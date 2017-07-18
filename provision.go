@@ -14,6 +14,8 @@ import (
 	"path"
 )
 
+//https://lastpass.com/enterprise_apidoc.php
+
 type Client struct {
 	URL              *url.URL
 	HttpClient       *http.Client
@@ -46,6 +48,15 @@ type User struct {
 	NumberOfApplications   int      `json:"applications,omitempty"`
 	NumberOfAttachments    int      `json:"attachment,omitempty"`
 	Groups                 []string `json:"groups,omitempty"`
+	Readonly			   string		`json:"readonly,omitempty"`			// ShareFolderの設定に利用. BooldでもなくIntでもない...
+	Give				   string		`json:"give,omitempty"`				// ShareFolderの設定に利用
+	Can_Administer		   string		`json:"can_administer,omitempty"` 	// ShareFolderの設定に利用
+}
+
+type SharedFolder struct {
+	ShareFolderName string `json:"sharedfoldername"`
+	Score float32 `json:"score"`
+	Users []User `json:"users"`
 }
 
 type Status struct {
@@ -84,14 +95,35 @@ func main() {
 	// Add Users
 	var users []User
 	users = append(users, User{UserName: "kengoscal@gmail.com"})
-	res, err = c.BatchAddUsers(users)
+	res, err = c.BatchAddOrUpdateUsers(users)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	var hoge Status
-	decodeBody(res, &hoge)
+	err = decodeBody(res, &hoge)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	fmt.Println(hoge.S)
+
+	// Get Shared Folder Data
+	res, err = c.GetSharedFolderData()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	var sharedFolders map[string]SharedFolder
+	err = decodeBody(res, &sharedFolders)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	for _, sf := range sharedFolders {
+		fmt.Println(sf)
+	}
+
 }
 
 func NewClient(urlString string, logger *log.Logger) (*Client, error) {
@@ -131,6 +163,11 @@ func (c *Client) newRequest(ctx context.Context, method, spath string, body io.R
 }
 
 /*
+The "batchadd" command is used to provision new or update existing users.
+The "username" field is required while the "fullname", "groups", "duousername", "securidusername", "password" and "password_reset_required" fields are optional.
+By setting the "password" field you can define a default password for the new user that could be temporary or permanent based on the "password_reset_required" field's value (default: true).
+
+# Request
   {
     "cid": "8771312",
     "provhash": "<Your API Secret>",
@@ -170,8 +207,13 @@ func (c *Client) newRequest(ctx context.Context, method, spath string, body io.R
         }
     ]
 }
+
+# Response
+{
+   "status": "OK"
+}
 */
-func (c *Client) BatchAddUsers(users []User) (*http.Response, error) {
+func (c *Client) BatchAddOrUpdateUsers(users []User) (*http.Response, error) {
 	body, err := json.Marshal(Request{
 		CompanyID:        c.CompanyId,
 		ProvisioningHash: c.ProvisioningHash,
@@ -182,7 +224,54 @@ func (c *Client) BatchAddUsers(users []User) (*http.Response, error) {
 		return nil, err
 	}
 
-	fmt.Println(string(body))
+	res, err := http.Post(EndPointURL, "application/json; charset=utf-8", bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+/*
+Get Shared Folder Data returns a JSON object containing information on all Shared Folders in the enterprise and the permissions granted to them.
+# Request
+{
+	"cid": "8771312",
+	"provhash": "<Your API Secret>",
+    "cmd": "getsfdata"
+}
+
+# Response
+{
+    "101": {
+        "sharedfoldername": "ThisSFName",
+        "score": 99,
+        "users": [
+            {
+                "username": "joe.user@lastpass.com",
+                "readonly": 0,
+                "give": 1,
+                "can_administer": 1
+            },
+            {
+                "username": "jane.user@lastpass.com",
+                "readonly": 1,
+                "give": 0,
+                "can_administer": 0
+            }
+        ]
+    }
+}
+ */
+func (c *Client) GetSharedFolderData()(*http.Response, error) {
+	body, err := json.Marshal(Request{
+		CompanyID:        c.CompanyId,
+		ProvisioningHash: c.ProvisioningHash,
+		Command:          "getsfdata",
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	res, err := http.Post(EndPointURL, "application/json; charset=utf-8", bytes.NewBuffer(body))
 	if err != nil {
