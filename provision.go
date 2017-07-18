@@ -85,57 +85,56 @@ func main() {
 		return
 	}
 
-	// Get an User
-	res, err := c.GetUserData("suzuki.kengo@moneyforward.co.jp")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	var user struct {
-		Users  map[string]User     `json:"Users,omitempty"`
-		Groups map[string][]string `json:"Groups,omitempty"`
-	}
-	decodeBody(res, &user)
-	fmt.Println(user)
-
-	// Add Users
-	var users []User
-	users = append(users, User{UserName: "kengoscal@gmail.com"})
-	res, err = c.BatchAddOrUpdateUsers(users)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	var status Status
-	err = decodeBody(res, &status)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println(status.Status)
-
-	// Get Shared Folder Data
-	res, err = c.GetSharedFolderData()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	var sharedFolders map[string]SharedFolder
-	err = decodeBody(res, &sharedFolders)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	for _, sf := range sharedFolders {
-		fmt.Println(sf)
-	}
+	//// Get an User
+	//res, err := c.GetUserData("suzuki.kengo@moneyforward.co.jp")
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//
+	//var user struct {
+	//	Users  map[string]User     `json:"Users,omitempty"`
+	//	Groups map[string][]string `json:"Groups,omitempty"`
+	//}
+	//decodeBody(res, &user)
+	//fmt.Println(user)
+	//
+	//// Add Users
+	//var users []User
+	//users = append(users, User{UserName: "kengoscal@gmail.com"})
+	//res, err = c.BatchAddOrUpdateUsers(users)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//var status Status
+	//err = decodeBody(res, &status)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//fmt.Println(status.Status)
+	//
+	//// Get Shared Folder Data
+	//res, err = c.GetSharedFolderData()
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//var sharedFolders map[string]SharedFolder
+	//err = decodeBody(res, &sharedFolders)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//for _, sf := range sharedFolders {
+	//	fmt.Println(sf)
+	//}
 
 	// BatchChange Group
 	data := BelongingGroup{
 		Username:"suzuki.kengo@moneyforward.co.jp",
-		GroupToAdd:[]string{"chalin-infra", "HOGEHOGE"},
-		GroupToDel:[]string{"FUGAFUGA", "h"},
+		GroupToAdd:[]string{"CISO室"},
 	}
 	data1 := BelongingGroup{
 		Username:"kengoscal@gmail.com",
@@ -143,7 +142,7 @@ func main() {
 		GroupToDel:[]string{"FUGAFUGA", "h"},
 	}
 	hoge := []BelongingGroup{data, data1} // hoge:=[...]Belonging{data}
-	res, err = c.ChangeGroupsMembership(hoge)
+	res, err := c.ChangeGroupsMembership(hoge)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -360,6 +359,8 @@ func (c *Client) ChangeGroupsMembership(groups []BelongingGroup)(*http.Response,
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Print(string(body))
 
 	res, err := http.Post(EndPointURL, "application/json; charset=utf-8", bytes.NewBuffer(body))
 	if err != nil {
