@@ -1,51 +1,55 @@
 package main
 
 import (
-	"net/url"
-	"net/http"
-	"log"
-	"github.com/pkg/errors"
-	"io/ioutil"
-	"fmt"
+	"bytes"
 	"context"
-	"io"
-	"path"
 	"encoding/json"
+	"fmt"
+	"github.com/pkg/errors"
+	"io"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"net/url"
+	"path"
 )
 
 type Client struct {
-	URL *url.URL
-	HttpClient *http.Client
-	CompanyId string
+	URL              *url.URL
+	HttpClient       *http.Client
+	CompanyId        string
 	ProvisioningHash string
-	Logger *log.Logger
+	Command          string
+	Logger           *log.Logger
 }
 
 type User struct {
-	UserName string
-	FullName string
-	MasterPasswordStrength string
-	Created string
-	LastPasswordChange string
-	LastLogin string
-	Disabled bool
-	NeverLoggedIn bool
-	LinkedAccount string
-	Sites int
-	Notes int
-	FormFills int
-	Applications int
-	Attachments int
-	Groups []map[string]string
+	UserName               string              `json:"username"`
+	FullName               string              `json:"fullname,omitempty"`
+	MasterPasswordStrength string              `json:"mpstrength,omitempty"`
+	Created                string              `json:"created,omitempty"`
+	LastPasswordChange     string              `json:"last_pw_change,omitempty"`
+	LastLogin              string              `json:"lastlogin,omitempty"`
+	Disabled               bool                `json:"disabled,omitempty"`
+	NeverLoggedIn          bool                `json:"neverloggedin,omitempty"`
+	LinkedAccount          string              `json:"linked,omitempty"`
+	NumberOfSites          int                 `json:"sites,omitempty"`
+	NumberOfNotes          int                 `json:"notes,omitempty"`
+	NumberOfFormFills      int                 `json:"formfills,omitempty"`
+	NumberOfApplications   int                 `json:"applications,omitempty"`
+	NumberOfAttachments    int                 `json:"attachment,omitempty"`
+	Groups                 []map[string]string `json:"groups,omitempty"`
 }
 
-var cid = "8771312"
-var provhash = "359fdfbc93bc6b8f1963c84e9db3539a5f3d688f394bd536e1ca6b77f8d5f101"
+const (
+	CompanyID        = "8771312"
+	ProvisioningHash = "359fdfbc93bc6b8f1963c84e9db3539a5f3d688f394bd536e1ca6b77f8d5f101"
+	EndPointURL      = "https://lastpass.com/enterpriseapi.php"
+)
 
 func main() {
 	//noinspection SpellCheckingInspection
-	lastpass_url := "https://lastpass.com/enterpriseapi.php"
-	c, err := NewClient(lastpass_url, nil)
+	c, err := NewClient(EndPointURL, nil)
 
 	if err != nil {
 		fmt.Errorf(err.Error())
@@ -57,7 +61,8 @@ func main() {
 		fmt.Errorf(err.Error())
 		return
 	}
-	fmt.Println(user)
+	hoge := User{}
+	decodeBody(user, hoge)
 }
 
 func NewClient(urlString string, logger *log.Logger) (*Client, error) {
@@ -71,13 +76,12 @@ func NewClient(urlString string, logger *log.Logger) (*Client, error) {
 		logger = discardLogger
 	}
 
-
 	return &Client{
-		URL: parsedURL,
-		HttpClient: http.DefaultClient,
-		CompanyId: cid,
-		ProvisioningHash: provhash,
-		Logger: logger,
+		URL:              parsedURL,
+		HttpClient:       http.DefaultClient,
+		CompanyId:        CompanyID,
+		ProvisioningHash: ProvisioningHash,
+		Logger:           logger,
 	}, err
 }
 
@@ -105,25 +109,38 @@ func (c *Client) newRequest(ctx context.Context, method, spath string, body io.R
         "username": "user1@lastpass.com"
     }
   }
- */
-func (c *Client) GetUserData(user string) (string, error) {
-	c.URL.Path = path.Join(c.URL.Path, user)
-	req, err:= http.NewRequest(http.MethodGet, c.URL.String(), nil)
+*/
+func (c *Client) GetUserData(user string) (*http.Response, error) {
+	body, err := json.Marshal(Request{
+		CompanyID:        c.CompanyId,
+		ProvisioningHash: c.ProvisioningHash,
+		Command:          "getuserdata",
+		Data:             User{UserName: user},
+	})
 	if err != nil {
-		return "",err
+		return nil, err
+	}
+
+	//req, err := c.newRequest(context.Background(), "POST", c.URL.Path, body)
+	req, err := http.NewRequest(http.MethodPost, c.URL.Path, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
 	}
 
 	res, err := c.HttpClient.Do(req)
 	if err != nil {
-		return "",err
+		return nil, err
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
-
-	return string(data), nil
+	return res, nil
 }
 
+type Request struct {
+	CompanyID        string `json:"cid"`
+	ProvisioningHash string `json:"provhash"`
+	Command          string `json:"cmd"`
+	Data             User
+}
 
 func decodeBody(resp *http.Response, out interface{}) error {
 	defer resp.Body.Close()
