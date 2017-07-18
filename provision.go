@@ -176,8 +176,10 @@ func main() {
 	//res, err := c.ResetPassword("teramoto.tomoya@moneyforward.co.jp")
 	//res, err := c.GetAllEventReports()
 	loc, _ := time.LoadLocation("Asia/Tokyo")
-	f := jsonLastPassTime{time.Date(2017, 7,1,0,0,0,0 ,loc)}
-	t := jsonLastPassTime{time.Now()}
+	now := time.Now().In(loc)
+	weekAgo := now.Add(-time.Duration(7) * time.Hour * 24)
+	t := jsonLastPassTime{now}
+	f := jsonLastPassTime{weekAgo}
 	res, err := c.GetEventReport("allusers", "", f, t)
 	if err != nil {
 		fmt.Println(err)
