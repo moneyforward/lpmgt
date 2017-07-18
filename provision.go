@@ -70,10 +70,17 @@ type Status struct {
 	Errors []string `json:"errors,omitempty"`
 }
 
+type DeactivationMode int
+
 const (
 	CompanyID   = "8771312"
 	Secret      = "359fdfbc93bc6b8f1963c84e9db3539a5f3d688f394bd536e1ca6b77f8d5f101"
 	EndPointURL = "https://lastpass.com/enterpriseapi.php"
+)
+const(
+	Deactivate DeactivationMode = iota
+	Remove
+	Delete
 )
 
 func main() {
@@ -130,19 +137,34 @@ func main() {
 	//for _, sf := range sharedFolders {
 	//	fmt.Println(sf)
 	//}
+	//
+	//// BatchChange Group
+	//data := BelongingGroup{
+	//	Username:"suzuki.kengo@moneyforward.co.jp",
+	//	GroupToAdd:[]string{"CISO室"},
+	//}
+	//data1 := BelongingGroup{
+	//	Username:"kengoscal@gmail.com",
+	//	GroupToAdd:[]string{"chalin-infra", "HOGEHOGE"},
+	//	GroupToDel:[]string{"FUGAFUGA", "h"},
+	//}
+	//hoge := []BelongingGroup{data, data1} // hoge:=[...]Belonging{data}
+	//res, err := c.ChangeGroupsMembership(hoge)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//var result Status
+	//err = decodeBody(res, &result)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//fmt.Println(result.Status + ": ")
+	//fmt.Println(result.Errors)
 
-	// BatchChange Group
-	data := BelongingGroup{
-		Username:"suzuki.kengo@moneyforward.co.jp",
-		GroupToAdd:[]string{"CISO室"},
-	}
-	data1 := BelongingGroup{
-		Username:"kengoscal@gmail.com",
-		GroupToAdd:[]string{"chalin-infra", "HOGEHOGE"},
-		GroupToDel:[]string{"FUGAFUGA", "h"},
-	}
-	hoge := []BelongingGroup{data, data1} // hoge:=[...]Belonging{data}
-	res, err := c.ChangeGroupsMembership(hoge)
+	//res, err := c.DeleteUser("teramoto.tomoya@moneyforward.co.jp", Deactivate)
+	res, err := c.DisableMultifactor("teramoto.tomoya@moneyforward.co.jp")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -153,8 +175,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(result.Status + ": ")
-	fmt.Println(result.Errors)
+	fmt.Println(result.Status)
 }
 
 func NewClient(urlString string, logger *log.Logger) (*Client, error) {
@@ -195,7 +216,7 @@ func (c *Client) newRequest(ctx context.Context, method, spath string, body io.R
 
 /*
 The "batchadd" command is used to provision new or update existing users.
-The "username" field is required while the "fullname", "groups", "duousername", "securidusername", "password" and "password_reset_required" fields are optional.
+The "UserName" field is required while the "fullname", "groups", "duousername", "securidusername", "password" and "password_reset_required" fields are optional.
 By setting the "password" field you can define a default password for the new user that could be temporary or permanent based on the "password_reset_required" field's value (default: true).
 
 # Request
@@ -245,22 +266,7 @@ By setting the "password" field you can define a default password for the new us
 }
 */
 func (c *Client) BatchAddOrUpdateUsers(users []User) (*http.Response, error) {
-	body, err := json.Marshal(Request{
-		CompanyID:        c.CompanyId,
-		ProvisioningHash: c.ProvisioningHash,
-		Command:          "batchadd",
-		Data:             users,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := http.Post(EndPointURL, "application/json; charset=utf-8", bytes.NewBuffer(body))
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return c.DoRequest("batchadd", users)
 }
 
 /*
@@ -295,21 +301,7 @@ Get Shared Folder Data returns a JSON object containing information on all Share
 }
  */
 func (c *Client) GetSharedFolderData()(*http.Response, error) {
-	body, err := json.Marshal(Request{
-		CompanyID:        c.CompanyId,
-		ProvisioningHash: c.ProvisioningHash,
-		Command:          "getsfdata",
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := http.Post(EndPointURL, "application/json; charset=utf-8", bytes.NewBuffer(body))
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return c.DoRequest("getsfdata", nil)
 }
 
 /* Batch Change Group (cmd = batchchangegrp)
@@ -350,24 +342,7 @@ group membership manipulation
 }
  */
 func (c *Client) ChangeGroupsMembership(groups []BelongingGroup)(*http.Response, error) {
-	body, err := json.Marshal(Request{
-		CompanyID:        c.CompanyId,
-		ProvisioningHash: c.ProvisioningHash,
-		Command:          "batchchangegrp",
-		Data:			groups,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Print(string(body))
-
-	res, err := http.Post(EndPointURL, "application/json; charset=utf-8", bytes.NewBuffer(body))
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return c.DoRequest("batchchangegrp", groups)
 }
 
 /*
@@ -378,7 +353,7 @@ Get information on users enterprise.
     "provhash": "<Your API Secret>",
     "cmd": "getuserdata",
     "data": {
-        "username": "user1@lastpass.com" // This can be either username, disabled, or admin
+        "username": "user1@lastpass.com" // This can be either UserName, disabled, or admin
     }
   }
 
@@ -420,16 +395,48 @@ Get information on users enterprise.
     }
 }
 */
+// GetUserData
 func (c *Client) GetUserData(user string) (*http.Response, error) {
-	body, err := json.Marshal(Request{
+	return c.DoRequest("getuserdata", User{UserName: user})
+}
+
+// DeleteUser - delete individual users.
+/*
+0 - Deactivate user. This blocks logins but retains data and enterprise membership
+1 - Remove user. This removed the user from the enterprise but otherwise keeps the account itself active.
+2 - Delete user. This will delete the account entirely.
+ */
+func (c *Client) DeleteUser(user string, mode DeactivationMode) (*http.Response, error) {
+	data := struct {
+		UserName     string	`json:"username"`
+		DeleteAction int `json:"deleteaction"`
+	}{UserName: user, DeleteAction: int(mode)}
+	return c.DoRequest("deluser", data)
+}
+
+// DisableMultifactor
+func (c *Client) DisableMultifactor(user string) (*http.Response, error) {
+	return c.DoRequest("disablemultifactor", User{UserName:user})
+}
+
+// DoRequest
+func (c *Client) DoRequest(command string, data interface{}) (*http.Response, error) {
+	req := Request{
 		CompanyID:        c.CompanyId,
 		ProvisioningHash: c.ProvisioningHash,
-		Command:          "getuserdata",
-		Data:             User{UserName: user},
-	})
+		Command:          command,
+	}
+
+	if data != nil {
+		req.Data = data
+	}
+
+	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println(string(body))
 
 	res, err := http.Post(EndPointURL, "application/json; charset=utf-8", bytes.NewBuffer(body))
 	if err != nil {
@@ -439,6 +446,7 @@ func (c *Client) GetUserData(user string) (*http.Response, error) {
 	return res, nil
 }
 
+// DecodeBody
 func decodeBody(resp *http.Response, out interface{}) error {
 	defer resp.Body.Close()
 	return json.NewDecoder(resp.Body).Decode(out)
