@@ -164,7 +164,8 @@ func main() {
 	//fmt.Println(result.Errors)
 
 	//res, err := c.DeleteUser("teramoto.tomoya@moneyforward.co.jp", Deactivate)
-	res, err := c.DisableMultifactor("teramoto.tomoya@moneyforward.co.jp")
+	//res, err := c.DisableMultifactor("teramoto.tomoya@moneyforward.co.jp")
+	res, err := c.ResetPassword("teramoto.tomoya@moneyforward.co.jp")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -417,6 +418,11 @@ func (c *Client) DeleteUser(user string, mode DeactivationMode) (*http.Response,
 // DisableMultifactor
 func (c *Client) DisableMultifactor(user string) (*http.Response, error) {
 	return c.DoRequest("disablemultifactor", User{UserName:user})
+}
+
+// ResetPassword
+func (c *Client) ResetPassword(user string) (*http.Response, error) {
+	return c.DoRequest("resetpassword", User{UserName:user})
 }
 
 // DoRequest
