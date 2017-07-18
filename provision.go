@@ -65,6 +65,14 @@ type BelongingGroup struct {
 	GroupToDel []string `json:"del,omitempty"`
 }
 
+type Event struct {
+	Time string `json:"Time"`
+	Username string `json:"Username"`
+	IP_Address string	`json:"IP_Address"`
+	Action string `json:"Action"`
+	Data string `json:"Data"`
+}
+
 type Status struct {
 	Status string `json:"status"`
 	Errors []string `json:"errors,omitempty"`
@@ -165,18 +173,21 @@ func main() {
 
 	//res, err := c.DeleteUser("teramoto.tomoya@moneyforward.co.jp", Deactivate)
 	//res, err := c.DisableMultifactor("teramoto.tomoya@moneyforward.co.jp")
-	res, err := c.ResetPassword("teramoto.tomoya@moneyforward.co.jp")
+	//res, err := c.ResetPassword("teramoto.tomoya@moneyforward.co.jp")
+	res, err := c.GetAllEventReports()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	var result Status
+	var result struct{
+		Events []Event `json:"events"`
+	}
 	err = decodeBody(res, &result)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(result.Status)
+	fmt.Println(result.Events)
 }
 
 func NewClient(urlString string, logger *log.Logger) (*Client, error) {
@@ -423,6 +434,30 @@ func (c *Client) DisableMultifactor(user string) (*http.Response, error) {
 // ResetPassword
 func (c *Client) ResetPassword(user string) (*http.Response, error) {
 	return c.DoRequest("resetpassword", User{UserName:user})
+}
+
+// GetEventReport
+func (c *Client) GetUserEventReport(user string) (*http.Response, error) {
+	data := struct {
+		From string `json:"from"`
+		To string `json:"to"`
+		Search string `json:"search"`
+		User string `json:"user"`
+		Format string `json:"format"`
+	}{User:user, Format:"siem"}
+	return c.DoRequest("reporting", data)
+}
+
+// GetEventReport
+func (c *Client) GetAllEventReports() (*http.Response, error) {
+	data := struct {
+		From string `json:"from"`
+		To string `json:"to"`
+		Search string `json:"search"`
+		User string `json:"user"`
+		Format string `json:"format"`
+	}{User:"allusers", Format:"siem", From:"2017-07-01 00:00:00", To:"2017-07-05 00:00:00",}
+	return c.DoRequest("reporting", data)
 }
 
 // DoRequest
