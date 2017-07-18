@@ -16,6 +16,8 @@ import (
 type Client struct {
 	URL *url.URL
 	HttpClient *http.Client
+	CompanyId string
+	ProvisioningHash string
 	Logger *log.Logger
 }
 
@@ -69,7 +71,14 @@ func NewClient(urlString string, logger *log.Logger) (*Client, error) {
 		logger = discardLogger
 	}
 
-	return &Client{parsedURL, http.DefaultClient, logger}, err
+
+	return &Client{
+		URL: parsedURL,
+		HttpClient: http.DefaultClient,
+		CompanyId: cid,
+		ProvisioningHash: provhash,
+		Logger: logger,
+	}, err
 }
 
 func (c *Client) newRequest(ctx context.Context, method, spath string, body io.Reader) (*http.Request, error) {
@@ -82,7 +91,7 @@ func (c *Client) newRequest(ctx context.Context, method, spath string, body io.R
 
 	req = req.WithContext(ctx)
 	//req.SetBasicAuth(c.Username, c.Password)
-	//req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Content-Type", "application/json")
 	//req.Header.Set("User-Agent", userAgent)
 	return req, nil
 }
