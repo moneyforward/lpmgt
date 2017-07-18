@@ -19,6 +19,24 @@ type Client struct {
 	Logger *log.Logger
 }
 
+type User struct {
+	UserName string
+	FullName string
+	MasterPasswordStrength string
+	Created string
+	LastPasswordChange string
+	LastLogin string
+	Disabled bool
+	NeverLoggedIn bool
+	LinkedAccount string
+	Sites int
+	Notes int
+	FormFills int
+	Applications int
+	Attachments int
+	Groups []map[string]string
+}
+
 var cid = "8771312"
 var provhash = "359fdfbc93bc6b8f1963c84e9db3539a5f3d688f394bd536e1ca6b77f8d5f101"
 
