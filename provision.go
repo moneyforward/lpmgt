@@ -62,8 +62,7 @@ func main() {
 		return
 	}
 	hoge := User{}
-	decodeBody(user, hoge)
-	fmt.Println(hoge)
+	decodeBody(user, &hoge)
 }
 
 func NewClient(urlString string, logger *log.Logger) (*Client, error) {
@@ -122,14 +121,7 @@ func (c *Client) GetUserData(user string) (*http.Response, error) {
 		return nil, err
 	}
 
-	fmt.Println(string(body))
-
 	res, err := http.Post(EndPointURL, "application/json; charset=utf-8", bytes.NewBuffer(body))
-	if err != nil {
-		return nil, err
-	}
-
-	c.Logger.Println(res)
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +138,5 @@ type Request struct {
 
 func decodeBody(resp *http.Response, out interface{}) error {
 	defer resp.Body.Close()
-	decoder := json.NewDecoder(resp.Body)
-	return decoder.Decode(out)
+	return json.NewDecoder(resp.Body).Decode(out)
 }
