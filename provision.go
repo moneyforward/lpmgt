@@ -58,11 +58,12 @@ func main() {
 
 	user, err := c.GetUserData("suzuki.kengo@moneyforward.co.jp")
 	if err != nil {
-		fmt.Errorf(err.Error())
+		fmt.Println(err)
 		return
 	}
 	hoge := User{}
 	decodeBody(user, hoge)
+	fmt.Println(hoge)
 }
 
 func NewClient(urlString string, logger *log.Logger) (*Client, error) {
@@ -121,13 +122,14 @@ func (c *Client) GetUserData(user string) (*http.Response, error) {
 		return nil, err
 	}
 
-	//req, err := c.newRequest(context.Background(), "POST", c.URL.Path, body)
-	req, err := http.NewRequest(http.MethodPost, c.URL.Path, bytes.NewBuffer(body))
+	fmt.Println(string(body))
+
+	res, err := http.Post(EndPointURL, "application/json; charset=utf-8", bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := c.HttpClient.Do(req)
+	c.Logger.Println(res)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +141,7 @@ type Request struct {
 	CompanyID        string `json:"cid"`
 	ProvisioningHash string `json:"provhash"`
 	Command          string `json:"cmd"`
-	Data             User
+	Data             User	`json:"data"`
 }
 
 func decodeBody(resp *http.Response, out interface{}) error {
