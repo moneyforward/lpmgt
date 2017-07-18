@@ -23,22 +23,34 @@ type Client struct {
 	Logger           *log.Logger
 }
 
+type Request struct {
+	CompanyID        string      `json:"cid"`
+	ProvisioningHash string      `json:"provhash"`
+	Command          string      `json:"cmd"`
+	Data             interface{} `json:"data"`
+}
+
 type User struct {
-	UserName               string              `json:"username"`
-	FullName               string              `json:"fullname,omitempty"`
-	MasterPasswordStrength string              `json:"mpstrength,omitempty"`
-	Created                string              `json:"created,omitempty"`
-	LastPasswordChange     string              `json:"last_pw_change,omitempty"`
-	LastLogin              string              `json:"lastlogin,omitempty"`
-	Disabled               bool                `json:"disabled,omitempty"`
-	NeverLoggedIn          bool                `json:"neverloggedin,omitempty"`
-	LinkedAccount          string              `json:"linked,omitempty"`
-	NumberOfSites          int                 `json:"sites,omitempty"`
-	NumberOfNotes          int                 `json:"notes,omitempty"`
-	NumberOfFormFills      int                 `json:"formfills,omitempty"`
-	NumberOfApplications   int                 `json:"applications,omitempty"`
-	NumberOfAttachments    int                 `json:"attachment,omitempty"`
-	Groups                 []map[string]string `json:"groups,omitempty"`
+	UserName               string   `json:"username"`
+	FullName               string   `json:"fullname,omitempty"`
+	MasterPasswordStrength string   `json:"mpstrength,omitempty"`
+	Created                string   `json:"created,omitempty"`
+	LastPasswordChange     string   `json:"last_pw_change,omitempty"`
+	LastLogin              string   `json:"lastlogin,omitempty"`
+	Disabled               bool     `json:"disabled,omitempty"`
+	NeverLoggedIn          bool     `json:"neverloggedin,omitempty"`
+	LinkedAccount          string   `json:"linked,omitempty"`
+	NumberOfSites          int      `json:"sites,omitempty"`
+	NumberOfNotes          int      `json:"notes,omitempty"`
+	NumberOfFormFills      int      `json:"formfills,omitempty"`
+	NumberOfApplications   int      `json:"applications,omitempty"`
+	NumberOfAttachments    int      `json:"attachment,omitempty"`
+	Groups                 []string `json:"groups,omitempty"`
+}
+
+type UserInfo struct {
+	Users  map[string]User     `json:"Users,omitempty"`
+	Groups map[string][]string `json:"Groups,omitempty"`
 }
 
 const (
@@ -56,13 +68,14 @@ func main() {
 		return
 	}
 
-	user, err := c.GetUserData("suzuki.kengo@moneyforward.co.jp")
+	res, err := c.GetUserData("suzuki.kengo@moneyforward.co.jp")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	hoge := User{}
-	decodeBody(user, &hoge)
+
+	var user UserInfo
+	decodeBody(res, &user)
 }
 
 func NewClient(urlString string, logger *log.Logger) (*Client, error) {
@@ -85,6 +98,7 @@ func NewClient(urlString string, logger *log.Logger) (*Client, error) {
 	}, err
 }
 
+// Have not used
 func (c *Client) newRequest(ctx context.Context, method, spath string, body io.Reader) (*http.Request, error) {
 	u := *c.URL
 	u.Path = path.Join(c.URL.Path, spath)
@@ -127,13 +141,6 @@ func (c *Client) GetUserData(user string) (*http.Response, error) {
 	}
 
 	return res, nil
-}
-
-type Request struct {
-	CompanyID        string `json:"cid"`
-	ProvisioningHash string `json:"provhash"`
-	Command          string `json:"cmd"`
-	Data             User	`json:"data"`
 }
 
 func decodeBody(resp *http.Response, out interface{}) error {
