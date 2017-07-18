@@ -437,18 +437,18 @@ func (c *Client) ResetPassword(user string) (*http.Response, error) {
 }
 
 // GetEventReport
-func (c *Client) GetUserEventReport(user string) (*http.Response, error) {
+func (c *Client) GetEventReport(user, search string, from, to time.Time) (*http.Response, error) {
 	data := struct {
 		From string `json:"from"`
 		To string `json:"to"`
 		Search string `json:"search"`
 		User string `json:"user"`
 		Format string `json:"format"`
-	}{User:user, Format:"siem"}
+	}{User:user, Search: search, From: from, To: to, Format:"siem"}
 	return c.DoRequest("reporting", data)
 }
 
-// GetEventReport
+// GetAllEventReports
 func (c *Client) GetAllEventReports() (*http.Response, error) {
 	data := struct {
 		From string `json:"from"`
