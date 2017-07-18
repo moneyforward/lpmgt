@@ -59,8 +59,15 @@ type SharedFolder struct {
 	Users []User `json:"users"`
 }
 
+type BelongingGroup struct {
+	Username   string `json:"username"`
+	GroupToAdd []string `json:"add,omitempty"`
+	GroupToDel []string `json:"del,omitempty"`
+}
+
 type Status struct {
-	S string `json:"status"`
+	Status string `json:"status"`
+	Errors []string `json:"errors,omitempty"`
 }
 
 const (
@@ -100,13 +107,13 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	var hoge Status
-	err = decodeBody(res, &hoge)
+	var status Status
+	err = decodeBody(res, &status)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(hoge.S)
+	fmt.Println(status.Status)
 
 	// Get Shared Folder Data
 	res, err = c.GetSharedFolderData()
@@ -124,6 +131,31 @@ func main() {
 		fmt.Println(sf)
 	}
 
+	// BatchChange Group
+	data := BelongingGroup{
+		Username:"suzuki.kengo@moneyforward.co.jp",
+		GroupToAdd:[]string{"chalin-infra", "HOGEHOGE"},
+		GroupToDel:[]string{"FUGAFUGA", "h"},
+	}
+	data1 := BelongingGroup{
+		Username:"kengoscal@gmail.com",
+		GroupToAdd:[]string{"chalin-infra", "HOGEHOGE"},
+		GroupToDel:[]string{"FUGAFUGA", "h"},
+	}
+	hoge := []BelongingGroup{data, data1} // hoge:=[...]Belonging{data}
+	res, err = c.ChangeGroupsMembership(hoge)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	var result Status
+	err = decodeBody(res, &result)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(result.Status + ": ")
+	fmt.Println(result.Errors)
 }
 
 func NewClient(urlString string, logger *log.Logger) (*Client, error) {
@@ -281,15 +313,111 @@ func (c *Client) GetSharedFolderData()(*http.Response, error) {
 	return res, nil
 }
 
-/*
+/* Batch Change Group (cmd = batchchangegrp)
+group membership manipulation
+# Request
+
   {
     "cid": "8771312",
-    "provhash": "359fdfbc93bc6b8f1963c84e9db3539a5f3d688f394bd536e1ca6b77f8d5f101",
+    "provhash": "<Your API Secret>",
+    "cmd": "batchchangegrp",
+    "data": [
+        {
+            "username": "user1@lastpass.com",
+            "add": [
+                "Group1",
+                "Group2"
+            ]
+        },
+        {
+            "username": "user2@lastpass.com",
+            "add": [
+                "Group1"
+            ],
+            "del": [
+                "Group2",
+                "Group3"
+            ]
+        }
+    ]
+}
+
+# Response
+{
+    "status": "WARN", // OK, WARN or FAIL
+    "errors": [
+        "user2@lastpass.com does not exist"
+    ]
+}
+ */
+func (c *Client) ChangeGroupsMembership(groups []BelongingGroup)(*http.Response, error) {
+	body, err := json.Marshal(Request{
+		CompanyID:        c.CompanyId,
+		ProvisioningHash: c.ProvisioningHash,
+		Command:          "batchchangegrp",
+		Data:			groups,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := http.Post(EndPointURL, "application/json; charset=utf-8", bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+/*
+Get information on users enterprise.
+# Request
+  {
+    "cid": "8771312",
+    "provhash": "<Your API Secret>",
     "cmd": "getuserdata",
     "data": {
-        "username": "user1@lastpass.com"
+        "username": "user1@lastpass.com" // This can be either username, disabled, or admin
     }
   }
+
+# Response
+  {
+    "Users": {
+        "101": {
+            "username": "user1@lastpass.com",
+            "fullname": "Ned Flanders",
+            "mpstrength": "100",
+            "created": "2014-03-12 10:02:56",
+            "last_pw_change": "2015-05-19 10:58:33",
+            "last_login": "2015-05-29 11:45:05",
+            "disabled": false,
+            "neverloggedin": false,
+            "linked": "personal.account@mydomain.com",
+            "sites": 72,
+            "notes": 19,
+            "formfills": 2,
+            "applications": 0,
+            "attachments": 1,
+            "groups": [
+                "Domain Admins",
+                "Dev Team",
+                "Support Team"
+            ]
+        }
+    },
+    "Groups": {
+        "Domain Admins": [
+            "user1@lastpass.com"
+        ],
+        "Dev Team": [
+            "user1@lastpass.com"
+        ],
+        "Support Team": [
+            "user1@lastpass.com"
+        ]
+    }
+}
 */
 func (c *Client) GetUserData(user string) (*http.Response, error) {
 	body, err := json.Marshal(Request{
