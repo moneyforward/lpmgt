@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"time"
 )
 
 //https://lastpass.com/enterprise_apidoc.php
@@ -92,7 +93,6 @@ const(
 )
 
 func main() {
-	//noinspection SpellCheckingInspection
 	c, err := NewClient(EndPointURL, nil)
 
 	if err != nil {
@@ -174,7 +174,11 @@ func main() {
 	//res, err := c.DeleteUser("teramoto.tomoya@moneyforward.co.jp", Deactivate)
 	//res, err := c.DisableMultifactor("teramoto.tomoya@moneyforward.co.jp")
 	//res, err := c.ResetPassword("teramoto.tomoya@moneyforward.co.jp")
-	res, err := c.GetAllEventReports()
+	//res, err := c.GetAllEventReports()
+	loc, _ := time.LoadLocation("Asia/Tokyo")
+	f := jsonLastPassTime{time.Date(2017, 7,1,0,0,0,0 ,loc)}
+	t := jsonLastPassTime{time.Now()}
+	res, err := c.GetEventReport("allusers", "", f, t)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -437,10 +441,10 @@ func (c *Client) ResetPassword(user string) (*http.Response, error) {
 }
 
 // GetEventReport
-func (c *Client) GetEventReport(user, search string, from, to time.Time) (*http.Response, error) {
+func (c *Client) GetEventReport(user, search string, from, to jsonLastPassTime) (*http.Response, error) {
 	data := struct {
-		From string `json:"from"`
-		To string `json:"to"`
+		From jsonLastPassTime `json:"from"`
+		To jsonLastPassTime `json:"to"`
 		Search string `json:"search"`
 		User string `json:"user"`
 		Format string `json:"format"`
@@ -451,12 +455,12 @@ func (c *Client) GetEventReport(user, search string, from, to time.Time) (*http.
 // GetAllEventReports
 func (c *Client) GetAllEventReports() (*http.Response, error) {
 	data := struct {
-		From string `json:"from"`
-		To string `json:"to"`
+		From jsonLastPassTime `json:"from"`
+		To jsonLastPassTime `json:"to"`
 		Search string `json:"search"`
 		User string `json:"user"`
 		Format string `json:"format"`
-	}{User:"allusers", Format:"siem", From:"2017-07-01 00:00:00", To:"2017-07-05 00:00:00",}
+	}{User:"allusers", Format:"siem",}
 	return c.DoRequest("reporting", data)
 }
 
@@ -491,4 +495,17 @@ func (c *Client) DoRequest(command string, data interface{}) (*http.Response, er
 func decodeBody(resp *http.Response, out interface{}) error {
 	defer resp.Body.Close()
 	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+type jsonLastPassTime struct {
+	time.Time
+}
+
+func (j jsonLastPassTime) format() string {
+	return j.Time.Format("2006-01-02 15:04:05")
+}
+
+func (j jsonLastPassTime) MarshalJSON() ([]byte, error) {
+	fmt.Println(j.format())
+	return []byte(`"` + j.format() + `"`), nil
 }
