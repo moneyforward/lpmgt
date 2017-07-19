@@ -49,33 +49,33 @@ type User struct {
 	NumberOfApplications   int      `json:"applications,omitempty"`
 	NumberOfAttachments    int      `json:"attachment,omitempty"`
 	Groups                 []string `json:"groups,omitempty"`
-	Readonly			   string		`json:"readonly,omitempty"`			// ShareFolderの設定に利用. BooldでもなくIntでもない...
-	Give				   string		`json:"give,omitempty"`				// ShareFolderの設定に利用
-	Can_Administer		   string		`json:"can_administer,omitempty"` 	// ShareFolderの設定に利用
+	Readonly               string   `json:"readonly,omitempty"`       // ShareFolderの設定に利用. BooldでもなくIntでもない...
+	Give                   string   `json:"give,omitempty"`           // ShareFolderの設定に利用
+	Can_Administer         string   `json:"can_administer,omitempty"` // ShareFolderの設定に利用
 }
 
 type SharedFolder struct {
-	ShareFolderName string `json:"sharedfoldername"`
-	Score float32 `json:"score"`
-	Users []User `json:"users"`
+	ShareFolderName string  `json:"sharedfoldername"`
+	Score           float32 `json:"score"`
+	Users           []User  `json:"users"`
 }
 
 type BelongingGroup struct {
-	Username   string `json:"username"`
+	Username   string   `json:"username"`
 	GroupToAdd []string `json:"add,omitempty"`
 	GroupToDel []string `json:"del,omitempty"`
 }
 
 type Event struct {
-	Time string `json:"Time"`
-	Username string `json:"Username"`
-	IP_Address string	`json:"IP_Address"`
-	Action string `json:"Action"`
-	Data string `json:"Data"`
+	Time       string `json:"Time"`
+	Username   string `json:"Username"`
+	IP_Address string `json:"IP_Address"`
+	Action     string `json:"Action"`
+	Data       string `json:"Data"`
 }
 
 type Status struct {
-	Status string `json:"status"`
+	Status string   `json:"status"`
 	Errors []string `json:"errors,omitempty"`
 }
 
@@ -86,7 +86,7 @@ const (
 	Secret      = "359fdfbc93bc6b8f1963c84e9db3539a5f3d688f394bd536e1ca6b77f8d5f101"
 	EndPointURL = "https://lastpass.com/enterpriseapi.php"
 )
-const(
+const (
 	Deactivate DeactivationMode = iota
 	Remove
 	Delete
@@ -185,7 +185,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	var result struct{
+	var result struct {
 		Events []Event `json:"events"`
 	}
 	err = decodeBody(res, &result)
@@ -317,8 +317,8 @@ Get Shared Folder Data returns a JSON object containing information on all Share
         ]
     }
 }
- */
-func (c *Client) GetSharedFolderData()(*http.Response, error) {
+*/
+func (c *Client) GetSharedFolderData() (*http.Response, error) {
 	return c.DoRequest("getsfdata", nil)
 }
 
@@ -358,8 +358,8 @@ group membership manipulation
         "user2@lastpass.com does not exist"
     ]
 }
- */
-func (c *Client) ChangeGroupsMembership(groups []BelongingGroup)(*http.Response, error) {
+*/
+func (c *Client) ChangeGroupsMembership(groups []BelongingGroup) (*http.Response, error) {
 	return c.DoRequest("batchchangegrp", groups)
 }
 
@@ -423,46 +423,46 @@ func (c *Client) GetUserData(user string) (*http.Response, error) {
 0 - Deactivate user. This blocks logins but retains data and enterprise membership
 1 - Remove user. This removed the user from the enterprise but otherwise keeps the account itself active.
 2 - Delete user. This will delete the account entirely.
- */
+*/
 func (c *Client) DeleteUser(user string, mode DeactivationMode) (*http.Response, error) {
 	data := struct {
-		UserName     string	`json:"username"`
-		DeleteAction int `json:"deleteaction"`
+		UserName     string `json:"username"`
+		DeleteAction int    `json:"deleteaction"`
 	}{UserName: user, DeleteAction: int(mode)}
 	return c.DoRequest("deluser", data)
 }
 
 // DisableMultifactor
 func (c *Client) DisableMultifactor(user string) (*http.Response, error) {
-	return c.DoRequest("disablemultifactor", User{UserName:user})
+	return c.DoRequest("disablemultifactor", User{UserName: user})
 }
 
 // ResetPassword
 func (c *Client) ResetPassword(user string) (*http.Response, error) {
-	return c.DoRequest("resetpassword", User{UserName:user})
+	return c.DoRequest("resetpassword", User{UserName: user})
 }
 
 // GetEventReport
 func (c *Client) GetEventReport(user, search string, from, to jsonLastPassTime) (*http.Response, error) {
 	data := struct {
-		From jsonLastPassTime `json:"from"`
-		To jsonLastPassTime `json:"to"`
-		Search string `json:"search"`
-		User string `json:"user"`
-		Format string `json:"format"`
-	}{User:user, Search: search, From: from, To: to, Format:"siem"}
+		From   jsonLastPassTime `json:"from"`
+		To     jsonLastPassTime `json:"to"`
+		Search string           `json:"search"`
+		User   string           `json:"user"`
+		Format string           `json:"format"`
+	}{User: user, Search: search, From: from, To: to, Format: "siem"}
 	return c.DoRequest("reporting", data)
 }
 
 // GetAllEventReports
 func (c *Client) GetAllEventReports() (*http.Response, error) {
 	data := struct {
-		From jsonLastPassTime `json:"from"`
-		To jsonLastPassTime `json:"to"`
-		Search string `json:"search"`
-		User string `json:"user"`
-		Format string `json:"format"`
-	}{User:"allusers", Format:"siem",}
+		From   jsonLastPassTime `json:"from"`
+		To     jsonLastPassTime `json:"to"`
+		Search string           `json:"search"`
+		User   string           `json:"user"`
+		Format string           `json:"format"`
+	}{User: "allusers", Format: "siem"}
 	return c.DoRequest("reporting", data)
 }
 
