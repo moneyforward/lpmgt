@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"path"
 	"time"
+	"gopkg.in/yaml.v2"
 )
 
 //https://lastpass.com/enterprise_apidoc.php
@@ -92,14 +93,40 @@ const (
 	Delete
 )
 
-func main() {
-	c, err := NewClient(EndPointURL, nil)
+type OU struct {
+	Name string
+	Members []string `yaml:",flow"`
+	Children	[]*OU
+}
 
+func formUser(email string, groups ...string) User {
+	return User{UserName: email, Groups: groups}
+}
+
+func main() {
+	f, err := ioutil.ReadFile("organization_structure.yaml")
 	if err != nil {
-		fmt.Errorf(err.Error())
-		return
+		panic(err)
 	}
 
+	var ou OU
+
+	err = yaml.Unmarshal(f, &ou)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(ou)
+	fmt.Println(ou.Children[1].Children[0])
+
+	//c, err := NewClient(EndPointURL, nil)
+	//
+	//if err != nil {
+	//	fmt.Errorf(err.Error())
+	//	return
+	//}
+
+	//var res *http.Response
 	//// Get an User
 	//res, err := c.GetUserData("suzuki.kengo@moneyforward.co.jp")
 	//if err != nil {
@@ -114,9 +141,36 @@ func main() {
 	//decodeBody(res, &user)
 	//fmt.Println(user)
 	//
-	//// Add Users
+	// Add Users
 	//var users []User
-	//users = append(users, User{UserName: "kengoscal@gmail.com"})
+	//emails := []string{
+	//	"akiyama.yoshio@moneyforward.co.jp",
+	//	"motokawa.daisuke@moneyforward.co.jp",
+	//	"ueno.takeshi@moneyforward.co.jp",
+	//	"kanebako.ryo@moneyforward.co.jp",
+	//	"hanafusa.nobuhiro@moneyforward.co.jp",
+	//
+	//	"hanafusa.nobuhiro@moneyforward.co.jp",
+	//	"kirihara.toyoaki@moneyforward.co.jp",
+	//	"kimura.hisashi@moneyforward.co.jp",
+	//
+	//	"kanebako.ryo@moneyforward.co.jp",
+	//	"yoshimoto.masaki@moneyforward.co.jp",
+	//	"oyama.yasuhiro@moneyforward.co.jp",
+	//
+	//	"yamashita.manato@moneyforward.co.jp",
+	//	"fukumoto.kazuhiro@moneyforward.co.jp",
+	//	"sawada.tsuyoshi@moneyforward.co.jp",
+	//	"sato.kimiaki@moneyforward.co.jp",
+	//}
+	//
+	//for _, email := range emails {
+	//	users = append(users, User{
+	//		UserName: email,
+	//		Groups: []string{"デザイン戦略室"},
+	//	})
+	//}
+	//
 	//res, err = c.BatchAddOrUpdateUsers(users)
 	//if err != nil {
 	//	fmt.Println(err)
@@ -175,25 +229,25 @@ func main() {
 	//res, err := c.DisableMultifactor("teramoto.tomoya@moneyforward.co.jp")
 	//res, err := c.ResetPassword("teramoto.tomoya@moneyforward.co.jp")
 	//res, err := c.GetAllEventReports()
-	loc, _ := time.LoadLocation("Asia/Tokyo")
-	now := time.Now().In(loc)
-	weekAgo := now.Add(-time.Duration(7) * time.Hour * 24)
-	t := jsonLastPassTime{now}
-	f := jsonLastPassTime{weekAgo}
-	res, err := c.GetEventReport("allusers", "", f, t)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	var result struct {
-		Events []Event `json:"events"`
-	}
-	err = decodeBody(res, &result)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println(result.Events)
+	//loc, _ := time.LoadLocation("Asia/Tokyo")
+	//now := time.Now().In(loc)
+	//weekAgo := now.Add(-time.Duration(7) * time.Hour * 24)
+	//t := jsonLastPassTime{now}
+	//f := jsonLastPassTime{weekAgo}
+	//res, err := c.GetEventReport("allusers", "", f, t)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//var result struct {
+	//	Events []Event `json:"events"`
+	//}
+	//err = decodeBody(res, &result)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//fmt.Println(result.Events)
 }
 
 func NewClient(urlString string, logger *log.Logger) (*Client, error) {
