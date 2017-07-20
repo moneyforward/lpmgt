@@ -14,6 +14,7 @@ import (
 	"path"
 	"time"
 	"gopkg.in/yaml.v2"
+	"os"
 )
 
 //https://lastpass.com/enterprise_apidoc.php
@@ -93,55 +94,63 @@ type Config struct {
 	Secret 	  string `yaml:"secret"`
 }
 
-//var	companyId      = "8771312"
-//var	endPointURL = "https://lastpass.com/enterpriseapi.php"
-//var secret string
-
 type OU struct {
 	Name string
 	Members []string `yaml:",flow"`
 	Children	[]*OU
 }
 
-func formUser(email string, groups ...string) User {
-	return User{UserName: email, Groups: groups}
+func formUsers(ou, parentOU *OU) []User {
+	var users []User
+
+	// Get Members within Child OU
+	if parentOU != nil {
+		ou.Name = fmt.Sprintf("%v - %v", parentOU.Name, ou.Name)
+	}
+	for _, member := range ou.Members {
+		users = append(users, User{UserName:member, Groups:[]string{ou.Name}})
+	}
+
+	// Get Members within Child OU
+	for _, child_ou := range ou.Children {
+		users = append(users, formUsers(child_ou, ou)...)
+	}
+	return users
 }
 
 func main() {
-	var clientConfig Config
-	f, err := ioutil.ReadFile("secret.yaml")
+	// Client作成
+	c, err := NewClient(nil)
 	if err != nil {
-		panic(err)
-	}
-	err = yaml.Unmarshal(f, &clientConfig)
-	if err != nil {
-		panic(err)
+		fmt.Errorf("Failed Building Client: %v", err.Error())
+		os.Exit(1)
 	}
 
-	f, err = ioutil.ReadFile("organization_structure.yaml")
+	f, err := ioutil.ReadFile("organization_structure.yaml")
 	if err != nil {
 		panic(err)
 	}
-
-	var ou struct{
+	var orgs struct{
 		Organizations []*OU `yaml:",flow"`
 	}
 
-	err = yaml.Unmarshal(f, &ou)
+	err = yaml.Unmarshal(f, &orgs)
 	if err != nil {
 		panic(err)
 	}
 
-	// Client作成
-	c, err := NewClient(clientConfig, nil)
-	if err != nil {
-		fmt.Errorf(err.Error())
-		return
+	var users []User
+	for _, ou := range orgs.Organizations {
+		users = append(users, formUsers(ou, nil)...)
+	}
+
+	for _, u := range users {
+		fmt.Println(u)
 	}
 
 	// Add Users
-	user := formUser("suzuki.kengo@moneyforward.co.jp", "A")
-	res, err := c.BatchAddOrUpdateUsers([]User{user})
+	users = []User{{UserName:"suzuki.kengo@moneyforward.co.jp"}}
+	res, err := c.BatchAddOrUpdateUsers(users)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -236,7 +245,17 @@ func main() {
 	//fmt.Println(result.Events)
 }
 
-func NewClient(config Config, logger *log.Logger) (*Client, error) {
+func NewClient(logger *log.Logger) (*Client, error) {
+	var config Config
+	f, err := ioutil.ReadFile("secret.yaml")
+	if err != nil {
+		panic(err)
+	}
+	err = yaml.Unmarshal(f, &config)
+	if err != nil {
+		panic(err)
+	}
+
 	parsedURL, err := url.ParseRequestURI(config.EndPoint)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse url: %s", config.EndPoint)
