@@ -109,15 +109,16 @@ func main() {
 		panic(err)
 	}
 
-	var ou OU
+	var ou struct{
+		Organizations []*OU `yaml:",flow"`
+	}
 
 	err = yaml.Unmarshal(f, &ou)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(ou)
-	fmt.Println(ou.Children[1].Children[0])
+	fmt.Println(ou.Organizations[1])
 
 	//c, err := NewClient(EndPointURL, nil)
 	//
