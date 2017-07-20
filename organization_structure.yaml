@@ -1,34 +1,47 @@
-name: アカウントアグリゲーション本部
+name: Money_Forward
 members:
-- uchinami.shoichi@moneyforward.co.jp
-- nakadaira.hirofumi@moneyforward.co.jp
-- yokoyama.takayoshi@moneyforward.co.jp
-- nakagawa.atsushi@moneyforward.co.jp
-- morita.kanako@moneyforward.co.jp
-- sogo.kenya@moneyforward.co.jp
-- fujishiro.tomotaka@moneyforward.co.jp
-name: 社長室
-members:
-- tahira.kiminobu@moneyforward.co.jp
+- tsuji.yosuke@moneyforward.co.jp
+- asano.chihiro@moneyforward.co.jp
+- taki.toshio@moneyforward.co.jp
+- tsuzuki.takayuki@moneyforward.co.jp
+- ichikawa.takashi@moneyforward.co.jp
+- kanesaka.naoya@moneyforward.co.jp
+- ueda.yozo@moneyforward.co.jp
+- matsuda.akira@moneyforward.co.jp
+
 children:
-  name: 秘書
-  members: 
-  - furukawa.kanae@moneyforward.co.jp
-  - tanaka.kei@moneyforward.co.jp
-  - suzuki.moeko@moneyforward.co.jp
-  name: 広報部
-  members:
-  - kashiwagi.aya@moneyforward.co.jp
-  - aoki.kanako@moneyforward.co.jp
-  - inamasu.yuki@moneyforward.co.jp
-  name: 人事部
-  members:
-  - hattori.hozumi@moneyforward.co.jp
-  - ogawa.masayuki@moneyforward.co.jp
-  - aoki.kanako@moneyforward.co.jp
-  - doe.arina@moneyforward.co.jp
-  - inoue.rei@moneyforward.co.jp
-  - arai.yumi@moneyforward.co.jp
-  - tsunoda.yukiko@moneyforward.co.jp
-  - hori.mayuka@moneyforward.co.jp
-  - nishino.erika@moneyforward.co.jp
+  - name: アカウントアグリゲーション本部
+    members:
+    - uchinami.shoichi@moneyforward.co.jp
+    - nakadaira.hirofumi@moneyforward.co.jp
+    - yokoyama.takayoshi@moneyforward.co.jp
+    - nakagawa.atsushi@moneyforward.co.jp
+    - morita.kanako@moneyforward.co.jp
+    - sogo.kenya@moneyforward.co.jp
+    - fujishiro.tomotaka@moneyforward.co.jp
+
+  - name: 社長室
+    members:
+    - tahira.kiminobu@moneyforward.co.jp
+    children:
+      - name: 秘書
+        members: 
+        - furukawa.kanae@moneyforward.co.jp
+        - tanaka.kei@moneyforward.co.jp
+        - suzuki.moeko@moneyforward.co.jp
+      - name: 広報部
+        members:
+        - kashiwagi.aya@moneyforward.co.jp
+        - aoki.kanako@moneyforward.co.jp
+        - inamasu.yuki@moneyforward.co.jp
+      - name: 人事部
+        members:
+        - hattori.hozumi@moneyforward.co.jp
+        - ogawa.masayuki@moneyforward.co.jp
+        - aoki.kanako@moneyforward.co.jp
+        - doe.arina@moneyforward.co.jp
+        - inoue.rei@moneyforward.co.jp
+        - arai.yumi@moneyforward.co.jp
+        - tsunoda.yukiko@moneyforward.co.jp
+        - hori.mayuka@moneyforward.co.jp
+        - nishino.erika@moneyforward.co.jp
