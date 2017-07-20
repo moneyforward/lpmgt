@@ -20,16 +20,29 @@ organizations:
 
 - name: CISO室
   members:
-  - ichikawa.takashi@moneyforward.co.jp
-  - sakamoto.yukiya@moneyforward.co.jp
-  - iida.yuki@moneyforward.co.jp
-  - murakami.katsutoshi@moneyforward.co.jp
-  - shinohara.yuki@moneyforward.co.jp
-  - suzuki.yosuke@moneyforward.co.jp
-  - makita.riki@moneyforward.co.jp   
-  - suzuki.kengo@moneyforward.co.jp
-  - kubo.kenichi@moneyforward.co.jp
-  - mughal.yuto@moneyforward.co.jp
+  children:
+    - name: サービスインフラグループ
+      members:
+      - iida.yuki@moneyforward.co.jp
+      - murakami.katsutoshi@moneyforward.co.jp
+      - shinohara.yuki@moneyforward.co.jp
+      - suzuki.yosuke@moneyforward.co.jp
+      - makita.riki@moneyforward.co.jp
+    - name: セキュリティ推進グループ
+      members:
+      - suzuki.kengo@moneyforward.co.jp
+      - tanabe.kazuhisa@moneyforward.co.jp
+    - name: 社内インフラグループ
+      members:
+      - sakamoto.yukiya@moneyforward.co.jp
+      - kubo.kenichi@moneyforward.co.jp
+      - mughal.yuto@moneyforward.co.jp
+      - meguro.ryoko@moneyforward.co.jp
+    - name: 情報セキュリティ管理部
+      members:
+      - ichikawa.takashi@moneyforward.co.jp
+      - sakamoto.yukiya@moneyforward.co.jp
+
 
 - name: アカウントアグリゲーション本部
   members:
