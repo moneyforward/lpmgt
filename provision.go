@@ -88,8 +88,8 @@ const (
 )
 
 type Config struct {
-	CompanyId string `yaml:"company_id:"`
-	EndPoint  string `yaml:"end_point_url:"`
+	CompanyId string `yaml:"company_id"`
+	EndPoint  string `yaml:"end_point_url"`
 	Secret 	  string `yaml:"secret"`
 }
 
@@ -106,7 +106,6 @@ type OU struct {
 func formUser(email string, groups ...string) User {
 	return User{UserName: email, Groups: groups}
 }
-
 
 func main() {
 	var clientConfig Config
@@ -133,16 +132,28 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println(ou.Organizations[1])
-
+	// Client作成
 	c, err := NewClient(clientConfig, nil)
-
 	if err != nil {
 		fmt.Errorf(err.Error())
 		return
 	}
 
-	//var res *http.Response
+	// Add Users
+	user := formUser("suzuki.kengo@moneyforward.co.jp", "A")
+	res, err := c.BatchAddOrUpdateUsers([]User{user})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	var status Status
+	err = decodeBody(res, &status)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(status.Status)
+
 	//// Get an User
 	//res, err := c.GetUserData("suzuki.kengo@moneyforward.co.jp")
 	//if err != nil {
@@ -157,49 +168,7 @@ func main() {
 	//decodeBody(res, &user)
 	//fmt.Println(user)
 	//
-	// Add Users
-	var users []User
-	emails := []string{
-	//	"akiyama.yoshio@moneyforward.co.jp",
-	//	"motokawa.daisuke@moneyforward.co.jp",
-	//	"ueno.takeshi@moneyforward.co.jp",
-	//	"kanebako.ryo@moneyforward.co.jp",
-	//	"hanafusa.nobuhiro@moneyforward.co.jp",
-	//
-	//	"hanafusa.nobuhiro@moneyforward.co.jp",
-	//	"kirihara.toyoaki@moneyforward.co.jp",
-	//	"kimura.hisashi@moneyforward.co.jp",
-	//
-	//	"kanebako.ryo@moneyforward.co.jp",
-	//	"yoshimoto.masaki@moneyforward.co.jp",
-	//	"oyama.yasuhiro@moneyforward.co.jp",
-	//
-	//	"yamashita.manato@moneyforward.co.jp",
-	//	"fukumoto.kazuhiro@moneyforward.co.jp",
-	//	"sawada.tsuyoshi@moneyforward.co.jp",
-	//	"sato.kimiaki@moneyforward.co.jp",
-		"suzuki.kengo@moneyforward.co.jp",
-	}
 
-	for _, email := range emails {
-		users = append(users, User{
-			UserName: email,
-			Groups: []string{"CISO室"},
-		})
-	}
-
-	res, err := c.BatchAddOrUpdateUsers(users)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	var status Status
-	err = decodeBody(res, &status)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println(status.Status)
 	//
 	//// Get Shared Folder Data
 	//res, err = c.GetSharedFolderData()
