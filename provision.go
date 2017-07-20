@@ -14,6 +14,7 @@ import (
 	"path"
 	"time"
 	"gopkg.in/yaml.v2"
+	"os"
 )
 
 //https://lastpass.com/enterprise_apidoc.php
@@ -82,11 +83,11 @@ type Status struct {
 
 type DeactivationMode int
 
-const (
-	CompanyID   = "8771312"
-	Secret      = "359fdfbc93bc6b8f1963c84e9db3539a5f3d688f394bd536e1ca6b77f8d5f101"
-	EndPointURL = "https://lastpass.com/enterpriseapi.php"
-)
+
+var	companyId      = "8771312"
+var	endPointURL = "https://lastpass.com/enterpriseapi.php"
+var secret string
+
 const (
 	Deactivate DeactivationMode = iota
 	Remove
@@ -103,7 +104,16 @@ func formUser(email string, groups ...string) User {
 	return User{UserName: email, Groups: groups}
 }
 
+func init() {
+}
+
 func main() {
+	secret, exist := os.LookupEnv("PROV_HASH")
+	if !exist {
+		fmt.Println(errors.New("PROV_HASH is not set."))
+		os.Exit(1)
+	}
+
 	f, err := ioutil.ReadFile("organization_structure.yaml")
 	if err != nil {
 		panic(err)
@@ -120,12 +130,12 @@ func main() {
 
 	fmt.Println(ou.Organizations[1])
 
-	//c, err := NewClient(EndPointURL, nil)
-	//
-	//if err != nil {
-	//	fmt.Errorf(err.Error())
-	//	return
-	//}
+	c, err := NewClient(endPointURL, nil)
+
+	if err != nil {
+		fmt.Errorf(err.Error())
+		return
+	}
 
 	//var res *http.Response
 	//// Get an User
@@ -143,8 +153,8 @@ func main() {
 	//fmt.Println(user)
 	//
 	// Add Users
-	//var users []User
-	//emails := []string{
+	var users []User
+	emails := []string{
 	//	"akiyama.yoshio@moneyforward.co.jp",
 	//	"motokawa.daisuke@moneyforward.co.jp",
 	//	"ueno.takeshi@moneyforward.co.jp",
@@ -163,27 +173,28 @@ func main() {
 	//	"fukumoto.kazuhiro@moneyforward.co.jp",
 	//	"sawada.tsuyoshi@moneyforward.co.jp",
 	//	"sato.kimiaki@moneyforward.co.jp",
-	//}
-	//
-	//for _, email := range emails {
-	//	users = append(users, User{
-	//		UserName: email,
-	//		Groups: []string{"デザイン戦略室"},
-	//	})
-	//}
-	//
-	//res, err = c.BatchAddOrUpdateUsers(users)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//var status Status
-	//err = decodeBody(res, &status)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//fmt.Println(status.Status)
+		"suzuki.kengo@moneyforward.co.jp",
+	}
+
+	for _, email := range emails {
+		users = append(users, User{
+			UserName: email,
+			Groups: []string{"CISO室"},
+		})
+	}
+
+	res, err := c.BatchAddOrUpdateUsers(users)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	var status Status
+	err = decodeBody(res, &status)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(status.Status)
 	//
 	//// Get Shared Folder Data
 	//res, err = c.GetSharedFolderData()
@@ -265,8 +276,8 @@ func NewClient(urlString string, logger *log.Logger) (*Client, error) {
 	return &Client{
 		URL:              parsedURL,
 		HttpClient:       http.DefaultClient,
-		CompanyId:        CompanyID,
-		ProvisioningHash: Secret,
+		CompanyId:        companyId,
+		ProvisioningHash: secret,
 		Logger:           logger,
 	}, err
 }
@@ -295,7 +306,7 @@ By setting the "password" field you can define a default password for the new us
 # Request
   {
     "cid": "8771312",
-    "provhash": "<Your API Secret>",
+    "provhash": "<Your API secret>",
     "cmd": "batchadd",
     "data": [
         {
@@ -347,7 +358,7 @@ Get Shared Folder Data returns a JSON object containing information on all Share
 # Request
 {
 	"cid": "8771312",
-	"provhash": "<Your API Secret>",
+	"provhash": "<Your API secret>",
     "cmd": "getsfdata"
 }
 
@@ -383,7 +394,7 @@ group membership manipulation
 
   {
     "cid": "8771312",
-    "provhash": "<Your API Secret>",
+    "provhash": "<Your API secret>",
     "cmd": "batchchangegrp",
     "data": [
         {
@@ -423,7 +434,7 @@ Get information on users enterprise.
 # Request
   {
     "cid": "8771312",
-    "provhash": "<Your API Secret>",
+    "provhash": "<Your API secret>",
     "cmd": "getuserdata",
     "data": {
         "username": "user1@lastpass.com" // This can be either UserName, disabled, or admin
@@ -540,7 +551,7 @@ func (c *Client) DoRequest(command string, data interface{}) (*http.Response, er
 
 	fmt.Println(string(body))
 
-	res, err := http.Post(EndPointURL, "application/json; charset=utf-8", bytes.NewBuffer(body))
+	res, err := http.Post(endPointURL, "application/json; charset=utf-8", bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}
