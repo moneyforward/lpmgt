@@ -14,7 +14,6 @@ import (
 	"path"
 	"time"
 	"gopkg.in/yaml.v2"
-	"os"
 )
 
 //https://lastpass.com/enterprise_apidoc.php
@@ -82,17 +81,21 @@ type Status struct {
 }
 
 type DeactivationMode int
-
-
-var	companyId      = "8771312"
-var	endPointURL = "https://lastpass.com/enterpriseapi.php"
-var secret string
-
 const (
 	Deactivate DeactivationMode = iota
 	Remove
 	Delete
 )
+
+type Config struct {
+	CompanyId string `yaml:"company_id:"`
+	EndPoint  string `yaml:"end_point_url:"`
+	Secret 	  string `yaml:"secret"`
+}
+
+//var	companyId      = "8771312"
+//var	endPointURL = "https://lastpass.com/enterpriseapi.php"
+//var secret string
 
 type OU struct {
 	Name string
@@ -104,17 +107,19 @@ func formUser(email string, groups ...string) User {
 	return User{UserName: email, Groups: groups}
 }
 
-func init() {
-}
 
 func main() {
-	secret, exist := os.LookupEnv("PROV_HASH")
-	if !exist {
-		fmt.Println(errors.New("PROV_HASH is not set."))
-		os.Exit(1)
+	var clientConfig Config
+	f, err := ioutil.ReadFile("secret.yaml")
+	if err != nil {
+		panic(err)
+	}
+	err = yaml.Unmarshal(f, &clientConfig)
+	if err != nil {
+		panic(err)
 	}
 
-	f, err := ioutil.ReadFile("organization_structure.yaml")
+	f, err = ioutil.ReadFile("organization_structure.yaml")
 	if err != nil {
 		panic(err)
 	}
@@ -130,7 +135,7 @@ func main() {
 
 	fmt.Println(ou.Organizations[1])
 
-	c, err := NewClient(endPointURL, nil)
+	c, err := NewClient(clientConfig, nil)
 
 	if err != nil {
 		fmt.Errorf(err.Error())
@@ -262,10 +267,10 @@ func main() {
 	//fmt.Println(result.Events)
 }
 
-func NewClient(urlString string, logger *log.Logger) (*Client, error) {
-	parsedURL, err := url.ParseRequestURI(urlString)
+func NewClient(config Config, logger *log.Logger) (*Client, error) {
+	parsedURL, err := url.ParseRequestURI(config.EndPoint)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse url: %s", urlString)
+		return nil, errors.Wrapf(err, "failed to parse url: %s", config.EndPoint)
 	}
 
 	var discardLogger = log.New(ioutil.Discard, "", log.LstdFlags)
@@ -276,8 +281,8 @@ func NewClient(urlString string, logger *log.Logger) (*Client, error) {
 	return &Client{
 		URL:              parsedURL,
 		HttpClient:       http.DefaultClient,
-		CompanyId:        companyId,
-		ProvisioningHash: secret,
+		CompanyId:        config.CompanyId,
+		ProvisioningHash: config.Secret,
 		Logger:           logger,
 	}, err
 }
@@ -551,7 +556,8 @@ func (c *Client) DoRequest(command string, data interface{}) (*http.Response, er
 
 	fmt.Println(string(body))
 
-	res, err := http.Post(endPointURL, "application/json; charset=utf-8", bytes.NewBuffer(body))
+	res, err := http.Post(c.URL.String(), "application/json; charset=utf-8", bytes.NewBuffer(body))
+	fmt.Println(c.URL.String())
 	if err != nil {
 		return nil, err
 	}
