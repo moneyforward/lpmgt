@@ -1,0 +1,102 @@
+organizations:
+
+- name: 役員
+  members:
+  - tsuji.yosuke@moneyforward.co.jp
+  - asano.chihiro@moneyforward.co.jp
+  - taki.toshio@moneyforward.co.jp
+  - tsuzuki.takayuki@moneyforward.co.jp
+  - ichikawa.takashi@moneyforward.co.jp
+  - kanesaka.naoya@moneyforward.co.jp
+  - ueda.yozo@moneyforward.co.jp
+  - matsuda.akira@moneyforward.co.jp
+- name: デザイン戦略室
+  members:
+  - kanai.keiko@moneyforward.co.jp
+  - ohashi.mizuki@moneyforward.co.jp
+  - yamasaki.shigenori@moneyforward.co.jp
+  - sugai.masahito@moneyforward.co.jp
+  - inage.makoto@moneyforward.co.jp
+  - ikeuchi.kenichi@moneyforward.co.jp
+  - sasaki.toshiya@moneyforward.co.jp
+  - nishimura.miki@moneyforward.co.jp
+  - kato.rei@moneyforward.co.jp
+  - kanai.keiko@moneyforward.co.jp
+  - oshima.mari@moneyforward.co.jp
+  - minegishi.kai@moneyforward.co.jp
+  - aoyama.reiko@moneyforward.co.jp
+  - takasugi.miyo@moneyforward.co.jp
+  - kuroki.yasuha@moneyforward.co.jp
+
+- name: CISO室
+  members:
+  children:
+    - name: サービスインフラグループ
+      members:
+      - iida.yuki@moneyforward.co.jp
+      - murakami.katsutoshi@moneyforward.co.jp
+      - shinohara.yuki@moneyforward.co.jp
+      - suzuki.yosuke@moneyforward.co.jp
+      - makita.riki@moneyforward.co.jp
+    - name: セキュリティ推進グループ
+      members:
+      - suzuki.kengo@moneyforward.co.jp
+      - tanabe.kazuhisa@moneyforward.co.jp
+    - name: 社内インフラグループ
+      members:
+      - sakamoto.yukiya@moneyforward.co.jp
+      - kubo.kenichi@moneyforward.co.jp
+      - mughal.yuto@moneyforward.co.jp
+      - meguro.ryoko@moneyforward.co.jp
+    - name: 情報セキュリティ管理部
+      members:
+      - ichikawa.takashi@moneyforward.co.jp
+      - sakamoto.yukiya@moneyforward.co.jp
+
+
+- name: アカウントアグリゲーション本部
+  members:
+  - uchinami.shoichi@moneyforward.co.jp
+  - nakadaira.hirofumi@moneyforward.co.jp
+  - yokoyama.takayoshi@moneyforward.co.jp
+  - nakagawa.atsushi@moneyforward.co.jp
+  - morita.kanako@moneyforward.co.jp
+  - sogo.kenya@moneyforward.co.jp
+  - fujishiro.tomotaka@moneyforward.co.jp
+
+- name: 社長室
+  members:
+  - tahira.kiminobu@moneyforward.co.jp
+
+  children:
+    - name: Chalin
+      members:
+      - ito.tetsuro@moneyforward.co.jp
+      - hirose.yudai@moneyforward.co.jp
+      - iwaichi.yasuyoshi@moneyforward.co.jp
+      - otsuka.naoya@moneyforward.co.jp
+    - name: データ基盤プロジェクト
+      members:
+      - ueno.takeshi@moneyforward.co.jp
+      - shinoda.takeshi@moneyforward.co.jp
+    - name: 秘書
+      members:
+      - furukawa.kanae@moneyforward.co.jp
+      - tanaka.kei@moneyforward.co.jp
+      - suzuki.moeko@moneyforward.co.jp
+    - name: 広報部
+      members:
+      - kashiwagi.aya@moneyforward.co.jp
+      - aoki.kanako@moneyforward.co.jp
+      - inamasu.yuki@moneyforward.co.jp
+    - name: 人事部
+      members:
+      - hattori.hozumi@moneyforward.co.jp
+      - ogawa.masayuki@moneyforward.co.jp
+      - aoki.kanako@moneyforward.co.jp
+      - doe.arina@moneyforward.co.jp
+      - inoue.rei@moneyforward.co.jp
+      - arai.yumi@moneyforward.co.jp
+      - tsunoda.yukiko@moneyforward.co.jp
+      - hori.mayuka@moneyforward.co.jp
+      - nishino.erika@moneyforward.co.jp

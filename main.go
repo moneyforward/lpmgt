@@ -117,9 +117,11 @@ func main() {
 
 	hoge :=  make([]*api.User, len(users))
 	fmt.Println(len(users))
+	i := 0
 	for _, u := range users {
 		fmt.Println(u)
-		hoge = append(hoge, u)
+		hoge[i] = u
+		i++
 	}
 
 	// Add Users
@@ -136,6 +138,7 @@ func main() {
 		return
 	}
 	fmt.Println(status.Status)
+	fmt.Println(status.Errors)
 
 	//// Get an User
 	//res, err := c.GetUserData("suzuki.kengo@moneyforward.co.jp")
