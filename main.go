@@ -15,10 +15,10 @@ import (
 	"time"
 	"gopkg.in/yaml.v2"
 	"os"
+	"lastpass_provisioning/api"
 )
 
 //https://lastpass.com/enterprise_apidoc.php
-
 type Client struct {
 	URL              *url.URL
 	HttpClient       *http.Client
@@ -33,47 +33,6 @@ type Request struct {
 	ProvisioningHash string      `json:"provhash"`
 	Command          string      `json:"cmd"`
 	Data             interface{} `json:"data"`
-}
-
-type User struct {
-	UserName               string   `json:"username"`
-	FullName               string   `json:"fullname,omitempty"`
-	MasterPasswordStrength string   `json:"mpstrength,omitempty"`
-	Created                string   `json:"created,omitempty"`
-	LastPasswordChange     string   `json:"last_pw_change,omitempty"`
-	LastLogin              string   `json:"lastlogin,omitempty"`
-	Disabled               bool     `json:"disabled,omitempty"`
-	NeverLoggedIn          bool     `json:"neverloggedin,omitempty"`
-	LinkedAccount          string   `json:"linked,omitempty"`
-	NumberOfSites          int      `json:"sites,omitempty"`
-	NumberOfNotes          int      `json:"notes,omitempty"`
-	NumberOfFormFills      int      `json:"formfills,omitempty"`
-	NumberOfApplications   int      `json:"applications,omitempty"`
-	NumberOfAttachments    int      `json:"attachment,omitempty"`
-	Groups                 []string `json:"groups,omitempty"`
-	Readonly               string   `json:"readonly,omitempty"`       // ShareFolderの設定に利用. BooldでもなくIntでもない...
-	Give                   string   `json:"give,omitempty"`           // ShareFolderの設定に利用
-	Can_Administer         string   `json:"can_administer,omitempty"` // ShareFolderの設定に利用
-}
-
-type SharedFolder struct {
-	ShareFolderName string  `json:"sharedfoldername"`
-	Score           float32 `json:"score"`
-	Users           []User  `json:"users"`
-}
-
-type BelongingGroup struct {
-	Username   string   `json:"username"`
-	GroupToAdd []string `json:"add,omitempty"`
-	GroupToDel []string `json:"del,omitempty"`
-}
-
-type Event struct {
-	Time       string `json:"Time"`
-	Username   string `json:"Username"`
-	IP_Address string `json:"IP_Address"`
-	Action     string `json:"Action"`
-	Data       string `json:"Data"`
 }
 
 type Status struct {
@@ -94,31 +53,37 @@ type Config struct {
 	Secret 	  string `yaml:"secret"`
 }
 
-type OU struct {
-	Name string
-	Members []string `yaml:",flow"`
-	Children	[]*OU
-}
+func formUsers(ou, parentOU *api.OU) map[string]*api.User {
+	users := make(map[string]*api.User)
 
-func formUsers(ou, parentOU *OU) []User {
-	var users []User
-
-	// Get Members within Child OU
+	// Construct Members within Child OU
 	if parentOU != nil {
 		ou.Name = fmt.Sprintf("%v - %v", parentOU.Name, ou.Name)
 	}
 	for _, member := range ou.Members {
-		users = append(users, User{UserName:member, Groups:[]string{ou.Name}})
+		if _, ok := users[member]; ok {
+			users[member].Groups = append(users[member].Groups, ou.Name)
+		} else {
+			users[member] = &api.User{UserName:member, Groups:[]string{ou.Name}}
+		}
 	}
 
-	// Get Members within Child OU
+	// Construct Members within Child OU
 	for _, child_ou := range ou.Children {
-		users = append(users, formUsers(child_ou, ou)...)
+		childUsers := formUsers(child_ou, ou)
+		for user, child := range childUsers {
+			if v, ok := users[user]; ok {
+				v.Groups = append(v.Groups, child.Groups...)
+			} else {
+				users[user] = child
+			}
+		}
 	}
 	return users
 }
 
 func main() {
+
 	// Client作成
 	c, err := NewClient(nil)
 	if err != nil {
@@ -131,7 +96,7 @@ func main() {
 		panic(err)
 	}
 	var orgs struct{
-		Organizations []*OU `yaml:",flow"`
+		Organizations []*api.OU `yaml:",flow"`
 	}
 
 	err = yaml.Unmarshal(f, &orgs)
@@ -139,18 +104,27 @@ func main() {
 		panic(err)
 	}
 
-	var users []User
+	users := make(map[string]*api.User)
 	for _, ou := range orgs.Organizations {
-		users = append(users, formUsers(ou, nil)...)
+		for user, hoge := range formUsers(ou, nil) {
+			if v, ok := users[user]; ok {
+				v.Groups = append(v.Groups, hoge.Groups...)
+			} else {
+				users[user] = hoge
+			}
+		}
 	}
 
+	hoge :=  make([]*api.User, len(users))
+	fmt.Println(len(users))
 	for _, u := range users {
 		fmt.Println(u)
+		hoge = append(hoge, u)
 	}
 
 	// Add Users
-	users = []User{{UserName:"suzuki.kengo@moneyforward.co.jp"}}
-	res, err := c.BatchAddOrUpdateUsers(users)
+	//fuga := []*api.User{{UserName:"suzuki.kengo@moneyforward.co.jp"}}
+	res, err := c.BatchAddOrUpdateUsers(hoge)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -342,7 +316,7 @@ By setting the "password" field you can define a default password for the new us
    "status": "OK"
 }
 */
-func (c *Client) BatchAddOrUpdateUsers(users []User) (*http.Response, error) {
+func (c *Client) BatchAddOrUpdateUsers(users []*api.User) (*http.Response, error) {
 	return c.DoRequest("batchadd", users)
 }
 
@@ -418,7 +392,7 @@ group membership manipulation
     ]
 }
 */
-func (c *Client) ChangeGroupsMembership(groups []BelongingGroup) (*http.Response, error) {
+func (c *Client) ChangeGroupsMembership(groups []api.BelongingGroup) (*http.Response, error) {
 	return c.DoRequest("batchchangegrp", groups)
 }
 
@@ -474,7 +448,7 @@ Get information on users enterprise.
 */
 // GetUserData
 func (c *Client) GetUserData(user string) (*http.Response, error) {
-	return c.DoRequest("getuserdata", User{UserName: user})
+	return c.DoRequest("getuserdata", api.User{UserName: user})
 }
 
 // DeleteUser - delete individual users.
@@ -493,12 +467,12 @@ func (c *Client) DeleteUser(user string, mode DeactivationMode) (*http.Response,
 
 // DisableMultifactor
 func (c *Client) DisableMultifactor(user string) (*http.Response, error) {
-	return c.DoRequest("disablemultifactor", User{UserName: user})
+	return c.DoRequest("disablemultifactor", api.User{UserName: user})
 }
 
 // ResetPassword
 func (c *Client) ResetPassword(user string) (*http.Response, error) {
-	return c.DoRequest("resetpassword", User{UserName: user})
+	return c.DoRequest("resetpassword", api.User{UserName: user})
 }
 
 // GetEventReport
