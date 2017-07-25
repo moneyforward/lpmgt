@@ -110,19 +110,28 @@ func main() {
 	}
 
 	//// Get an User
-	//res, err := c.GetUserData("suzuki.kengo@moneyforward.co.jp")
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//
-	//var user struct {
-	//	Users  map[string]User     `json:"Users,omitempty"`
-	//	Groups map[string][]string `json:"Groups,omitempty"`
-	//}
-	//decodeBody(res, &user)
-	//fmt.Println(user)
-	//
+	res, err := c.GetAdminUserData()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	var Users struct {
+		Users  map[string]api.User     `json:"Users,omitempty"`
+		Groups map[string][]string `json:"Groups,omitempty"`
+	}
+	decodeBody(res, &Users)
+
+	fmt.Println(" --------------------------------------  Admin User ---------------------------------------- ")
+
+	for _, user := range Users.Users {
+		fmt.Println(user.UserName)
+	}
+
+	for _, group := range Users.Groups {
+		fmt.Println(group)
+	}
+
 
 	//
 	//// Get Shared Folder Data
@@ -175,7 +184,7 @@ func main() {
 	weekAgo := now.Add(-time.Duration(1) * time.Hour * 24)
 	t := jsonLastPassTime{now}
 	f := jsonLastPassTime{weekAgo}
-	res, err := c.GetEventReport("", "", f, t)
+	res, err = c.GetEventReport("", "", f, t)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -188,6 +197,8 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+
+	fmt.Println(" --------------------------------------  Events ---------------------------------------- ")
 	for _, event := range result.Events {
 		fmt.Println(event)
 		// Employee Account Created (done) // 従業員のアカウントを作成しました
@@ -459,6 +470,11 @@ Get information on users enterprise.
 // GetUserData
 func (c *Client) GetUserData(user string) (*http.Response, error) {
 	return c.DoRequest("getuserdata", api.User{UserName: user})
+}
+
+// GetAdminUserData
+func (c *Client) GetAdminUserData() (*http.Response, error) {
+	return c.DoRequest("getuserdata", api.User{IsAdmin:1})
 }
 
 // DeleteUser - delete individual users.

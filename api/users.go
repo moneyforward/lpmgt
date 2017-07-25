@@ -19,5 +19,6 @@ type User struct {
 	Readonly               string   `json:"readonly,omitempty"`       // ShareFolderの設定に利用. BooldでもなくIntでもない...
 	Give                   string   `json:"give,omitempty"`           // ShareFolderの設定に利用
 	Can_Administer         string   `json:"can_administer,omitempty"` // ShareFolderの設定に利用
+	IsAdmin				   int      `json:"admin,omitempty"`
 }
 
