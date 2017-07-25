@@ -148,10 +148,7 @@ func main() {
 		fmt.Println(sf.ShareFolderName)
 		if sf.ShareFolderName == "Super-Admins" {
 			for _, user := range sf.Users {
-				//if user.Contains(adminUserNames) {
-				//	fmt.Println(sf)
-				//}
-				fmt.Println(fmt.Sprintf("	username: %v, give: %v, can_administr: %v", user.UserName, user.Give, user.Can_Administer))
+				fmt.Println("	username: " + user.UserName )
 			}
 		}
 	}
@@ -177,20 +174,9 @@ func main() {
 
 	fmt.Println(" --------------------------------------  Events ---------------------------------------- ")
 	for _, event := range result.Events {
-		fmt.Println(event)
-		// Employee Account Created (done) // 従業員のアカウントを作成しました
-		// Employee Account Deleted (done)
-		// Deactivated User  (done)
-		// Reactivated User  (done)
-		// Make Admin  (done)
-		// Remove Admin (done)
-		// Require Password Change (done)
-		// Require Password Change (done)
-		// Add to Shared Folder 'Super-Admins' 'kengo-admin@moneyforward.co.jp'
-
-		// {YYYY-MM-DD MM:DD:SS(US/Eastern time zone) USER IP ACTION}
-		// {2017-07-25 09:40:56 suzuki.kengo@moneyforward.co.jp 210.138.23.111 Require Password Change kengo-admin@moneyforward.co.jp}
-
+		if event.IsAuditEvent() {
+			fmt.Println(event.Action + " -> " + event.Data)
+		}
 	}
 }
 
@@ -520,7 +506,6 @@ func (c *Client) DoRequest(command string, data interface{}) (*http.Response, er
 	}
 
 	res, err := http.Post(c.URL.String(), "application/json; charset=utf-8", bytes.NewBuffer(body))
-	fmt.Println(c.URL.String())
 	if err != nil {
 		return nil, err
 	}
@@ -543,6 +528,5 @@ func (j jsonLastPassTime) format() string {
 }
 
 func (j jsonLastPassTime) MarshalJSON() ([]byte, error) {
-	fmt.Println(j.format())
 	return []byte(`"` + j.format() + `"`), nil
 }
