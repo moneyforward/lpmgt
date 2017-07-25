@@ -155,9 +155,9 @@ func main() {
 
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
-	weekAgo := now.Add(-time.Duration(1) * time.Hour * 24)
+	dayAgo := now.Add(-time.Duration(1) * time.Hour * 24)
 	t := jsonLastPassTime{now}
-	f := jsonLastPassTime{weekAgo}
+	f := jsonLastPassTime{dayAgo}
 	res, err = c.GetEventReport("", "", f, t)
 	if err != nil {
 		fmt.Println(err)
@@ -172,7 +172,7 @@ func main() {
 		return
 	}
 
-	fmt.Println(" --------------------------------------  Events ---------------------------------------- ")
+	fmt.Println(fmt.Sprintf(" -------------------------------- Events(%v ~ %v) ----------------------------------- \n", f.format(), t.format()))
 	for _, event := range result.Events {
 		if event.IsAuditEvent() {
 			fmt.Println(event.Action + " -> " + event.Data)

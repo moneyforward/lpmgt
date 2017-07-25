@@ -27,9 +27,10 @@ func (e *Event) IsAuditEvent() bool {
 	case "Require Password Change":
 	case "Super Admin Password Reset":
 	case "Add to Shared Folder":
-		if strings.Contains(e.Data, "Shared-Super-Admins") {
+		if !strings.Contains(e.Data, "Shared-Super-Admins") {
 			return false
 		}
+		break
 	default:
 		return false
 	}
