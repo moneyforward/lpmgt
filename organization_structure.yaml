@@ -1,5 +1,4 @@
 organizations:
-
 - name: 役員
   members:
   - tsuji.yosuke@moneyforward.co.jp
@@ -183,6 +182,7 @@ organizations:
       - takahashi.satomi@moneyforward.co.jp
       - nakamura.ryo@moneyforward.co.jp
 
+
 - name: MFクラウドマーケティング本部
   members:
   children:
@@ -229,7 +229,6 @@ organizations:
       members:
       - ichikawa.takashi@moneyforward.co.jp
       - sakamoto.yukiya@moneyforward.co.jp
-
 
 - name: アカウントアグリゲーション本部
   members:

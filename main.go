@@ -14,8 +14,8 @@ import (
 	"path"
 	"time"
 	"gopkg.in/yaml.v2"
-	"os"
 	"lastpass_provisioning/api"
+	"os"
 )
 
 //https://lastpass.com/enterprise_apidoc.php
@@ -53,6 +53,10 @@ type Config struct {
 	Secret 	  string `yaml:"secret"`
 }
 
+type Org struct{
+	OUs []*api.OU `yaml:"organizations,flow"`
+}
+
 func formUsers(ou, parentOU *api.OU) map[string]*api.User {
 	users := make(map[string]*api.User)
 
@@ -82,6 +86,20 @@ func formUsers(ou, parentOU *api.OU) map[string]*api.User {
 	return users
 }
 
+func readOrg() Org {
+	f, err := ioutil.ReadFile("organization_structure.yaml")
+	if err != nil {
+		panic(err)
+	}
+	var org Org
+	err = yaml.Unmarshal(f, &org)
+	if err != nil {
+		panic(err)
+	}
+
+	return org
+}
+
 func main() {
 
 	// Client作成
@@ -90,55 +108,6 @@ func main() {
 		fmt.Errorf("Failed Building Client: %v", err.Error())
 		os.Exit(1)
 	}
-
-	f, err := ioutil.ReadFile("organization_structure.yaml")
-	if err != nil {
-		panic(err)
-	}
-	var orgs struct{
-		Organizations []*api.OU `yaml:",flow"`
-	}
-
-	err = yaml.Unmarshal(f, &orgs)
-	if err != nil {
-		panic(err)
-	}
-
-	users := make(map[string]*api.User)
-	for _, ou := range orgs.Organizations {
-		for user, hoge := range formUsers(ou, nil) {
-			if v, ok := users[user]; ok {
-				v.Groups = append(v.Groups, hoge.Groups...)
-			} else {
-				users[user] = hoge
-			}
-		}
-	}
-
-	hoge :=  make([]*api.User, len(users))
-	fmt.Println(len(users))
-	i := 0
-	for _, u := range users {
-		fmt.Println(u)
-		hoge[i] = u
-		i++
-	}
-
-	// Add Users
-	//fuga := []*api.User{{UserName:"suzuki.kengo@moneyforward.co.jp"}}
-	res, err := c.BatchAddOrUpdateUsers(hoge)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	var status Status
-	err = decodeBody(res, &status)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println(status.Status)
-	fmt.Println(status.Errors)
 
 	//// Get an User
 	//res, err := c.GetUserData("suzuki.kengo@moneyforward.co.jp")
@@ -201,25 +170,40 @@ func main() {
 	//res, err := c.DisableMultifactor("teramoto.tomoya@moneyforward.co.jp")
 	//res, err := c.ResetPassword("teramoto.tomoya@moneyforward.co.jp")
 	//res, err := c.GetAllEventReports()
-	//loc, _ := time.LoadLocation("Asia/Tokyo")
-	//now := time.Now().In(loc)
-	//weekAgo := now.Add(-time.Duration(7) * time.Hour * 24)
-	//t := jsonLastPassTime{now}
-	//f := jsonLastPassTime{weekAgo}
-	//res, err := c.GetEventReport("allusers", "", f, t)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//var result struct {
-	//	Events []Event `json:"events"`
-	//}
-	//err = decodeBody(res, &result)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//fmt.Println(result.Events)
+	loc, _ := time.LoadLocation("Asia/Tokyo")
+	now := time.Now().In(loc)
+	weekAgo := now.Add(-time.Duration(1) * time.Hour * 24)
+	t := jsonLastPassTime{now}
+	f := jsonLastPassTime{weekAgo}
+	res, err := c.GetEventReport("", "", f, t)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	var result struct {
+		Events []api.Event `json:"events"`
+	}
+	err = decodeBody(res, &result)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	for _, event := range result.Events {
+		fmt.Println(event)
+		// Employee Account Created (done) // 従業員のアカウントを作成しました
+		// Employee Account Deleted (done)
+		// Deactivated User  (done)
+		// Reactivated User  (done)
+		// Make Admin  (done)
+		// Remove Admin (done)
+		// Require Password Change (done)
+		// Require Password Change (done)
+		// Add to Shared Folder 'Super-Admins' 'kengo-admin@moneyforward.co.jp'
+
+		// {YYYY-MM-DD MM:DD:SS(US/Eastern time zone) USER IP ACTION}
+		// {2017-07-25 09:40:56 suzuki.kengo@moneyforward.co.jp 210.138.23.111 Require Password Change kengo-admin@moneyforward.co.jp}
+
+	}
 }
 
 func NewClient(logger *log.Logger) (*Client, error) {
@@ -321,6 +305,29 @@ By setting the "password" field you can define a default password for the new us
 */
 func (c *Client) BatchAddOrUpdateUsers(users []*api.User) (*http.Response, error) {
 	return c.DoRequest("batchadd", users)
+}
+
+func (c *Client) InitialBatchAdd() (*http.Response, error) {
+	org := readOrg()
+	userMap := make(map[string]*api.User)
+	for _, ou := range org.OUs {
+		for userName, user := range formUsers(ou, nil) {
+			if v, ok := userMap[userName]; ok {
+				v.Groups = append(v.Groups, user.Groups...)
+			} else {
+				userMap[userName] = user
+			}
+		}
+	}
+
+	i := 0
+	users := make([]*api.User, len(userMap))
+	for _, u := range userMap {
+		users[i] = u
+		i++
+	}
+
+	return c.BatchAddOrUpdateUsers(users)
 }
 
 /*
@@ -486,7 +493,7 @@ func (c *Client) GetEventReport(user, search string, from, to jsonLastPassTime) 
 		Search string           `json:"search"`
 		User   string           `json:"user"`
 		Format string           `json:"format"`
-	}{User: user, Search: search, From: from, To: to, Format: "siem"}
+	}{User: "", Search: search, From: from, To: to, Format: "siem"}
 	return c.DoRequest("reporting", data)
 }
 
@@ -518,8 +525,6 @@ func (c *Client) DoRequest(command string, data interface{}) (*http.Response, er
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(string(body))
 
 	res, err := http.Post(c.URL.String(), "application/json; charset=utf-8", bytes.NewBuffer(body))
 	fmt.Println(c.URL.String())
