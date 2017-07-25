@@ -116,69 +116,46 @@ func main() {
 		return
 	}
 
-	var Users struct {
+	var AdminUsers struct {
 		Users  map[string]api.User     `json:"Users,omitempty"`
 		Groups map[string][]string `json:"Groups,omitempty"`
 	}
-	decodeBody(res, &Users)
+	decodeBody(res, &AdminUsers)
 
 	fmt.Println(" --------------------------------------  Admin User ---------------------------------------- ")
-
-	for _, user := range Users.Users {
-		fmt.Println(user.UserName)
+	adminUserNames := make([]string, len(AdminUsers.Users))
+	i := 0
+	for _, admin := range AdminUsers.Users {
+		adminUserNames[i] = admin.UserName
+		fmt.Println(admin.UserName)
+		i++
 	}
 
-	for _, group := range Users.Groups {
-		fmt.Println(group)
+	// Get Shared Folder Data
+	fmt.Println(" --------------------------------------  Super Shared Folder ------------------------------- ")
+	res, err = c.GetSharedFolderData()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	var sharedFolders map[string]api.SharedFolder
+	err = decodeBody(res, &sharedFolders)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	for _, sf := range sharedFolders {
+		fmt.Println(sf.ShareFolderName)
+		if sf.ShareFolderName == "Super-Admins" {
+			for _, user := range sf.Users {
+				//if user.Contains(adminUserNames) {
+				//	fmt.Println(sf)
+				//}
+				fmt.Println(fmt.Sprintf("	username: %v, give: %v, can_administr: %v", user.UserName, user.Give, user.Can_Administer))
+			}
+		}
 	}
 
-
-	//
-	//// Get Shared Folder Data
-	//res, err = c.GetSharedFolderData()
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//var sharedFolders map[string]SharedFolder
-	//err = decodeBody(res, &sharedFolders)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//for _, sf := range sharedFolders {
-	//	fmt.Println(sf)
-	//}
-	//
-	//// BatchChange Group
-	//data := BelongingGroup{
-	//	Username:"suzuki.kengo@moneyforward.co.jp",
-	//	GroupToAdd:[]string{"CISO室"},
-	//}
-	//data1 := BelongingGroup{
-	//	Username:"kengoscal@gmail.com",
-	//	GroupToAdd:[]string{"chalin-infra", "HOGEHOGE"},
-	//	GroupToDel:[]string{"FUGAFUGA", "h"},
-	//}
-	//hoge := []BelongingGroup{data, data1} // hoge:=[...]Belonging{data}
-	//res, err := c.ChangeGroupsMembership(hoge)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//var result Status
-	//err = decodeBody(res, &result)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//fmt.Println(result.Status + ": ")
-	//fmt.Println(result.Errors)
-
-	//res, err := c.DeleteUser("teramoto.tomoya@moneyforward.co.jp", Deactivate)
-	//res, err := c.DisableMultifactor("teramoto.tomoya@moneyforward.co.jp")
-	//res, err := c.ResetPassword("teramoto.tomoya@moneyforward.co.jp")
-	//res, err := c.GetAllEventReports()
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
 	weekAgo := now.Add(-time.Duration(1) * time.Hour * 24)

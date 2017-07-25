@@ -22,3 +22,11 @@ type User struct {
 	IsAdmin				   int      `json:"admin,omitempty"`
 }
 
+func (u *User) Contains(users []string) bool {
+	for _, user := range users {
+		if user == u.UserName {
+			return true
+		}
+	}
+	return false
+}
