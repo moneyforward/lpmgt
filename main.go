@@ -109,7 +109,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	//// Get an User
+	fmt.Println(" --------------------------------------  Admin Users ---------------------------------------- ")
 	res, err := c.GetAdminUserData()
 	if err != nil {
 		fmt.Println(err)
@@ -121,8 +121,6 @@ func main() {
 		Groups map[string][]string `json:"Groups,omitempty"`
 	}
 	decodeBody(res, &AdminUsers)
-
-	fmt.Println(" --------------------------------------  Admin User ---------------------------------------- ")
 	adminUserNames := make([]string, len(AdminUsers.Users))
 	i := 0
 	for _, admin := range AdminUsers.Users {
@@ -132,7 +130,7 @@ func main() {
 	}
 
 	// Get Shared Folder Data
-	fmt.Println(" --------------------------------------  Super Shared Folder ------------------------------- ")
+	fmt.Println(" --------------------------------------  Super Shared Folders ------------------------------- ")
 	res, err = c.GetSharedFolderData()
 	if err != nil {
 		fmt.Println(err)
@@ -145,10 +143,9 @@ func main() {
 		return
 	}
 	for _, sf := range sharedFolders {
-		fmt.Println(sf.ShareFolderName)
 		if sf.ShareFolderName == "Super-Admins" {
 			for _, user := range sf.Users {
-				fmt.Println("	username: " + user.UserName )
+				fmt.Println(sf.ShareFolderName + " : " + user.UserName)
 			}
 		}
 	}
@@ -172,10 +169,10 @@ func main() {
 		return
 	}
 
-	fmt.Println(fmt.Sprintf(" -------------------------------- Events(%v ~ %v) ----------------------------------- \n", f.format(), t.format()))
+	fmt.Println(fmt.Sprintf(" -------------------------------- Events(%v ~ %v) -----------------------------------", f.format(), t.format()))
 	for _, event := range result.Events {
 		if event.IsAuditEvent() {
-			fmt.Println(event.Action + " -> " + event.Data)
+			fmt.Println(event)
 		}
 	}
 }
