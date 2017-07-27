@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
@@ -11,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"path"
 	"time"
 	"gopkg.in/yaml.v2"
 	"lastpass_provisioning/api"
@@ -199,22 +197,6 @@ func NewClient(logger *log.Logger) (*Client, error) {
 		ProvisioningHash: config.Secret,
 		Logger:           logger,
 	}, err
-}
-
-// Have not used
-func (c *Client) newRequest(ctx context.Context, method, spath string, body io.Reader) (*http.Request, error) {
-	u := *c.URL
-	u.Path = path.Join(c.URL.Path, spath)
-	req, err := http.NewRequest(method, u.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req = req.WithContext(ctx)
-	//req.SetBasicAuth(c.Username, c.Password)
-	req.Header.Set("Content-Type", "application/json")
-	//req.Header.Set("User-Agent", userAgent)
-	return req, nil
 }
 
 /*
