@@ -16,6 +16,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"lastpass_provisioning/api"
 	"os"
+	lastpassTime "lastpass_provisioning/lastpass_time"
 )
 
 //https://lastpass.com/enterprise_apidoc.php
@@ -24,7 +25,6 @@ type Client struct {
 	HttpClient       *http.Client
 	CompanyId        string
 	ProvisioningHash string
-	Command          string
 	Logger           *log.Logger
 }
 
@@ -86,8 +86,8 @@ func formUsers(ou, parentOU *api.OU) map[string]*api.User {
 	return users
 }
 
-func readOrg() Org {
-	f, err := ioutil.ReadFile("organization_structure.yaml")
+func readOrg(fileName string) Org {
+	f, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		panic(err)
 	}
@@ -153,8 +153,8 @@ func main() {
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
 	dayAgo := now.Add(-time.Duration(1) * time.Hour * 24)
-	t := jsonLastPassTime{now}
-	f := jsonLastPassTime{dayAgo}
+	t := lastpassTime.JsonLastPassTime{now}
+	f := lastpassTime.JsonLastPassTime{dayAgo}
 	res, err = c.GetEventReport("", "", f, t)
 	if err != nil {
 		fmt.Println(err)
@@ -169,7 +169,7 @@ func main() {
 		return
 	}
 
-	fmt.Println(fmt.Sprintf(" -------------------------------- Events(%v ~ %v) -----------------------------------", f.format(), t.format()))
+	fmt.Println(fmt.Sprintf(" -------------------------------- Events(%v ~ %v) -----------------------------------", f.Format(), t.Format()))
 	for _, event := range result.Events {
 		if event.IsAuditEvent() {
 			fmt.Println(event)
@@ -279,7 +279,7 @@ func (c *Client) BatchAddOrUpdateUsers(users []*api.User) (*http.Response, error
 }
 
 func (c *Client) InitialBatchAdd() (*http.Response, error) {
-	org := readOrg()
+	org := readOrg("organization_structure.yaml")
 	userMap := make(map[string]*api.User)
 	for _, ou := range org.OUs {
 		for userName, user := range formUsers(ou, nil) {
@@ -462,10 +462,10 @@ func (c *Client) ResetPassword(user string) (*http.Response, error) {
 }
 
 // GetEventReport
-func (c *Client) GetEventReport(user, search string, from, to jsonLastPassTime) (*http.Response, error) {
+func (c *Client) GetEventReport(user, search string, from, to lastpassTime.JsonLastPassTime) (*http.Response, error) {
 	data := struct {
-		From   jsonLastPassTime `json:"from"`
-		To     jsonLastPassTime `json:"to"`
+		From   lastpassTime.JsonLastPassTime `json:"from"`
+		To     lastpassTime.JsonLastPassTime `json:"to"`
 		Search string           `json:"search"`
 		User   string           `json:"user"`
 		Format string           `json:"format"`
@@ -476,8 +476,8 @@ func (c *Client) GetEventReport(user, search string, from, to jsonLastPassTime) 
 // GetAllEventReports
 func (c *Client) GetAllEventReports() (*http.Response, error) {
 	data := struct {
-		From   jsonLastPassTime `json:"from"`
-		To     jsonLastPassTime `json:"to"`
+		From   lastpassTime.JsonLastPassTime `json:"from"`
+		To     lastpassTime.JsonLastPassTime `json:"to"`
 		Search string           `json:"search"`
 		User   string           `json:"user"`
 		Format string           `json:"format"`
@@ -514,16 +514,4 @@ func (c *Client) DoRequest(command string, data interface{}) (*http.Response, er
 func decodeBody(resp *http.Response, out interface{}) error {
 	defer resp.Body.Close()
 	return json.NewDecoder(resp.Body).Decode(out)
-}
-
-type jsonLastPassTime struct {
-	time.Time
-}
-
-func (j jsonLastPassTime) format() string {
-	return j.Time.Format("2006-01-02 15:04:05")
-}
-
-func (j jsonLastPassTime) MarshalJSON() ([]byte, error) {
-	return []byte(`"` + j.format() + `"`), nil
 }

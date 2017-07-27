@@ -1,5 +1,7 @@
 package api
 
+import "net/http"
+
 type User struct {
 	UserName               string   `json:"username"`
 	FullName               string   `json:"fullname,omitempty"`
@@ -22,6 +24,11 @@ type User struct {
 	IsAdmin				   int      `json:"admin,omitempty"`
 }
 
+type UserService struct {
+	Client *http.Client
+	Command string
+}
+
 func (u *User) Contains(users []string) bool {
 	for _, user := range users {
 		if user == u.UserName {
@@ -30,3 +37,8 @@ func (u *User) Contains(users []string) bool {
 	}
 	return false
 }
+
+func (s *UserService) DoRequest() (*http.Response, error) {
+
+}
+
