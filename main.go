@@ -32,64 +32,10 @@ type Status struct {
 	Errors []string `json:"errors,omitempty"`
 }
 
-type DeactivationMode int
-const (
-	Deactivate DeactivationMode = iota
-	Remove
-	Delete
-)
-
 type Config struct {
 	CompanyId string `yaml:"company_id"`
 	EndPoint  string `yaml:"end_point_url"`
 	Secret 	  string `yaml:"secret"`
-}
-
-type Org struct{
-	OUs []*api.OU `yaml:"organizations,flow"`
-}
-
-func formUsers(ou, parentOU *api.OU) map[string]*api.User {
-	users := make(map[string]*api.User)
-
-	// Construct Members within Child OU
-	if parentOU != nil {
-		ou.Name = fmt.Sprintf("%v - %v", parentOU.Name, ou.Name)
-	}
-	for _, member := range ou.Members {
-		if _, ok := users[member]; ok {
-			users[member].Groups = append(users[member].Groups, ou.Name)
-		} else {
-			users[member] = &api.User{UserName:member, Groups:[]string{ou.Name}}
-		}
-	}
-
-	// Construct Members within Child OU
-	for _, child_ou := range ou.Children {
-		childUsers := formUsers(child_ou, ou)
-		for user, child := range childUsers {
-			if v, ok := users[user]; ok {
-				v.Groups = append(v.Groups, child.Groups...)
-			} else {
-				users[user] = child
-			}
-		}
-	}
-	return users
-}
-
-func readOrg(fileName string) Org {
-	f, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		panic(err)
-	}
-	var org Org
-	err = yaml.Unmarshal(f, &org)
-	if err != nil {
-		panic(err)
-	}
-
-	return org
 }
 
 func main() {
@@ -108,10 +54,7 @@ func main() {
 		return
 	}
 
-	var AdminUsers struct {
-		Users  map[string]api.User     `json:"Users,omitempty"`
-		Groups map[string][]string `json:"Groups,omitempty"`
-	}
+	var AdminUsers api.Users
 	err = client.DecodeBody(res, &AdminUsers)
 	adminUserNames := make([]string, len(AdminUsers.Users))
 	i := 0
@@ -255,10 +198,10 @@ func (c *Client) BatchAddOrUpdateUsers(users []*api.User) (*http.Response, error
 }
 
 func (c *Client) InitialBatchAdd() (*http.Response, error) {
-	org := readOrg("organization_structure.yaml")
+	org := api.ReadOrg("organization_structure.yaml")
 	userMap := make(map[string]*api.User)
 	for _, ou := range org.OUs {
-		for userName, user := range formUsers(ou, nil) {
+		for userName, user := range api.FormUsers(ou, nil) {
 			if v, ok := userMap[userName]; ok {
 				v.Groups = append(v.Groups, user.Groups...)
 			} else {
@@ -426,6 +369,12 @@ func (c *Client) DeleteUser(user string, mode DeactivationMode) (*http.Response,
 	}{UserName: user, DeleteAction: int(mode)}
 	return c.DoRequest("deluser", data)
 }
+type DeactivationMode int
+const (
+	Deactivate DeactivationMode = iota
+	Remove
+	Delete
+)
 
 // DisableMultifactor
 func (c *Client) DisableMultifactor(user string) (*http.Response, error) {

@@ -1,10 +1,5 @@
 package api
 
-import (
-
-	"lastpass_provisioning/client"
-)
-
 type User struct {
 	UserName               string   `json:"username"`
 	FullName               string   `json:"fullname,omitempty"`
@@ -27,9 +22,9 @@ type User struct {
 	IsAdmin				   int      `json:"admin,omitempty"`
 }
 
-type UserService struct {
-	Client client.Client
-	Command string
+type Users struct {
+	Users  map[string]User     `json:"Users,omitempty"`
+	Groups map[string][]string `json:"Groups,omitempty"`
 }
 
 func (u *User) Contains(users []string) bool {
