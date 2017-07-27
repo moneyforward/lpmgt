@@ -492,29 +492,16 @@ func (c *Client) DoRequest(command string, data interface{}) (*http.Response, er
 			Command:          command,
 	}
 
-	reqHeaders := make(http.Header)
-	reqHeaders.Set("Content-Type", "application/json")
-	//r, _ := http.NewRequest("POST", c.URL.String(), )
-
-
 	if data != nil {
 		req.Data = data
 	}
 
-	//body, err := json.Marshal(req)
-	//fmt.Println(body)
 	r, err := JSONReader(req)
-	//buf, err := new(bytes.Buffer)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := http.Post(c.URL.String(), "application/json; charset=utf-8", r)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return http.Post(c.URL.String(), "application/json; charset=utf-8", r)
 }
 
 func JSONReader(v interface{}) (io.Reader, error) {
