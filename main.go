@@ -17,6 +17,7 @@ import (
 	"lastpass_provisioning/api"
 	"os"
 	lastpassTime "lastpass_provisioning/lastpass_time"
+	"lastpass_provisioning/client"
 )
 
 //https://lastpass.com/enterprise_apidoc.php
@@ -26,13 +27,6 @@ type Client struct {
 	CompanyId        string
 	ProvisioningHash string
 	Logger           *log.Logger
-}
-
-type Request struct {
-	CompanyID        string      `json:"cid"`
-	ProvisioningHash string      `json:"provhash"`
-	Command          string      `json:"cmd"`
-	Data             interface{} `json:"data"`
 }
 
 type Status struct {
@@ -120,7 +114,7 @@ func main() {
 		Users  map[string]api.User     `json:"Users,omitempty"`
 		Groups map[string][]string `json:"Groups,omitempty"`
 	}
-	decodeBody(res, &AdminUsers)
+	err = client.DecodeBody(res, &AdminUsers)
 	adminUserNames := make([]string, len(AdminUsers.Users))
 	i := 0
 	for _, admin := range AdminUsers.Users {
@@ -137,7 +131,7 @@ func main() {
 		return
 	}
 	var sharedFolders map[string]api.SharedFolder
-	err = decodeBody(res, &sharedFolders)
+	err = client.DecodeBody(res, &sharedFolders)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -163,7 +157,7 @@ func main() {
 	var result struct {
 		Events []api.Event `json:"events"`
 	}
-	err = decodeBody(res, &result)
+	err = client.DecodeBody(res, &result)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -487,22 +481,35 @@ func (c *Client) GetAllEventReports() (*http.Response, error) {
 
 // DoRequest
 func (c *Client) DoRequest(command string, data interface{}) (*http.Response, error) {
-	req := Request{
-		CompanyID:        c.CompanyId,
-		ProvisioningHash: c.ProvisioningHash,
-		Command:          command,
+	req := struct {
+		CompanyID        string      `json:"cid"`
+		ProvisioningHash string      `json:"provhash"`
+		Command          string      `json:"cmd"`
+		Data             interface{} `json:"data"`
+	}{
+			CompanyID:        c.CompanyId,
+			ProvisioningHash: c.ProvisioningHash,
+			Command:          command,
 	}
+
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("Content-Type", "application/json")
+	//r, _ := http.NewRequest("POST", c.URL.String(), )
+
 
 	if data != nil {
 		req.Data = data
 	}
 
-	body, err := json.Marshal(req)
+	//body, err := json.Marshal(req)
+	//fmt.Println(body)
+	r, err := JSONReader(req)
+	//buf, err := new(bytes.Buffer)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := http.Post(c.URL.String(), "application/json; charset=utf-8", bytes.NewBuffer(body))
+	res, err := http.Post(c.URL.String(), "application/json; charset=utf-8", r)
 	if err != nil {
 		return nil, err
 	}
@@ -510,8 +517,11 @@ func (c *Client) DoRequest(command string, data interface{}) (*http.Response, er
 	return res, nil
 }
 
-// DecodeBody
-func decodeBody(resp *http.Response, out interface{}) error {
-	defer resp.Body.Close()
-	return json.NewDecoder(resp.Body).Decode(out)
+func JSONReader(v interface{}) (io.Reader, error) {
+	buf := new(bytes.Buffer)
+	err := json.NewEncoder(buf).Encode(v)
+	if err != nil {
+		return nil, err
+	}
+	return buf, nil
 }

@@ -1,6 +1,9 @@
 package api
 
-import "net/http"
+import (
+
+	"lastpass_provisioning/client"
+)
 
 type User struct {
 	UserName               string   `json:"username"`
@@ -25,7 +28,7 @@ type User struct {
 }
 
 type UserService struct {
-	Client *http.Client
+	Client client.Client
 	Command string
 }
 
@@ -37,8 +40,3 @@ func (u *User) Contains(users []string) bool {
 	}
 	return false
 }
-
-func (s *UserService) DoRequest() (*http.Response, error) {
-
-}
-
