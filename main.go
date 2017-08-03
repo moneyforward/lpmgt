@@ -16,6 +16,7 @@ import (
 	"os"
 	lastpassTime "lastpass_provisioning/lastpass_time"
 	"lastpass_provisioning/client"
+	"sync"
 )
 
 //https://lastpass.com/enterprise_apidoc.php
@@ -109,23 +110,60 @@ func main() {
 		}
 	}
 
-	for _, admin := range AdminUsers.Users {
-		fmt.Println(fmt.Sprintf(" --------------------------------------  %v Login ------------------------------- ", admin.UserName))
-		res, err = c.GetEventReport(admin.UserName, "login", f, t)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
 
-		err = client.DecodeBody(res, &result)
-		if err != nil {
-			fmt.Println(err)
-			return
+	//q := make(chan string)
+
+	hoge :=  func(q chan string) {
+		for {
+			userName, ok := <- q
+			if !ok {
+				return
+			}
+			res, err = c.GetEventReport(userName, "login", f, t)
+			fmt.Println(fmt.Sprintf(" --------------------------------------  %v Login History ------------------------------- ", userName))
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			err = client.DecodeBody(res, &result)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			for _, event := range result.Events {
+				fmt.Println(event)
+			}
 		}
-		for _, event := range result.Events {
-			fmt.Println(event)
-		}
+		//fmt.Println(fmt.Sprintf(" --------------------------------------  %v Login ------------------------------- ", userName))
+		//res, err = c.GetEventReport(userName, "login", f, t)
+		//if err != nil {
+		//	fmt.Println(err)
+		//	return
+		//}
+		//
+		//err = client.DecodeBody(res, &result)
+		//if err != nil {
+		//	fmt.Println(err)
+		//	return
+		//}
+		//for _, event := range result.Events {
+		//	//q <- event.Data
+		//	fmt.Println(event.Data)
+		//}
 	}
+
+	var wg sync.WaitGroup
+	q := make(chan string, 5)
+	for i:= 0; i < len(AdminUsers.Users); i++ {
+		wg.Add(1)
+		go hoge(q)
+	}
+
+	for _, admin := range AdminUsers.Users {
+		q <- admin.UserName
+	}
+	close(q)
+	wg.Wait()
 
 	// Delete
 	//_, err = c.DeleteUser("takizawa.naoto@moneyforward.co.jp", Delete)
