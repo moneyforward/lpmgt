@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"github.com/pkg/errors"
-	"io"
 	"io/ioutil"
 	"lastpass_provisioning/api"
 	"lastpass_provisioning/lastpass_time"
@@ -14,7 +11,7 @@ import (
 )
 
 //https://lastpass.com/enterprise_apidoc.php
-type client struct {
+type LastpassClient struct {
 	URL              *url.URL
 	HttpClient       *http.Client
 	CompanyId        string
@@ -29,13 +26,7 @@ type Request struct {
 	Data             interface{} `json:"data"`
 }
 
-// DecodeBody
-func DecodeBody(resp *http.Response, out interface{}) error {
-	defer resp.Body.Close()
-	return json.NewDecoder(resp.Body).Decode(out)
-}
-
-func NewClient(logger *log.Logger) (*client, error) {
+func NewClient(logger *log.Logger) (*LastpassClient, error) {
 	config := NewConfig()
 	parsedURL, err := url.ParseRequestURI(config.EndPoint)
 	if err != nil {
@@ -47,7 +38,7 @@ func NewClient(logger *log.Logger) (*client, error) {
 		logger = discardLogger
 	}
 
-	return &client{
+	return &LastpassClient{
 		URL:              parsedURL,
 		HttpClient:       http.DefaultClient,
 		CompanyId:        config.CompanyId,
@@ -87,7 +78,7 @@ Get Shared Folder Data returns a JSON object containing information on all Share
     }
 }
 */
-func (c *client) GetSharedFolderData() (*http.Response, error) {
+func (c *LastpassClient) GetSharedFolderData() (*http.Response, error) {
 	return c.DoRequest("getsfdata", nil)
 }
 
@@ -128,7 +119,7 @@ group membership manipulation
     ]
 }
 */
-func (c *client) ChangeGroupsMembership(groups []api.BelongingGroup) (*http.Response, error) {
+func (c *LastpassClient) ChangeGroupsMembership(groups []api.BelongingGroup) (*http.Response, error) {
 	return c.DoRequest("batchchangegrp", groups)
 }
 
@@ -183,14 +174,14 @@ Get information on users enterprise.
 }
 */
 // GetUserData
-func (c *client) GetUserData(user string) (*http.Response, error) {
+func (c *LastpassClient) GetUserData(user string) (*http.Response, error) {
 	return c.DoRequest("getuserdata", api.User{UserName: user})
 }
 
-// GetAdminUserData
-func (c *client) GetAdminUserData() (*http.Response, error) {
-	return c.DoRequest("getuserdata", api.User{IsAdmin: 1})
-}
+//// GetAdminUserData
+//func (c *LastpassClient) GetAdminUserData() (*http.Response, error) {
+//	return c.DoRequest("getuserdata", api.User{IsAdmin: 1})
+//}
 
 // DeleteUser - delete individual users.
 /*
@@ -198,7 +189,7 @@ func (c *client) GetAdminUserData() (*http.Response, error) {
 1 - Remove user. This removed the user from the enterprise but otherwise keeps the account itself active.
 2 - Delete user. This will delete the account entirely.
 */
-func (c *client) DeleteUser(user string, mode DeactivationMode) (*http.Response, error) {
+func (c *LastpassClient) DeleteUser(user string, mode DeactivationMode) (*http.Response, error) {
 	data := struct {
 		UserName     string `json:"username"`
 		DeleteAction int    `json:"deleteaction"`
@@ -215,17 +206,17 @@ const (
 )
 
 // DisableMultifactor
-func (c *client) DisableMultifactor(user string) (*http.Response, error) {
+func (c *LastpassClient) DisableMultifactor(user string) (*http.Response, error) {
 	return c.DoRequest("disablemultifactor", api.User{UserName: user})
 }
 
 // ResetPassword
-func (c *client) ResetPassword(user string) (*http.Response, error) {
+func (c *LastpassClient) ResetPassword(user string) (*http.Response, error) {
 	return c.DoRequest("resetpassword", api.User{UserName: user})
 }
 
 // GetEventReport
-func (c *client) GetEventReport(user, search string, from, to lastpass_time.JsonLastPassTime) (*http.Response, error) {
+func (c *LastpassClient) GetEventReport(user, search string, from, to lastpass_time.JsonLastPassTime) (*http.Response, error) {
 	data := struct {
 		From   lastpass_time.JsonLastPassTime `json:"from"`
 		To     lastpass_time.JsonLastPassTime `json:"to"`
@@ -237,7 +228,7 @@ func (c *client) GetEventReport(user, search string, from, to lastpass_time.Json
 }
 
 // GetAllEventReports
-func (c *client) GetAllEventReports() (*http.Response, error) {
+func (c *LastpassClient) GetAllEventReports() (*http.Response, error) {
 	data := struct {
 		From   lastpass_time.JsonLastPassTime `json:"from"`
 		To     lastpass_time.JsonLastPassTime `json:"to"`
@@ -249,7 +240,7 @@ func (c *client) GetAllEventReports() (*http.Response, error) {
 }
 
 // DoRequest
-func (c *client) DoRequest(command string, data interface{}) (*http.Response, error) {
+func (c *LastpassClient) DoRequest(command string, data interface{}) (*http.Response, error) {
 	req := struct {
 		CompanyID        string      `json:"cid"`
 		ProvisioningHash string      `json:"provhash"`
@@ -271,14 +262,4 @@ func (c *client) DoRequest(command string, data interface{}) (*http.Response, er
 	}
 
 	return http.Post(c.URL.String(), "application/json; charset=utf-8", r)
-}
-
-func JSONReader(v interface{}) (io.Reader, error) {
-	buf := new(bytes.Buffer)
-	err := json.NewEncoder(buf).Encode(v)
-
-	if err != nil {
-		return nil, err
-	}
-	return buf, nil
 }

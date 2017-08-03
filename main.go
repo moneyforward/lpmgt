@@ -10,7 +10,6 @@ import (
 )
 
 func main() {
-
 	// Client作成
 	c, err := NewClient(nil)
 	if err != nil {
@@ -19,14 +18,8 @@ func main() {
 	}
 
 	fmt.Println(" --------------------------------------  Admin Users ---------------------------------------- ")
-	res, err := c.GetAdminUserData()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	var AdminUsers api.Users
-	err = DecodeBody(res, &AdminUsers)
+	s := NewService(c)
+	AdminUsers, err := s.GetAdminUserData()
 	i := 0
 	for _, admin := range AdminUsers.Users {
 		fmt.Println(admin.UserName)
@@ -35,7 +28,7 @@ func main() {
 
 	// Get Shared Folder Data
 	fmt.Println(" --------------------------------------  Super Shared Folders ------------------------------- ")
-	res, err = c.GetSharedFolderData()
+	res, err := c.GetSharedFolderData()
 	if err != nil {
 		fmt.Println(err)
 		return
