@@ -178,11 +178,6 @@ func (c *LastpassClient) GetUserData(user string) (*http.Response, error) {
 	return c.DoRequest("getuserdata", api.User{UserName: user})
 }
 
-//// GetAdminUserData
-//func (c *LastpassClient) GetAdminUserData() (*http.Response, error) {
-//	return c.DoRequest("getuserdata", api.User{IsAdmin: 1})
-//}
-
 // DeleteUser - delete individual users.
 /*
 0 - Deactivate user. This blocks logins but retains data and enterprise membership
