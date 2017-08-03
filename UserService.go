@@ -11,21 +11,20 @@ type UserService struct {
 	data api.User
 }
 
-func (s *UserService) GetAdminUserData() (api.Users, error) {
-	var AdminUsers api.Users
-
+func (s *UserService) GetAdminUserData() ([]api.User, error) {
 	s.command = "getuserdata"
-	s.data = api.User{IsAdmin: 1}
+	s.data = api.User{IsAdmin: true}
 	res, err := s.DoRequest()
 	if err != nil {
-		return AdminUsers, err
+		return nil, err
 	}
 
-	if err :=  DecodeBody(res, &AdminUsers); err != nil {
-		return AdminUsers, err
+	var AdminUsers api.Users
+	err =  DecodeBody(res, &AdminUsers)
+	if err != nil {
+		return nil, err
 	}
-
-	return AdminUsers, nil
+	return AdminUsers.GetUsers(), nil
 }
 
 func NewService(client *LastpassClient) (s *UserService) {

@@ -20,10 +20,9 @@ func main() {
 	fmt.Println(" --------------------------------------  Admin Users ---------------------------------------- ")
 	s := NewService(c)
 	AdminUsers, err := s.GetAdminUserData()
-	i := 0
-	for _, admin := range AdminUsers.Users {
+
+	for _, admin := range AdminUsers {
 		fmt.Println(admin.UserName)
-		i++
 	}
 
 	// Get Shared Folder Data
@@ -98,12 +97,12 @@ func main() {
 
 	var wg sync.WaitGroup
 	q := make(chan string, 5)
-	for i := 0; i < len(AdminUsers.Users); i++ {
+	for i := 0; i < len(AdminUsers); i++ {
 		wg.Add(1)
 		go hoge(&wg, q)
 	}
 
-	for _, admin := range AdminUsers.Users {
+	for _, admin := range AdminUsers {
 		q <- admin.UserName
 	}
 	close(q)
