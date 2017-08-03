@@ -110,9 +110,6 @@ func main() {
 		}
 	}
 
-
-	//q := make(chan string)
-
 	hoge :=  func(q chan string) {
 		for {
 			userName, ok := <- q
@@ -134,22 +131,6 @@ func main() {
 				fmt.Println(event)
 			}
 		}
-		//fmt.Println(fmt.Sprintf(" --------------------------------------  %v Login ------------------------------- ", userName))
-		//res, err = c.GetEventReport(userName, "login", f, t)
-		//if err != nil {
-		//	fmt.Println(err)
-		//	return
-		//}
-		//
-		//err = client.DecodeBody(res, &result)
-		//if err != nil {
-		//	fmt.Println(err)
-		//	return
-		//}
-		//for _, event := range result.Events {
-		//	//q <- event.Data
-		//	fmt.Println(event.Data)
-		//}
 	}
 
 	var wg sync.WaitGroup
