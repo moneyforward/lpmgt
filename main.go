@@ -38,14 +38,6 @@ type Config struct {
 	Secret 	  string `yaml:"secret"`
 }
 
-type Event struct {
-	Action    string `json:"Action"`
-	Data      string `json:"Data"`
-	ID        string `json:"ID"`
-	IPAddress string `json:"IP_Address"`
-	Time      string `json:"Time"`
-}
-
 func main() {
 
 	// Client作成
