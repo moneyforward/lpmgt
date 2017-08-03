@@ -38,6 +38,14 @@ type Config struct {
 	Secret 	  string `yaml:"secret"`
 }
 
+type Event struct {
+	Action    string `json:"Action"`
+	Data      string `json:"Data"`
+	ID        string `json:"ID"`
+	IPAddress string `json:"IP_Address"`
+	Time      string `json:"Time"`
+}
+
 func main() {
 
 	// Client作成
@@ -56,13 +64,12 @@ func main() {
 
 	var AdminUsers api.Users
 	err = client.DecodeBody(res, &AdminUsers)
-	adminUserNames := make([]string, len(AdminUsers.Users))
 	i := 0
 	for _, admin := range AdminUsers.Users {
-		adminUserNames[i] = admin.UserName
 		fmt.Println(admin.UserName)
 		i++
 	}
+
 
 	// Get Shared Folder Data
 	fmt.Println(" --------------------------------------  Super Shared Folders ------------------------------- ")
@@ -95,9 +102,8 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	var result struct {
-		Events []api.Event `json:"events"`
-	}
+
+	var result api.Events
 	err = client.DecodeBody(res, &result)
 	if err != nil {
 		fmt.Println(err)
@@ -110,6 +116,68 @@ func main() {
 			fmt.Println(event)
 		}
 	}
+
+	for _, admin := range AdminUsers.Users {
+		fmt.Println(fmt.Sprintf(" --------------------------------------  %v Login ------------------------------- ", admin.UserName))
+		res, err = c.GetEventReport(admin.UserName, "login", f, t)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		err = client.DecodeBody(res, &result)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		for _, event := range result.Events {
+			fmt.Println(event)
+		}
+	}
+
+	// Delete
+	//_, err = c.DeleteUser("takizawa.naoto@moneyforward.co.jp", Delete)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//_, err = c.DeleteUser("suga.kosuke@moneyforward.co.jp", Delete)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+
+	// Move
+	//_, err = c.ChangeGroupsMembership([]api.BelongingGroup{
+	//	{
+	//		"ikeuchi.kenichi@moneyforward.co.jp",
+	//		[]string{"PFMサービス開発本部"},
+	//		[]string{},
+	//	},
+	//})
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+
+	// Add
+	//_, err = c.BatchAddOrUpdateUsers(
+	//	[]*api.User{
+	//		{UserName:"takahashi.yuto@moneyforward.co.jp",Groups:[]string{"MFクラウドサービス開発本部"}},
+	//		{UserName:"ishii.hiroyuki@moneyforward.co.jp",Groups:[]string{"MFクラウドサービス開発本部"}},
+	//		{UserName:"suzuki.shota.340@moneyforward.co.jp",Groups:[]string{"PFMサービス開発本部"}},
+	//		{UserName:"oba.akitaka@moneyforward.co.jp",Groups:[]string{"PFMサービス開発本部"}},
+	//		{UserName:"ono.yumemi@moneyforward.co.jp",Groups:[]string{"アカウントアグリゲーション本部"}},
+	//		{UserName:"takenaka.kazumasa@moneyforward.co.jp",Groups:[]string{"MFクラウド事業推進本部 - 事業戦略部"}},
+	//		{UserName:"ukon.yuto@@moneyforward.co.jp", Groups:[]string{"MFクラウド事業推進本部 - ダイレクトセールス部"}},
+	//		{UserName:"lee.choonghaeng@moneyforward.co.jp",Groups: []string{"MFクラウド事業推進本部 - MFクラウド事業戦略部"}},
+	//		{UserName:"furuhama.yusuke@moneyforward.co.jp", Groups: []string{"社長室 - Chalin", "MFクラウドサービス開発本部"}},
+	//	},
+	//)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
 }
 
 func NewClient(logger *log.Logger) (*Client, error) {
@@ -394,7 +462,7 @@ func (c *Client) GetEventReport(user, search string, from, to lastpassTime.JsonL
 		Search string           `json:"search"`
 		User   string           `json:"user"`
 		Format string           `json:"format"`
-	}{User: "", Search: search, From: from, To: to, Format: "siem"}
+	}{User: user, Search: search, From: from, To: to, Format: "siem"}
 	return c.DoRequest("reporting", data)
 }
 
@@ -438,6 +506,7 @@ func (c *Client) DoRequest(command string, data interface{}) (*http.Response, er
 func JSONReader(v interface{}) (io.Reader, error) {
 	buf := new(bytes.Buffer)
 	err := json.NewEncoder(buf).Encode(v)
+
 	if err != nil {
 		return nil, err
 	}

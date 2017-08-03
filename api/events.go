@@ -1,15 +1,20 @@
 package api
 
-import "strings"
+import (
+	"strings"
+)
+
+type Events struct {
+	Events []Event `json:"events"`
+}
 
 type Event struct {
 	Time       string `json:"Time"`
-	Username   string `json:"Username"`
-	IP_Address string `json:"IP_Address"`
-	Action     string `json:"Action"`
-	// {YYYY-MM-DD MM:DD:SS(US/Eastern time zone) USER IP ACTION}
-	// {2017-07-25 09:40:56 suzuki.kengo@moneyforward.co.jp 210.138.23.111 Require Password Change kengo-admin@moneyforward.co.jp}
-	Data       string `json:"Data"`
+	Username   string `json:"Username,omitempty"`
+	IPAddress string `json:"IP_Address,omitempty"`
+	Action     string `json:"Action,omitempty"`
+	Data       string `json:"Data,omitempty"`
+	ID		   string `json:"ID,omitempty"`
 }
 
 func (e *Event) IsAuditEvent() bool {
