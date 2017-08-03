@@ -71,7 +71,7 @@ func main() {
 		}
 	}
 
-	hoge := func(wg *sync.WaitGroup,q chan string) {
+	GetLoginEvent := func(wg *sync.WaitGroup,q chan string) {
 		defer wg.Done()
 		for {
 			userName, ok := <-q
@@ -99,7 +99,7 @@ func main() {
 	q := make(chan string, 5)
 	for i := 0; i < len(AdminUsers); i++ {
 		wg.Add(1)
-		go hoge(&wg, q)
+		go GetLoginEvent(&wg, q)
 	}
 
 	for _, admin := range AdminUsers {
