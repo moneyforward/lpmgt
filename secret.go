@@ -1,14 +1,14 @@
 package main
 
 import (
-	"io/ioutil"
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
 )
 
 type Config struct {
 	CompanyId string `yaml:"company_id"`
 	EndPoint  string `yaml:"end_point_url"`
-	Secret 	  string `yaml:"secret"`
+	Secret    string `yaml:"secret"`
 }
 
 func NewConfig() Config {

@@ -1,37 +1,13 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
-	"io"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"net/url"
-	"time"
-	"gopkg.in/yaml.v2"
 	"lastpass_provisioning/api"
-	"os"
 	lastpassTime "lastpass_provisioning/lastpass_time"
+	"os"
 	"sync"
-	"lastpass_provisioning/lastpassclient"
+	"time"
 )
-
-//https://lastpass.com/enterprise_apidoc.php
-type Client struct {
-	URL              *url.URL
-	HttpClient       *http.Client
-	CompanyId        string
-	ProvisioningHash string
-	Logger           *log.Logger
-}
-
-type Status struct {
-	Status string   `json:"status"`
-	Errors []string `json:"errors,omitempty"`
-}
 
 func main() {
 
@@ -50,7 +26,7 @@ func main() {
 	}
 
 	var AdminUsers api.Users
-	err = lastpassclient.DecodeBody(res, &AdminUsers)
+	err = DecodeBody(res, &AdminUsers)
 	i := 0
 	for _, admin := range AdminUsers.Users {
 		fmt.Println(admin.UserName)
@@ -65,7 +41,7 @@ func main() {
 		return
 	}
 	var sharedFolders map[string]api.SharedFolder
-	err = lastpassclient.DecodeBody(res, &sharedFolders)
+	err = DecodeBody(res, &sharedFolders)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -90,7 +66,7 @@ func main() {
 	}
 
 	var result api.Events
-	err = lastpassclient.DecodeBody(res, &result)
+	err = DecodeBody(res, &result)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -103,9 +79,10 @@ func main() {
 		}
 	}
 
-	hoge :=  func(q chan string) {
+	hoge := func(wg *sync.WaitGroup,q chan string) {
+		defer wg.Done()
 		for {
-			userName, ok := <- q
+			userName, ok := <-q
 			if !ok {
 				return
 			}
@@ -115,7 +92,7 @@ func main() {
 				fmt.Println(err)
 				return
 			}
-			err = lastpassclient.DecodeBody(res, &result)
+			err = DecodeBody(res, &result)
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -128,9 +105,9 @@ func main() {
 
 	var wg sync.WaitGroup
 	q := make(chan string, 5)
-	for i:= 0; i < len(AdminUsers.Users); i++ {
+	for i := 0; i < len(AdminUsers.Users); i++ {
 		wg.Add(1)
-		go hoge(q)
+		go hoge(&wg, q)
 	}
 
 	for _, admin := range AdminUsers.Users {
@@ -182,252 +159,4 @@ func main() {
 	//	fmt.Println(err)
 	//	return
 	//}
-}
-
-func NewClient(logger *log.Logger) (*Client, error) {
-	config := NewConfig()
-	parsedURL, err := url.ParseRequestURI(config.EndPoint)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse url: %s", config.EndPoint)
-	}
-
-	var discardLogger = log.New(ioutil.Discard, "", log.LstdFlags)
-	if logger == nil {
-		logger = discardLogger
-	}
-
-	return &Client{
-		URL:              parsedURL,
-		HttpClient:       http.DefaultClient,
-		CompanyId:        config.CompanyId,
-		ProvisioningHash: config.Secret,
-		Logger:           logger,
-	}, err
-}
-
-
-
-/*
-Get Shared Folder Data returns a JSON object containing information on all Shared Folders in the enterprise and the permissions granted to them.
-# Request
-{
-	"cid": "8771312",
-	"provhash": "<Your API secret>",
-    "cmd": "getsfdata"
-}
-
-# Response
-{
-    "101": {
-        "sharedfoldername": "ThisSFName",
-        "score": 99,
-        "users": [
-            {
-                "username": "joe.user@lastpass.com",
-                "readonly": 0,
-                "give": 1,
-                "can_administer": 1
-            },
-            {
-                "username": "jane.user@lastpass.com",
-                "readonly": 1,
-                "give": 0,
-                "can_administer": 0
-            }
-        ]
-    }
-}
-*/
-func (c *Client) GetSharedFolderData() (*http.Response, error) {
-	return c.DoRequest("getsfdata", nil)
-}
-
-/* Batch Change Group (cmd = batchchangegrp)
-group membership manipulation
-# Request
-
-  {
-    "cid": "8771312",
-    "provhash": "<Your API secret>",
-    "cmd": "batchchangegrp",
-    "data": [
-        {
-            "username": "user1@lastpass.com",
-            "add": [
-                "Group1",
-                "Group2"
-            ]
-        },
-        {
-            "username": "user2@lastpass.com",
-            "add": [
-                "Group1"
-            ],
-            "del": [
-                "Group2",
-                "Group3"
-            ]
-        }
-    ]
-}
-
-# Response
-{
-    "status": "WARN", // OK, WARN or FAIL
-    "errors": [
-        "user2@lastpass.com does not exist"
-    ]
-}
-*/
-func (c *Client) ChangeGroupsMembership(groups []api.BelongingGroup) (*http.Response, error) {
-	return c.DoRequest("batchchangegrp", groups)
-}
-
-/*
-Get information on users enterprise.
-# Request
-  {
-    "cid": "8771312",
-    "provhash": "<Your API secret>",
-    "cmd": "getuserdata",
-    "data": {
-        "username": "user1@lastpass.com" // This can be either UserName, disabled, or admin
-    }
-  }
-
-# Response
-  {
-    "Users": {
-        "101": {
-            "username": "user1@lastpass.com",
-            "fullname": "Ned Flanders",
-            "mpstrength": "100",
-            "created": "2014-03-12 10:02:56",
-            "last_pw_change": "2015-05-19 10:58:33",
-            "last_login": "2015-05-29 11:45:05",
-            "disabled": false,
-            "neverloggedin": false,
-            "linked": "personal.account@mydomain.com",
-            "sites": 72,
-            "notes": 19,
-            "formfills": 2,
-            "applications": 0,
-            "attachments": 1,
-            "groups": [
-                "Domain Admins",
-                "Dev Team",
-                "Support Team"
-            ]
-        }
-    },
-    "Groups": {
-        "Domain Admins": [
-            "user1@lastpass.com"
-        ],
-        "Dev Team": [
-            "user1@lastpass.com"
-        ],
-        "Support Team": [
-            "user1@lastpass.com"
-        ]
-    }
-}
-*/
-// GetUserData
-func (c *Client) GetUserData(user string) (*http.Response, error) {
-	return c.DoRequest("getuserdata", api.User{UserName: user})
-}
-
-// GetAdminUserData
-func (c *Client) GetAdminUserData() (*http.Response, error) {
-	return c.DoRequest("getuserdata", api.User{IsAdmin:1})
-}
-
-// DeleteUser - delete individual users.
-/*
-0 - Deactivate user. This blocks logins but retains data and enterprise membership
-1 - Remove user. This removed the user from the enterprise but otherwise keeps the account itself active.
-2 - Delete user. This will delete the account entirely.
-*/
-func (c *Client) DeleteUser(user string, mode DeactivationMode) (*http.Response, error) {
-	data := struct {
-		UserName     string `json:"username"`
-		DeleteAction int    `json:"deleteaction"`
-	}{UserName: user, DeleteAction: int(mode)}
-	return c.DoRequest("deluser", data)
-}
-type DeactivationMode int
-const (
-	Deactivate DeactivationMode = iota
-	Remove
-	Delete
-)
-
-// DisableMultifactor
-func (c *Client) DisableMultifactor(user string) (*http.Response, error) {
-	return c.DoRequest("disablemultifactor", api.User{UserName: user})
-}
-
-// ResetPassword
-func (c *Client) ResetPassword(user string) (*http.Response, error) {
-	return c.DoRequest("resetpassword", api.User{UserName: user})
-}
-
-// GetEventReport
-func (c *Client) GetEventReport(user, search string, from, to lastpassTime.JsonLastPassTime) (*http.Response, error) {
-	data := struct {
-		From   lastpassTime.JsonLastPassTime `json:"from"`
-		To     lastpassTime.JsonLastPassTime `json:"to"`
-		Search string           `json:"search"`
-		User   string           `json:"user"`
-		Format string           `json:"format"`
-	}{User: user, Search: search, From: from, To: to, Format: "siem"}
-	return c.DoRequest("reporting", data)
-}
-
-// GetAllEventReports
-func (c *Client) GetAllEventReports() (*http.Response, error) {
-	data := struct {
-		From   lastpassTime.JsonLastPassTime `json:"from"`
-		To     lastpassTime.JsonLastPassTime `json:"to"`
-		Search string           `json:"search"`
-		User   string           `json:"user"`
-		Format string           `json:"format"`
-	}{User: "allusers", Format: "siem"}
-	return c.DoRequest("reporting", data)
-}
-
-// DoRequest
-func (c *Client) DoRequest(command string, data interface{}) (*http.Response, error) {
-	req := struct {
-		CompanyID        string      `json:"cid"`
-		ProvisioningHash string      `json:"provhash"`
-		Command          string      `json:"cmd"`
-		Data             interface{} `json:"data"`
-	}{
-			CompanyID:        c.CompanyId,
-			ProvisioningHash: c.ProvisioningHash,
-			Command:          command,
-	}
-
-	if data != nil {
-		req.Data = data
-	}
-
-	r, err := JSONReader(req)
-	if err != nil {
-		return nil, err
-	}
-
-	return http.Post(c.URL.String(), "application/json; charset=utf-8", r)
-}
-
-func JSONReader(v interface{}) (io.Reader, error) {
-	buf := new(bytes.Buffer)
-	err := json.NewEncoder(buf).Encode(v)
-
-	if err != nil {
-		return nil, err
-	}
-	return buf, nil
 }
