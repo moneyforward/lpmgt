@@ -15,8 +15,8 @@ import (
 	"lastpass_provisioning/api"
 	"os"
 	lastpassTime "lastpass_provisioning/lastpass_time"
-	"lastpass_provisioning/client"
 	"sync"
+	"lastpass_provisioning/lastpassclient"
 )
 
 //https://lastpass.com/enterprise_apidoc.php
@@ -31,12 +31,6 @@ type Client struct {
 type Status struct {
 	Status string   `json:"status"`
 	Errors []string `json:"errors,omitempty"`
-}
-
-type Config struct {
-	CompanyId string `yaml:"company_id"`
-	EndPoint  string `yaml:"end_point_url"`
-	Secret 	  string `yaml:"secret"`
 }
 
 func main() {
@@ -56,13 +50,12 @@ func main() {
 	}
 
 	var AdminUsers api.Users
-	err = client.DecodeBody(res, &AdminUsers)
+	err = lastpassclient.DecodeBody(res, &AdminUsers)
 	i := 0
 	for _, admin := range AdminUsers.Users {
 		fmt.Println(admin.UserName)
 		i++
 	}
-
 
 	// Get Shared Folder Data
 	fmt.Println(" --------------------------------------  Super Shared Folders ------------------------------- ")
@@ -72,7 +65,7 @@ func main() {
 		return
 	}
 	var sharedFolders map[string]api.SharedFolder
-	err = client.DecodeBody(res, &sharedFolders)
+	err = lastpassclient.DecodeBody(res, &sharedFolders)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -97,7 +90,7 @@ func main() {
 	}
 
 	var result api.Events
-	err = client.DecodeBody(res, &result)
+	err = lastpassclient.DecodeBody(res, &result)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -122,7 +115,7 @@ func main() {
 				fmt.Println(err)
 				return
 			}
-			err = client.DecodeBody(res, &result)
+			err = lastpassclient.DecodeBody(res, &result)
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -192,16 +185,7 @@ func main() {
 }
 
 func NewClient(logger *log.Logger) (*Client, error) {
-	var config Config
-	f, err := ioutil.ReadFile("secret.yaml")
-	if err != nil {
-		panic(err)
-	}
-	err = yaml.Unmarshal(f, &config)
-	if err != nil {
-		panic(err)
-	}
-
+	config := NewConfig()
 	parsedURL, err := url.ParseRequestURI(config.EndPoint)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse url: %s", config.EndPoint)
@@ -221,83 +205,7 @@ func NewClient(logger *log.Logger) (*Client, error) {
 	}, err
 }
 
-/*
-The "batchadd" command is used to provision new or update existing users.
-The "UserName" field is required while the "fullname", "groups", "duousername", "securidusername", "password" and "password_reset_required" fields are optional.
-By setting the "password" field you can define a default password for the new user that could be temporary or permanent based on the "password_reset_required" field's value (default: true).
 
-# Request
-  {
-    "cid": "8771312",
-    "provhash": "<Your API secret>",
-    "cmd": "batchadd",
-    "data": [
-        {
-            "username": "user0@lastpass.com"
-        },
-        {
-            "username": "user1@lastpass.com",
-            "fullname": "John Doe"
-        },
-        {
-            "username": "user2@lastpass.com",
-            "fullname": "Mark Hunter",
-            "groups": [
-                "Group1",
-                "Group2",
-                "Group3"
-            ],
-            "attribs": {
-                "objectGUID": "d3b07384d113edec49eaa6238ad5ff00",
-                "Department": "Finance",
-                "EmployeeNumber": "192832"
-            }
-        },
-        {
-            "username": "user3@lastpass.com",
-            "fullname": "John Smith",
-            "password": "DefaultPassword"
-        },
-        {
-            "username": "user4@lastpass.com",
-            "fullname": "Jane Smith",
-            "password": "DefaultPassword",
-            "password_reset_required": false
-        }
-    ]
-}
-
-# Response
-{
-   "status": "OK"
-}
-*/
-func (c *Client) BatchAddOrUpdateUsers(users []*api.User) (*http.Response, error) {
-	return c.DoRequest("batchadd", users)
-}
-
-func (c *Client) InitialBatchAdd() (*http.Response, error) {
-	org := api.ReadOrg("organization_structure.yaml")
-	userMap := make(map[string]*api.User)
-	for _, ou := range org.OUs {
-		for userName, user := range api.FormUsers(ou, nil) {
-			if v, ok := userMap[userName]; ok {
-				v.Groups = append(v.Groups, user.Groups...)
-			} else {
-				userMap[userName] = user
-			}
-		}
-	}
-
-	i := 0
-	users := make([]*api.User, len(userMap))
-	for _, u := range userMap {
-		users[i] = u
-		i++
-	}
-
-	return c.BatchAddOrUpdateUsers(users)
-}
 
 /*
 Get Shared Folder Data returns a JSON object containing information on all Shared Folders in the enterprise and the permissions granted to them.

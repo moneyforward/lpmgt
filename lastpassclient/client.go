@@ -1,4 +1,4 @@
-package client
+package lastpassclient
 
 import (
 	"net/url"
@@ -8,7 +8,7 @@ import (
 )
 
 //https://lastpass.com/enterprise_apidoc.php
-type Client struct {
+type client struct {
 	URL              *url.URL
 	HttpClient       *http.Client
 	CompanyId        string
