@@ -121,62 +121,24 @@ func main() {
 	//}
 
 	// Move
-	hoge := []string{
-		"yamada.kazuya@moneyforward.co.jp",
-		"taniguchi.toru@moneyforward.co.jp",
-		"harada.toru@moneyforward.co.jp",
-		"kaneko.yuichiro@moneyforward.co.jp",
-		"fukahori.munetoshi@moneyforward.co.jp",
-		"ogura.takashi@moneyforward.co.jp",
-		"shinoda.takeshi@moneyforward.co.jp",
-		"otsuka.hayato@moneyforward.co.jp",
-		"takasugi.miyo@moneyforward.co.jp",
-		"sato.ko@moneyforward.co.jp",
-		"suda.michiko@moneyforward.co.jp",
-		"izumiya.keisuke@moneyforward.co.jp",
-		"akiyama.chie@moneyforward.co.jp",
-		"oshima.mari@moneyforward.co.jp",
-		"hamada.akira@moneyforward.co.jp",
-		"takahashi.yuto@moneyforward.co.jp",
-		"shibuya.ryo@moneyforward.co.jp",
-		"ishii.hiroyuki@moneyforward.co.jp",
-		"masuyama.daisuke@moneyforward.co.jp",
-		"otsu.hiroaki@moneyforward.co.jp",
-		"tsuji.shuhei@moneyforward.co.jp",
-		"uemura.saeko@moneyforward.co.jp",
-		"kuroda.naoki@moneyforward.co.jp",
-		"nishinobu.takahiro@moneyforward.co.jp",
-		"ito.daisuke@moneyforward.co.jp",
-		"kashiwazaki.takahiro@moneyforward.co.jp",
-		"aoyama.reiko@moneyforward.co.jp",
-		"furuhama.yusuke@moneyforward.co.jp",
-		"ito.yusuke@moneyforward.co.jp",
-		"kato.takuya@moneyforward.co.jp",
-		"nozaki.keigo@moneyforward.co.jp",
-		"sogo.kenya@moneyforward.co.jp",
-		"hashimoto.satoshi@moneyforward.co.jp",
-		"iwamura.yuna@moneyforward.co.jp",
-		"minegishi.kai@moneyforward.co.jp",
-		"kuroki.yasuha@moneyforward.co.jp",
-	}
 
-	var wgwg sync.WaitGroup
-	for _, h := range hoge	{
-		wgwg.Add(1)
-		go func(name string) {
-			defer wgwg.Done()
-
-			_, err = c.ChangeGroupsMembership([]api.BelongingGroup{
-				{
-					name,
-					[]string{"MFクラウドサービス開発本部"},
-					[]string{},
-				},
-
-			})
-		}(h)
-	}
-	wgwg.Wait()
+	//var wgwg sync.WaitGroup
+	//for _, h := range hoge	{
+	//	wgwg.Add(1)
+	//	go func(name string) {
+	//		defer wgwg.Done()
+	//
+	//		_, err = c.ChangeGroupsMembership([]api.BelongingGroup{
+	//			{
+	//				name,
+	//				[]string{"MFクラウドサービス開発本部"},
+	//				[]string{},
+	//			},
+	//
+	//		})
+	//	}(h)
+	//}
+	//wgwg.Wait()
 
 	//_, err = c.ChangeGroupsMembership([]api.BelongingGroup{
 	//	{
