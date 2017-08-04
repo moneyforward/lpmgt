@@ -1,14 +1,14 @@
 package main
 
 import (
-	"net/http"
 	"lastpass_provisioning/api"
+	"net/http"
 )
 
 type UserService struct {
-	client *LastpassClient
+	client  *LastpassClient
 	command string
-	data api.User
+	data    api.User
 }
 
 func (s *UserService) GetAdminUserData() ([]api.User, error) {
@@ -20,7 +20,7 @@ func (s *UserService) GetAdminUserData() ([]api.User, error) {
 	}
 
 	var AdminUsers api.Users
-	err =  DecodeBody(res, &AdminUsers)
+	err = DecodeBody(res, &AdminUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +28,7 @@ func (s *UserService) GetAdminUserData() ([]api.User, error) {
 }
 
 func NewService(client *LastpassClient) (s *UserService) {
-	return &UserService{client:client}
+	return &UserService{client: client}
 }
 
 func (s *UserService) DoRequest() (*http.Response, error) {

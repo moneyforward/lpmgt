@@ -71,14 +71,14 @@ func main() {
 		}
 	}
 
-	GetLoginEvent := func(wg *sync.WaitGroup,q chan string) {
+	GetLoginEvent := func(wg *sync.WaitGroup, q chan string) {
 		defer wg.Done()
 		for {
 			userName, ok := <-q
 			if !ok {
 				return
 			}
-			res, err = c.GetEventReport(userName, "login", f, t)
+			res, err = c.GetEventReport(userName, "", f, t)
 			fmt.Println(fmt.Sprintf(" --------------------------------------  %v Login History ------------------------------- ", userName))
 			if err != nil {
 				fmt.Println(err)

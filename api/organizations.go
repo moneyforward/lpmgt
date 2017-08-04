@@ -1,19 +1,19 @@
 package api
 
 import (
-	"io/ioutil"
 	"fmt"
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
 )
 
-type Org struct{
-OUs []*OU `yaml:"organizations,flow"`
+type Org struct {
+	OUs []*OU `yaml:"organizations,flow"`
 }
 
 type OU struct {
-	Name string
-	Members []string `yaml:",flow"`
-	Children	[]*OU
+	Name     string
+	Members  []string `yaml:",flow"`
+	Children []*OU
 }
 
 func FormUsers(ou, parentOU *OU) map[string]*User {
@@ -27,7 +27,7 @@ func FormUsers(ou, parentOU *OU) map[string]*User {
 		if _, ok := users[member]; ok {
 			users[member].Groups = append(users[member].Groups, ou.Name)
 		} else {
-			users[member] = &User{UserName:member, Groups:[]string{ou.Name}}
+			users[member] = &User{UserName: member, Groups: []string{ou.Name}}
 		}
 	}
 

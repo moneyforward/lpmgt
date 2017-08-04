@@ -218,7 +218,7 @@ func (c *LastpassClient) GetEventReport(user, search string, from, to lastpass_t
 		Search string                         `json:"search"`
 		User   string                         `json:"user"`
 		Format string                         `json:"format"`
-	}{User: user, Search: search, From: from, To: to, Format: "siem"}
+	}{User: user, From: from, To: to, Format: "siem"}
 	return c.DoRequest("reporting", data)
 }
 

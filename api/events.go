@@ -9,12 +9,12 @@ type Events struct {
 }
 
 type Event struct {
-	Time       string `json:"Time"`
-	Username   string `json:"Username,omitempty"`
+	Time      string `json:"Time"`
+	Username  string `json:"Username,omitempty"`
 	IPAddress string `json:"IP_Address,omitempty"`
-	Action     string `json:"Action,omitempty"`
-	Data       string `json:"Data,omitempty"`
-	ID		   string `json:"ID,omitempty"`
+	Action    string `json:"Action,omitempty"`
+	Data      string `json:"Data,omitempty"`
+	ID        string `json:"ID,omitempty"`
 }
 
 func (e *Event) IsAuditEvent() bool {
