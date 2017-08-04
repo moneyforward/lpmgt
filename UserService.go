@@ -11,9 +11,33 @@ type UserService struct {
 	data    interface{}
 }
 
+type DeactivationMode int
+
+const (
+	Deactivate DeactivationMode = iota
+	Remove
+	Delete
+)
+
 func (s *UserService) BatchAdd(users []api.User) (error) {
 	s.command = "batchadd"
 	s.data = users
+	_, err := s.DoRequest()
+	return err
+}
+
+// DeleteUser - delete individual users.
+/*
+0 - Deactivate user. This blocks logins but retains data and enterprise membership
+1 - Remove user. This removed the user from the enterprise but otherwise keeps the account itself active.
+2 - Delete user. This will delete the account entirely.
+*/
+func (s *UserService) DeleteUser(name string, mode DeactivationMode) error {
+	s.command = "deleteaction"
+	s.data = struct {
+		UserName     string `json:"username"`
+		DeleteAction int    `json:"deleteaction"`
+	}{UserName: name, DeleteAction: int(mode)}
 	_, err := s.DoRequest()
 	return err
 }

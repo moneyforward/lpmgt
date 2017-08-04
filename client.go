@@ -178,28 +178,6 @@ func (c *LastpassClient) GetUserData(user string) (*http.Response, error) {
 	return c.DoRequest("getuserdata", api.User{UserName: user})
 }
 
-// DeleteUser - delete individual users.
-/*
-0 - Deactivate user. This blocks logins but retains data and enterprise membership
-1 - Remove user. This removed the user from the enterprise but otherwise keeps the account itself active.
-2 - Delete user. This will delete the account entirely.
-*/
-func (c *LastpassClient) DeleteUser(user string, mode DeactivationMode) (*http.Response, error) {
-	data := struct {
-		UserName     string `json:"username"`
-		DeleteAction int    `json:"deleteaction"`
-	}{UserName: user, DeleteAction: int(mode)}
-	return c.DoRequest("deluser", data)
-}
-
-type DeactivationMode int
-
-const (
-	Deactivate DeactivationMode = iota
-	Remove
-	Delete
-)
-
 // DisableMultifactor
 func (c *LastpassClient) DisableMultifactor(user string) (*http.Response, error) {
 	return c.DoRequest("disablemultifactor", api.User{UserName: user})

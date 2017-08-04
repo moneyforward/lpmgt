@@ -108,18 +108,6 @@ func main() {
 	close(q)
 	wg.Wait()
 
-	// Delete
-	//_, err = c.DeleteUser("takizawa.naoto@moneyforward.co.jp", Delete)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//_, err = c.DeleteUser("suga.kosuke@moneyforward.co.jp", Delete)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-
 	// Move
 
 	//var wgwg sync.WaitGroup
@@ -148,25 +136,6 @@ func main() {
 	//	},
 	//
 	//})
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-
-	// Add
-	//_, err = c.BatchAddOrUpdateUsers(
-	//	[]*api.User{
-	//		{UserName:"takahashi.yuto@moneyforward.co.jp",Groups:[]string{"MFクラウドサービス開発本部"}},
-	//		{UserName:"ishii.hiroyuki@moneyforward.co.jp",Groups:[]string{"MFクラウドサービス開発本部"}},
-	//		{UserName:"suzuki.shota.340@moneyforward.co.jp",Groups:[]string{"PFMサービス開発本部"}},
-	//		{UserName:"oba.akitaka@moneyforward.co.jp",Groups:[]string{"PFMサービス開発本部"}},
-	//		{UserName:"ono.yumemi@moneyforward.co.jp",Groups:[]string{"アカウントアグリゲーション本部"}},
-	//		{UserName:"takenaka.kazumasa@moneyforward.co.jp",Groups:[]string{"MFクラウド事業推進本部 - 事業戦略部"}},
-	//		{UserName:"ukon.yuto@@moneyforward.co.jp", Groups:[]string{"MFクラウド事業推進本部 - ダイレクトセールス部"}},
-	//		{UserName:"lee.choonghaeng@moneyforward.co.jp",Groups: []string{"MFクラウド事業推進本部 - MFクラウド事業戦略部"}},
-	//		{UserName:"furuhama.yusuke@moneyforward.co.jp", Groups: []string{"社長室 - Chalin", "MFクラウドサービス開発本部"}},
-	//	},
-	//)
 	//if err != nil {
 	//	fmt.Println(err)
 	//	return
