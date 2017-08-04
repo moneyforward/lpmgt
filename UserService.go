@@ -8,7 +8,14 @@ import (
 type UserService struct {
 	client  *LastpassClient
 	command string
-	data    api.User
+	data    interface{}
+}
+
+func (s *UserService) BatchAdd(users []api.User) (error) {
+	s.command = "batchadd"
+	s.data = users
+	_, err := s.DoRequest()
+	return err
 }
 
 func (s *UserService) GetAdminUserData() ([]api.User, error) {
