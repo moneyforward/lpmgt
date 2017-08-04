@@ -32,6 +32,12 @@ type Users struct {
 	Invited []string            `json:"invited,omitempty"`
 }
 
+func ConstructUser(email string, groupName... string) *User {
+	u := &User{UserName: email}
+	u.Groups = groupName
+	return u
+}
+
 func (u *User) Contains(users []string) bool {
 	for _, user := range users {
 		if user == u.UserName {
