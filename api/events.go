@@ -2,6 +2,7 @@ package api
 
 import (
 	"strings"
+	"lastpass_provisioning/lastpass_time"
 )
 
 type Events struct {
@@ -9,7 +10,7 @@ type Events struct {
 }
 
 type Event struct {
-	Time      string `json:"Time"`
+	Time      *lastpass_time.JsonLastPassTime `json:"Time"`
 	Username  string `json:"Username,omitempty"`
 	IPAddress string `json:"IP_Address,omitempty"`
 	Action    string `json:"Action,omitempty"`

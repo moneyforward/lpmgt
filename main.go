@@ -9,6 +9,9 @@ import (
 	"time"
 )
 
+// TODO 時間の変更
+// TODO InActivateな人
+// TODO Deactivatedな人
 func main() {
 	// Client作成
 	c, err := NewClient(nil)
@@ -17,7 +20,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(" --------------------------------------  Admin Users ---------------------------------------- ")
+	fmt.Println(" --------------------  Admin Users -------------------- ")
 	s := NewService(c)
 	AdminUsers, err := s.GetAdminUserData()
 
@@ -26,7 +29,7 @@ func main() {
 	}
 
 	// Get Shared Folder Data
-	fmt.Println(" --------------------------------------  Super Shared Folders ------------------------------- ")
+	fmt.Println(" --------------------  Super Shared Folders -------------------- ")
 	res, err := c.GetSharedFolderData()
 	if err != nil {
 		fmt.Println(err)
@@ -48,7 +51,7 @@ func main() {
 
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
-	dayAgo := now.Add(-time.Duration(1) * time.Hour * 24)
+	dayAgo := now.Add(-time.Duration(4) * time.Hour * 24)
 	t := lastpassTime.JsonLastPassTime{now}
 	f := lastpassTime.JsonLastPassTime{dayAgo}
 	res, err = c.GetEventReport("", "", f, t)
@@ -64,7 +67,8 @@ func main() {
 		return
 	}
 
-	fmt.Println(fmt.Sprintf(" -------------------------------- Events(%v ~ %v) -----------------------------------", f.Format(), t.Format()))
+	header := fmt.Sprintf(" -------------------- Events(%v ~ %v) --------------------", f.Format(), t.Format())
+	fmt.Println(header)
 	for _, event := range result.Events {
 		if event.IsAuditEvent() {
 			fmt.Println(event)
