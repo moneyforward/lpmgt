@@ -2,44 +2,18 @@ package lastpass_time
 
 import (
 	"time"
-	"encoding/json"
-	"fmt"
 )
 
 const LastpassFormat  = "2006-01-02 15:04:05"
 
 type JsonLastPassTime struct {
-	time.Time
+	JsonTime time.Time
 }
 
 func (j JsonLastPassTime) Format() string {
-	return j.Time.Format(LastpassFormat)
+	return j.JsonTime.Format(LastpassFormat)
 }
 
 func (j JsonLastPassTime) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + j.Format() + `"`), nil
 }
-
-func (j JsonLastPassTime) UnmarshalJSON(b []byte) error {
-	var s string
-	origLoc, _ := time.LoadLocation("EST")
-	asiaLoc, _ := time.LoadLocation("Asia/Tokyo")
-	if err := json.Unmarshal(b, &s); err != nil {
-		return err
-	}
-
-	t, err := time.Parse(LastpassFormat, s)
-	if err != nil {
-		return err
-	}
-
-	j.Time = t.In(origLoc).In(asiaLoc)
-
-	return nil
-}
-
-func (j JsonLastPassTime) String() string{
-	fmt.Println(j.Time.String())
-	return j.Time.String()
-}
-

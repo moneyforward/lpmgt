@@ -4,7 +4,6 @@ import (
 	"strings"
 	"encoding/json"
 	"time"
-	"fmt"
 )
 
 type Events struct {
@@ -12,7 +11,7 @@ type Events struct {
 }
 
 type Event struct {
-	Time      time.Time `json:"Time"`
+	Time      string `json:"JsonTime"`
 	Username  string `json:"Username,omitempty"`
 	IPAddress string `json:"IP_Address,omitempty"`
 	Action    string `json:"Action,omitempty"`
@@ -30,14 +29,13 @@ func (e *Event) UnmarshalJSON(b []byte) error {
 
 	for k, v := range rawStrings {
 		if strings.ToLower(k) == "time" {
-			fmt.Println(v)
 			t, err := time.Parse("2006-01-02 15:04:05", v)
 			if err != nil {
 				return err
 			}
 			origLoc, _ := time.LoadLocation("EST")
 			asiaLoc, _ := time.LoadLocation("Asia/Tokyo")
-			e.Time = t.In(origLoc).In(asiaLoc)
+			e.Time = t.In(origLoc).In(asiaLoc).String()
 		}
 		if strings.ToLower(k) == "username" {
 			e.Username = v
