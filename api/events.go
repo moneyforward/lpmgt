@@ -4,6 +4,7 @@ import (
 	"strings"
 	"encoding/json"
 	"time"
+	"fmt"
 )
 
 type Events struct {
@@ -11,7 +12,7 @@ type Events struct {
 }
 
 type Event struct {
-	Time      string `json:"JsonTime"`
+	Time      time.Time `json:"JsonTime"`
 	Username  string `json:"Username,omitempty"`
 	IPAddress string `json:"IP_Address,omitempty"`
 	Action    string `json:"Action,omitempty"`
@@ -29,13 +30,17 @@ func (e *Event) UnmarshalJSON(b []byte) error {
 
 	for k, v := range rawStrings {
 		if strings.ToLower(k) == "time" {
+			// LastPass's timestamp is in EST
 			t, err := time.Parse("2006-01-02 15:04:05", v)
+			fmt.Println(t.Add(time.Duration(5) * time.Hour))
 			if err != nil {
 				return err
 			}
-			origLoc, _ := time.LoadLocation("EST")
+
 			asiaLoc, _ := time.LoadLocation("Asia/Tokyo")
-			e.Time = t.In(origLoc).In(asiaLoc).String()
+			// First add 5 hours to convert time zone from EST to UTC
+			// Then convert to asia/tokyo time zone
+			e.Time = t.Add(time.Duration(5) * time.Hour).In(asiaLoc)
 		}
 		if strings.ToLower(k) == "username" {
 			e.Username = v

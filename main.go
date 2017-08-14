@@ -51,7 +51,7 @@ func main() {
 
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
-	dayAgo := now.Add(-time.Duration(4) * time.Hour * 24)
+	dayAgo := now.Add(-time.Duration(1) * time.Hour * 24)
 	t := lastpassTime.JsonLastPassTime{now}
 	f := lastpassTime.JsonLastPassTime{dayAgo}
 	res, err = c.GetEventReport("", "", f, t)
