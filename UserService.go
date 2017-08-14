@@ -19,7 +19,7 @@ const (
 	Delete
 )
 
-func (s *UserService) BatchAdd(users []api.User) (error) {
+func (s *UserService) BatchAdd(users []api.User) error {
 	s.command = "batchadd"
 	s.data = users
 	_, err := s.DoRequest()

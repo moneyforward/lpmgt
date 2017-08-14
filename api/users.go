@@ -32,7 +32,7 @@ type Users struct {
 	Invited []string            `json:"invited,omitempty"`
 }
 
-func ConstructUser(email string, groupName... string) *User {
+func ConstructUser(email string, groupName ...string) *User {
 	u := &User{UserName: email}
 	u.Groups = groupName
 	return u

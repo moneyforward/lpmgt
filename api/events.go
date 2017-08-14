@@ -1,10 +1,9 @@
 package api
 
 import (
-	"strings"
 	"encoding/json"
+	"strings"
 	"time"
-	"fmt"
 )
 
 type Events struct {
@@ -13,11 +12,11 @@ type Events struct {
 
 type Event struct {
 	Time      time.Time `json:"JsonTime"`
-	Username  string `json:"Username,omitempty"`
-	IPAddress string `json:"IP_Address,omitempty"`
-	Action    string `json:"Action,omitempty"`
-	Data      string `json:"Data,omitempty"`
-	ID        string `json:"ID,omitempty"`
+	Username  string    `json:"Username,omitempty"`
+	IPAddress string    `json:"IP_Address,omitempty"`
+	Action    string    `json:"Action,omitempty"`
+	Data      string    `json:"Data,omitempty"`
+	ID        string    `json:"ID,omitempty"`
 }
 
 func (e *Event) UnmarshalJSON(b []byte) error {
@@ -32,7 +31,6 @@ func (e *Event) UnmarshalJSON(b []byte) error {
 		if strings.ToLower(k) == "time" {
 			// LastPass's timestamp is in EST
 			t, err := time.Parse("2006-01-02 15:04:05", v)
-			fmt.Println(t.Add(time.Duration(5) * time.Hour))
 			if err != nil {
 				return err
 			}

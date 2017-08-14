@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-const LastpassFormat  = "2006-01-02 15:04:05"
+const LastpassFormat = "2006-01-02 15:04:05"
 
 type JsonLastPassTime struct {
 	JsonTime time.Time
