@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-// TODO 時間の変更
 // TODO InActivateな人
 // TODO Deactivatedな人
 func main() {
