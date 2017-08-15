@@ -42,6 +42,22 @@ func (s *UserService) DeleteUser(name string, mode DeactivationMode) error {
 	return err
 }
 
+func (s *UserService) GetDisabledUser() ([]api.User, error) {
+	s.command = "getuserdata"
+	s.data = api.User{Disabled: true}
+	res, err := s.DoRequest()
+	if err != nil {
+		return nil, err
+	}
+
+	var Users api.Users
+	err = DecodeBody(res, &Users)
+	if err != nil {
+		return nil, err
+	}
+	return Users.GetUsers(), nil
+}
+
 func (s *UserService) GetAdminUserData() ([]api.User, error) {
 	s.command = "getuserdata"
 	s.data = api.User{IsAdmin: true}

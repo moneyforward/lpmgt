@@ -9,8 +9,7 @@ import (
 	"time"
 )
 
-// TODO InActivateな人
-// TODO Deactivatedな人
+// TODO Inactiveな人
 func main() {
 	// Client作成
 	c, err := NewClient(nil)
@@ -19,8 +18,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(" --------------------  Admin Users -------------------- ")
+	fmt.Println(" --------------------  Disabled Users -------------------- ")
 	s := NewService(c)
+	InactiveUsers, err := s.GetDisabledUser()
+
+	for _, user := range InactiveUsers {
+		fmt.Println(user.UserName)
+	}
+
+	fmt.Println(" --------------------  Admin Users -------------------- ")
 	AdminUsers, err := s.GetAdminUserData()
 
 	for _, admin := range AdminUsers {
