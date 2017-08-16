@@ -20,11 +20,15 @@ func main() {
 
 	fmt.Println(" --------------------  Disabled Users -------------------- ")
 	s := NewService(c)
-	InactiveUsers, err := s.GetDisabledUser()
+	disabledUsers, err := s.GetDisabledUser()
 
-	for _, user := range InactiveUsers {
+	for _, user := range disabledUsers {
 		fmt.Println(user.UserName)
 	}
+
+	fmt.Println(" --------------------  Inactive Users -------------------- ")
+	inactiveUsers, err := s.GetInactiveUser()
+	fmt.Println(len(inactiveUsers))
 
 	fmt.Println(" --------------------  Admin Users -------------------- ")
 	AdminUsers, err := s.GetAdminUserData()
@@ -59,6 +63,10 @@ func main() {
 	dayAgo := now.Add(-time.Duration(1) * time.Hour * 24)
 	t := lastpassTime.JsonLastPassTime{now}
 	f := lastpassTime.JsonLastPassTime{dayAgo}
+
+	header := fmt.Sprintf(" -------------------- Events(%v ~ %v) --------------------", f.Format(), t.Format())
+	fmt.Println(header)
+
 	res, err = c.GetEventReport("", "", f, t)
 	if err != nil {
 		fmt.Println(err)
@@ -71,9 +79,6 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-
-	header := fmt.Sprintf(" -------------------- Events(%v ~ %v) --------------------", f.Format(), t.Format())
-	fmt.Println(header)
 	for _, event := range result.Events {
 		if event.IsAuditEvent() {
 			fmt.Println(event)

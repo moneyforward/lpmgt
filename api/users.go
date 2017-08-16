@@ -54,3 +54,12 @@ func (us *Users) GetUsers() []User {
 	}
 	return users
 }
+
+func (us *Users) GetInactiveUsers() (users []User) {
+	for _, user := range us.Users{
+		if user.NeverLoggedIn {
+			users = append(users, user)
+		}
+	}
+	return
+}
