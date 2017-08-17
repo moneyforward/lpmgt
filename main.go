@@ -28,9 +28,14 @@ func main() {
 
 	fmt.Println(" --------------------  Inactive Users -------------------- ")
 	inactiveUsers, err := s.GetInactiveUser()
-	fmt.Println(len(inactiveUsers))
+	inactiveDep := make(map[string][]api.User)
 	for _, u := range inactiveUsers {
-		fmt.Println(u.UserName, u.Groups)
+		for _, group := range u.Groups {
+			inactiveDep[group] = append(inactiveDep[group], u)
+		}
+	}
+	for dep, users := range inactiveDep {
+		fmt.Println(fmt.Sprintf("%v : %v", dep, len(users)))
 	}
 
 	fmt.Println(" --------------------  Admin Users -------------------- ")
@@ -124,37 +129,4 @@ func main() {
 	}
 	close(q)
 	wg.Wait()
-
-	// Move
-
-	//var wgwg sync.WaitGroup
-	//for _, h := range hoge	{
-	//	wgwg.Add(1)
-	//	go func(name string) {
-	//		defer wgwg.Done()
-	//
-	//		_, err = c.ChangeGroupsMembership([]api.BelongingGroup{
-	//			{
-	//				name,
-	//				[]string{"MFクラウドサービス開発本部"},
-	//				[]string{},
-	//			},
-	//
-	//		})
-	//	}(h)
-	//}
-	//wgwg.Wait()
-
-	//_, err = c.ChangeGroupsMembership([]api.BelongingGroup{
-	//	{
-	//		"ikeuchi.kenichi@moneyforward.co.jp",
-	//		[]string{"MFクラウド事業推進本部"},
-	//		[]string{},
-	//	},
-	//
-	//})
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
 }
