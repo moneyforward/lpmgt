@@ -29,6 +29,9 @@ func main() {
 	fmt.Println(" --------------------  Inactive Users -------------------- ")
 	inactiveUsers, err := s.GetInactiveUser()
 	fmt.Println(len(inactiveUsers))
+	for _, u := range inactiveUsers {
+		fmt.Println(u.UserName, u.Groups)
+	}
 
 	fmt.Println(" --------------------  Admin Users -------------------- ")
 	AdminUsers, err := s.GetAdminUserData()
@@ -60,7 +63,7 @@ func main() {
 
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
-	dayAgo := now.Add(-time.Duration(1) * time.Hour * 24)
+	dayAgo := now.Add(-time.Duration(2) * time.Hour * 24)
 	t := lastpassTime.JsonLastPassTime{now}
 	f := lastpassTime.JsonLastPassTime{dayAgo}
 
