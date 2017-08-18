@@ -55,14 +55,14 @@ func doDashboard(c *cli.Context) error {
 	client := NewLastPassClientFromContext(c)
 	s := NewService(client)
 
-	fmt.Println(" --------------------  Disabled Users -------------------- ")
+	fmt.Println("# Disabled Users")
 	disabledUsers, err := s.GetDisabledUser()
 
 	for _, user := range disabledUsers {
 		fmt.Println(user.UserName)
 	}
 
-	fmt.Println(" --------------------  Inactive Users -------------------- ")
+	fmt.Println("# Inactive Users")
 	inactiveUsers, err := s.GetInactiveUser()
 	inactiveDep := make(map[string][]api.User)
 	for _, u := range inactiveUsers {
@@ -74,15 +74,15 @@ func doDashboard(c *cli.Context) error {
 		fmt.Println(fmt.Sprintf("%v : %v", dep, len(users)))
 	}
 
-	fmt.Println(" --------------------  Admin Users -------------------- ")
+	fmt.Println("# Admin Users")
 	AdminUsers, err := s.GetAdminUserData()
-
+	logger.DieIf(err)
 	for _, admin := range AdminUsers {
-		fmt.Println(admin.UserName)
+		PrettyPrintJSON(admin)
 	}
 
 	// Get Shared Folder Data
-	fmt.Println(" --------------------  Super Shared Folders -------------------- ")
+	fmt.Println("# Super Shared Folders")
 	res, err := client.GetSharedFolderData()
 	if err != nil {
 		logger.ErrorIf(err)
@@ -106,7 +106,7 @@ func doDashboard(c *cli.Context) error {
 	t := lastpass_time.JsonLastPassTime{now}
 	f := lastpass_time.JsonLastPassTime{dayAgo}
 
-	header := fmt.Sprintf(" -------------------- Events(%v ~ %v) --------------------", f.Format(), t.Format())
+	header := fmt.Sprintf("# Events(%v ~ %v)", f.Format(), t.Format())
 	fmt.Println(header)
 
 	res, err = client.GetEventReport("", "", f, t)
@@ -133,7 +133,7 @@ func doDashboard(c *cli.Context) error {
 				return
 			}
 			res, err = client.GetEventReport(userName, "", f, t)
-			fmt.Println(fmt.Sprintf(" --------------------------------------  %v Login History ------------------------------- ", userName))
+			fmt.Println(fmt.Sprintf("## %v Login History", userName))
 			if err != nil {
 				fmt.Println(err)
 				return
