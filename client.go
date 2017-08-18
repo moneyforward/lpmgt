@@ -2,21 +2,25 @@ package main
 
 import (
 	"github.com/pkg/errors"
-	"io/ioutil"
 	"lastpass_provisioning/api"
 	"lastpass_provisioning/lastpass_time"
 	"log"
 	"net/http"
 	"net/url"
+	"github.com/urfave/cli"
+	"lastpass_provisioning/logger"
+	"os"
 )
 
-//https://lastpass.com/enterprise_apidoc.php
 type LastpassClient struct {
-	URL              *url.URL
-	HttpClient       *http.Client
-	CompanyId        string
-	ProvisioningHash string
-	Logger           *log.Logger
+	URL        *url.URL
+	HttpClient *http.Client
+	CompanyId  string
+	ApiKey     string
+	Verbose    bool
+	Logger     *log.Logger
+	UserAgent  string
+	Headers    http.Header
 }
 
 type Request struct {
@@ -26,26 +30,67 @@ type Request struct {
 	Data             interface{} `json:"data"`
 }
 
-func NewClient(logger *log.Logger) (*LastpassClient, error) {
-	config := NewConfig()
-	parsedURL, err := url.ParseRequestURI(config.EndPoint)
+func NewLastPassClientFromContext(c *cli.Context) *LastpassClient {
+	confFile := c.GlobalString("config")
+	config, err := LoadConfig(confFile)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse url: %s", config.EndPoint)
+		logger.DieIf(err)
 	}
-
-	var discardLogger = log.New(ioutil.Discard, "", log.LstdFlags)
-	if logger == nil {
-		logger = discardLogger
+	if config.LoadApiKeyFromEnvOrConfig() == "" {
+		err := errors.New(`
+    LASTPASS_APIKEY environment variable is not set. (Try "export LASTPASS_APIKEY='<Your apikey>'")
+`)
+		logger.DieIf(err)
 	}
+	if config.LoadCompanyId() == "" {
+		err := errors.New(`
+    LASTPASS_COMPANY_ID environment variable is not set. (Try "export LASTPASS_COMPANY_ID='<Your lastpass company id>'")
+`)
+		logger.DieIf(err)
+	}
+	client, err := NewClient(config.LoadApiKeyFromEnvOrConfig(), config.LoadEndPointURL(), os.Getenv("DEBUG") != "")
+	logger.DieIf(err)
 
-	return &LastpassClient{
-		URL:              parsedURL,
-		HttpClient:       http.DefaultClient,
-		CompanyId:        config.CompanyId,
-		ProvisioningHash: config.Secret,
-		Logger:           logger,
-	}, err
+	return client
 }
+
+func NewClient(apiKey string, endpointUrl string, verbose bool) (*LastpassClient, error) {
+	parsedURL, err := url.ParseRequestURI(endpointUrl)
+	if err != nil {
+		return nil, err
+	}
+	return &LastpassClient{
+		URL:        parsedURL,
+		HttpClient: http.DefaultClient,
+		ApiKey:     apiKey,
+		Verbose:    verbose,
+		UserAgent:  defaultUserAgent,
+		Headers:    http.Header{},
+		Logger:     logger,
+	}, nil
+}
+
+//func NewClient(logger *log.Logger) (client *LastpassClient, err error) {
+//	config, err := LoadConfig("secret.yaml")
+//	parsedURL, err := url.ParseRequestURI(config.EndPoint)
+//	if err != nil {
+//		client.Logger =logger
+//		return client, errors.Wrapf(err, "failed to parse url: %s", config.EndPoint)
+//	}
+//
+//	var discardLogger = log.New(ioutil.Discard, "", log.LstdFlags)
+//	if logger == nil {
+//		logger = discardLogger
+//	}
+//
+//	return &LastpassClient{
+//		URL:        parsedURL,
+//		HttpClient: http.DefaultClient,
+//		CompanyId:  config.CompanyId,
+//		ApiKey:     config.Secret,
+//		Logger:     logger,
+//	}, err
+//}
 
 /*
 Get Shared Folder Data returns a JSON object containing information on all Shared Folders in the enterprise and the permissions granted to them.
@@ -214,25 +259,30 @@ func (c *LastpassClient) GetAllEventReports() (*http.Response, error) {
 
 // DoRequest
 func (c *LastpassClient) DoRequest(command string, data interface{}) (*http.Response, error) {
-	req := struct {
+	body := struct {
 		CompanyID        string      `json:"cid"`
 		ProvisioningHash string      `json:"provhash"`
 		Command          string      `json:"cmd"`
 		Data             interface{} `json:"data"`
 	}{
 		CompanyID:        c.CompanyId,
-		ProvisioningHash: c.ProvisioningHash,
+		ProvisioningHash: c.ApiKey,
 		Command:          command,
 	}
 
 	if data != nil {
-		req.Data = data
+		body.Data = data
 	}
 
-	r, err := JSONReader(req)
+	r, err := JSONReader(body)
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO Change to req
+	// req, err := http.NewRequest("POST")
+	 // ?client := http.DefaultClient
+	// return c.client.Do(req, c.URL, body)
 
 	return http.Post(c.URL.String(), "application/json; charset=utf-8", r)
 }
