@@ -14,7 +14,7 @@ import (
 	"os"
 )
 
-// Client is a standard client
+// Client is a general client structure.
 type Client struct {
 	URL       *url.URL
 	APIKey    string
@@ -30,17 +30,12 @@ type LastpassClient struct {
 	CompanyID string
 }
 
-type Request struct {
-	CompanyID        string      `json:"cid"`
-	ProvisioningHash string      `json:"provhash"`
-	Command          string      `json:"cmd"`
-	Data             interface{} `json:"data"`
-}
-
 func init() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 }
 
+// NewLastPassClientFromContext creates LastpassClient.
+// This method depends on urfave/cli.
 func NewLastPassClientFromContext(c *cli.Context) *LastpassClient {
 	confFile := c.GlobalString("config")
 	config, err := LoadConfig(confFile)
@@ -69,6 +64,7 @@ func NewLastPassClientFromContext(c *cli.Context) *LastpassClient {
 	}
 }
 
+// NewClient returns a general Client structure.
 func NewClient(apiKey string, endpointURL string, verbose bool) (*Client, error) {
 	parsedURL, err := url.ParseRequestURI(endpointURL)
 	if err != nil {
@@ -250,6 +246,7 @@ func (c *LastpassClient) GetAllEventReports() (*http.Response, error) {
 	return c.DoRequest("reporting", data)
 }
 
+// requestJSON is a general http request in JSON form.
 func (c *Client) requestJSON(method string, path string, payload interface{}) (*http.Response, error) {
 	body, err := JSONReader(payload)
 	if err != nil {
@@ -264,6 +261,7 @@ func (c *Client) requestJSON(method string, path string, payload interface{}) (*
 	return c.ExecRequest(req)
 }
 
+// ExecRequest executes general http request
 func (c *Client) ExecRequest(req *http.Request) (resp *http.Response, err error) {
 	for header, values := range c.Headers {
 		for _, v := range values {
