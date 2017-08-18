@@ -16,7 +16,7 @@ type User struct {
 	NumberOfApplications   float64  `json:"applications,omitempty"`
 	NumberOfAttachments    float64  `json:"attachment,omitempty"`
 	Groups                 []string `json:"groups,omitempty"`
-	Readonly               string   `json:"readonly,omitempty"`       // ShareFolderの設定に利用. BooldでもなくIntでもない...
+	Readonly               string   `json:"readonly,omitempty"`       // ShareFolderの設定に利用. BoolでもなくIntでもない...
 	Give                   string   `json:"give,omitempty"`           // ShareFolderの設定に利用
 	Can_Administer         string   `json:"can_administer,omitempty"` // ShareFolderの設定に利用
 	IsAdmin                bool     `json:"admin,omitempty"`
