@@ -108,7 +108,7 @@ func doDashboard(c *cli.Context) error {
 		logger.ErrorIf(err)
 	}
 	var sharedFolders map[string]api.SharedFolder
-	err = DecodeBody(res, &sharedFolders)
+	err = JSONBodyDecoder(res, &sharedFolders)
 	if err != nil {
 		logger.ErrorIf(err)
 	}
@@ -143,7 +143,7 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	var result api.Events
-	err = DecodeBody(res, &result)
+	err = JSONBodyDecoder(res, &result)
 	if err != nil {
 		logger.ErrorIf(err)
 	}
@@ -166,7 +166,7 @@ func doDashboard(c *cli.Context) error {
 				fmt.Println(err)
 				return
 			}
-			err = DecodeBody(res, &result)
+			err = JSONBodyDecoder(res, &result)
 			if err != nil {
 				fmt.Println(err)
 				return

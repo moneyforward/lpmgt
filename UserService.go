@@ -51,7 +51,7 @@ func (s *UserService) GetInactiveUser() ([]api.User, error) {
 	}
 
 	var AdminUsers api.Users
-	err = DecodeBody(res, &AdminUsers)
+	err = JSONBodyDecoder(res, &AdminUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (s *UserService) GetDisabledUser() ([]api.User, error) {
 	}
 
 	var Users api.Users
-	err = DecodeBody(res, &Users)
+	err = JSONBodyDecoder(res, &Users)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (s *UserService) GetAdminUserData() ([]api.User, error) {
 	}
 
 	var AdminUsers api.Users
-	err = DecodeBody(res, &AdminUsers)
+	err = JSONBodyDecoder(res, &AdminUsers)
 	if err != nil {
 		return nil, err
 	}
