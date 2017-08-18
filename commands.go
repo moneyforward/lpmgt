@@ -109,7 +109,6 @@ func doDashboard(c *cli.Context) error {
 	//	fmt.Println(user.UserName)
 	//}
 
-	//fmt.Println("# Inactive Users")
 	inactiveUsers, err := s.GetInactiveUser()
 	logger.ErrorIf(err)
 	inactiveDep := make(map[string][]api.User)
@@ -119,12 +118,10 @@ func doDashboard(c *cli.Context) error {
 		}
 	}
 	for dep, users := range inactiveDep {
-		//fmt.Println(fmt.Sprintf("%v : %v", dep, len(users)))
 		d.Departments[dep] = users
 	}
 
 	// Get Shared Folder Data
-	//fmt.Println("# Super Shared Folders must be only shared within Admin Users")
 	res, err := client.GetSharedFolderData()
 	logger.ErrorIf(err)
 
@@ -136,29 +133,9 @@ func doDashboard(c *cli.Context) error {
 		if sf.ShareFolderName != "Super-Admins" {
 			break
 		}
-
 		d.Users["super_shared_folder_users"] = sf.Users
-
-		if len(sf.Users) > len(AdminUsers) {
-			//fmt.Println("Some non-admin who joins Super Shared Folders")
-			//PrettyPrintJSON(sf.Users)
-		} else {
-			for _, admin := range AdminUsers {
-				flag := false
-				for _, susers := range sf.Users {
-					if admin.UserName != susers.UserName {
-						flag = true
-					}
-				}
-				if !flag {
-					//fmt.Println("Some one who is non-admin is in Super Shared Folders")
-					//PrettyPrintJSON(sf.Users)
-				}
-			}
-		}
 	}
 
-	//fmt.Println("# Events")
 	res, err = client.GetEventReport("", "", d.From, d.To)
 	logger.ErrorIf(err)
 
@@ -168,10 +145,6 @@ func doDashboard(c *cli.Context) error {
 
 	for _, event := range result.Events {
 		d.Events[event.Username] = result.Events
-
-		if event.IsAuditEvent() {
-			//fmt.Println(event)
-		}
 	}
 
 	GetLoginEvent := func(wg *sync.WaitGroup, q chan string) {
@@ -182,21 +155,11 @@ func doDashboard(c *cli.Context) error {
 				return
 			}
 			res, err = client.GetEventReport(userName, "", d.From, d.To)
-			//fmt.Println(fmt.Sprintf("## %v Login History", userName))
 			logger.ErrorIf(err)
-			//if err != nil {
-			//	fmt.Println(err)
-			//	return
-			//}
+
 			err = JSONBodyDecoder(res, &result)
 			logger.ErrorIf(err)
-			//if err != nil {
-			//	fmt.Println(err)
-			//	return
-			//}
-			//for _, event := range result.Events {
-			//	fmt.Println(event)
-			//}
+
 			d.Events[userName] = result.Events
 		}
 	}
@@ -214,17 +177,22 @@ func doDashboard(c *cli.Context) error {
 	close(q)
 	wg.Wait()
 
+	admins := []string{}
 	out := fmt.Sprintf("# Admin Users And Activities\n")
-	for _, u := range d.Users["admin_users"] {
-		out = out + fmt.Sprintf("## %v: \n", u.UserName)
-		for us, events := range d.Events {
-			if us == u.UserName {
-				for _, event := range events{
-					out = out + fmt.Sprintf("%v\n",event)
+	for _, admin := range d.Users["admin_users"] {
+		out = out + fmt.Sprintf("## %v: \n", admin.UserName)
+		admins = append(admins, admin.UserName)
+		for user, events := range d.Events {
+			if admin.UserName == user {
+				for _, event := range events {
+					out = out + fmt.Sprintf("%v\n", event)
 				}
 			}
 		}
 	}
+
+	out = out + fmt.Sprintf("\n# Audit Events\n")
+
 	out = out + fmt.Sprintf("\n# Disabled Users\n")
 	for _, u := range d.Users["disabled_users"] {
 		out = out + fmt.Sprintf("## %v: \n", u.UserName)
@@ -237,7 +205,6 @@ func doDashboard(c *cli.Context) error {
 		}
 	}
 
-	//PrettyPrintJSON(d.Users)
 	fmt.Println(out)
 	return nil
 }

@@ -60,7 +60,7 @@ func (e *Event) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (e *Event) IsAuditEvent() bool {
+func (e Event) IsAuditEvent() bool {
 	switch e.Action {
 	case "Employee Account Deleted":
 	case "Employee Account Created":
