@@ -10,8 +10,8 @@ import (
 	"github.com/urfave/cli"
 	"lastpass_provisioning/logger"
 	"os"
-	"fmt"
 	"net/http/httputil"
+	"fmt"
 )
 
 type LastpassClient struct {
@@ -30,6 +30,11 @@ type Request struct {
 	ProvisioningHash string      `json:"provhash"`
 	Command          string      `json:"cmd"`
 	Data             interface{} `json:"data"`
+}
+
+
+func init() {
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 }
 
 func NewLastPassClientFromContext(c *cli.Context) *LastpassClient {
@@ -77,27 +82,7 @@ func NewClient(apiKey string, endpointUrl string, verbose bool) (*LastpassClient
 	}, nil
 }
 
-//func NewClient(logger *log.Logger) (client *LastpassClient, err error) {
-//	config, err := LoadConfig("secret.yaml")
-//	parsedURL, err := url.ParseRequestURI(config.EndPoint)
-//	if err != nil {
-//		client.Logger =logger
-//		return client, errors.Wrapf(err, "failed to parse url: %s", config.EndPoint)
-//	}
-//
-//	var discardLogger = log.New(ioutil.Discard, "", log.LstdFlags)
-//	if logger == nil {
-//		logger = discardLogger
-//	}
-//
-//	return &LastpassClient{
-//		URL:        parsedURL,
-//		HttpClient: http.DefaultClient,
-//		CompanyId:  config.CompanyId,
-//		ApiKey:     config.Secret,
-//		Logger:     logger,
-//	}, err
-//}
+
 
 /*
 Get Shared Folder Data returns a JSON object containing information on all Shared Folders in the enterprise and the permissions granted to them.
@@ -264,6 +249,51 @@ func (c *LastpassClient) GetAllEventReports() (*http.Response, error) {
 	return c.DoRequest("reporting", data)
 }
 
+func (c *LastpassClient) requestJSON(method string, path string, payload interface{}) (*http.Response, error) {
+	body, err := JSONReader(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(method, c.URL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Content-Type", "application/json")
+	return c.ExecRequest(req)
+}
+
+func (c *LastpassClient) ExecRequest(req *http.Request) (resp *http.Response, err error) {
+	for header, values := range c.Headers {
+		for _, v := range values {
+			req.Header.Add(header, v)
+		}
+	}
+	req.Header.Set("X-Api-Key", c.ApiKey)
+	req.Header.Set("User-Agent", c.UserAgent)
+
+	if c.Verbose {
+		dump, err := httputil.DumpRequest(req, true)
+		if err == nil {
+			log.Printf("%s", dump)
+		}
+	}
+	resp, err = c.HttpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if c.Verbose {
+		dump, err := httputil.DumpResponse(resp, true)
+		if err == nil {
+			log.Printf("%s", dump)
+		}
+	}
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return resp, fmt.Errorf("API result failed: %s", resp.Status)
+	}
+	return resp, nil
+}
+
 // DoRequest
 func (c *LastpassClient) DoRequest(command string, data interface{}) (*http.Response, error) {
 	body := struct {
@@ -281,21 +311,5 @@ func (c *LastpassClient) DoRequest(command string, data interface{}) (*http.Resp
 		body.Data = data
 	}
 
-	r, err := JSONReader(body)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO Change to req
-	// req, err := http.NewRequest("POST")
-	// ?client := http.DefaultClient
-	// return c.client.Do(req, c.URL, body)
-	//if c.Verbose {
-	//	dump, err := httputil.DumpRequest(req, true)
-	//	if err == nil {
-	//		log.Printf("%s", dump)
-	//	}
-	//}
-
-	return http.Post(c.URL.String(), "application/json; charset=utf-8", r)
+	return c.requestJSON(http.MethodPost, "", body)
 }
