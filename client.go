@@ -10,6 +10,8 @@ import (
 	"github.com/urfave/cli"
 	"lastpass_provisioning/logger"
 	"os"
+	"fmt"
+	"net/http/httputil"
 )
 
 type LastpassClient struct {
@@ -51,6 +53,11 @@ func NewLastPassClientFromContext(c *cli.Context) *LastpassClient {
 	client, err := NewClient(config.LoadApiKeyFromEnvOrConfig(), config.LoadEndPointURL(), os.Getenv("DEBUG") != "")
 	logger.DieIf(err)
 
+	// CompanyID is a parameter only required by LastPass
+	// I am planning to separate general Client class later,
+	// so I will not put Company ID in NewClient argument.
+	client.CompanyId = config.LoadCompanyId()
+
 	return client
 }
 
@@ -66,7 +73,7 @@ func NewClient(apiKey string, endpointUrl string, verbose bool) (*LastpassClient
 		Verbose:    verbose,
 		UserAgent:  defaultUserAgent,
 		Headers:    http.Header{},
-		Logger:     logger,
+		Logger:     nil,
 	}, nil
 }
 
@@ -281,8 +288,14 @@ func (c *LastpassClient) DoRequest(command string, data interface{}) (*http.Resp
 
 	// TODO Change to req
 	// req, err := http.NewRequest("POST")
-	 // ?client := http.DefaultClient
+	// ?client := http.DefaultClient
 	// return c.client.Do(req, c.URL, body)
+	//if c.Verbose {
+	//	dump, err := httputil.DumpRequest(req, true)
+	//	if err == nil {
+	//		log.Printf("%s", dump)
+	//	}
+	//}
 
 	return http.Post(c.URL.String(), "application/json; charset=utf-8", r)
 }

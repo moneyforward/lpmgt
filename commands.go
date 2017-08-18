@@ -50,9 +50,6 @@ var commandDashboards = cli.Command{
 }
 
 func doDashboard(c *cli.Context) error {
-	//client
-	conf := c.GlobalString("conf")
-	fmt.Println(conf)
 	client := NewLastPassClientFromContext(c)
 	s := NewService(client)
 

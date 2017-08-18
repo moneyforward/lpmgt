@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/urfave/cli"
+	"os"
 )
 
 // TODO Security Score
@@ -22,6 +23,7 @@ func main() {
 		},
 	}
 	app.Commands = Commands
+	app.Run(os.Args)
 
 	// Client作成
 	//c, err := NewClient(nil)
