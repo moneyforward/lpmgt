@@ -38,29 +38,32 @@ func init() {
 // This method depends on urfave/cli.
 func NewLastPassClientFromContext(c *cli.Context) *LastpassClient {
 	confFile := c.GlobalString("config")
-	config, err := LoadConfig(confFile)
-	if err != nil {
-		logger.DieIf(err)
-	}
-	if config.LoadAPIKeyFromEnvOrConfig() == "" {
+	apiKey := LoadAPIKeyFromEnvOrConfig(confFile)
+	companyID := LoadCompanyIDFromEnvOrConfig(confFile)
+	endPointURL := LoadEndPointURL(confFile)
+
+	if apiKey == "" {
 		err := errors.New(`
     LASTPASS_APIKEY environment variable is not set. (Try "export LASTPASS_APIKEY='<Your apikey>'")
 `)
 		logger.DieIf(err)
 	}
-	if config.LoadCompanyID() == "" {
+	if companyID == "" {
 		err := errors.New(`
     LASTPASS_COMPANY_ID environment variable is not set. (Try "export LASTPASS_COMPANY_ID='<Your lastpass company id>'")
 `)
 		logger.DieIf(err)
 	}
+	if endPointURL == "" {
+		endPointURL = defaultBaseURL
+	}
 
-	client, err := NewClient(config.LoadAPIKeyFromEnvOrConfig(), config.LoadEndPointURL(), os.Getenv("DEBUG") != "")
+	client, err := NewClient(apiKey, endPointURL, os.Getenv("DEBUG") != "")
 	logger.DieIf(err)
 
 	return &LastpassClient{
 		Client:    client,
-		CompanyID: config.LoadCompanyID(),
+		CompanyID: companyID,
 	}
 }
 

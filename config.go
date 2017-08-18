@@ -15,7 +15,7 @@ type LastPassConfig struct {
 }
 
 const (
-	defaultBaseURL   = "https://lastpass.com/enterprise_apidoc.php"
+	defaultBaseURL   = "https://lastpass.com/enterpriseapi.php"
 	defaultUserAgent = "lastpass-client-go"
 )
 
@@ -39,23 +39,35 @@ func LoadConfig(configFile string) (*LastPassConfig, error) {
 }
 
 // LoadEndPointURL returns endpoint url
-func (config *LastPassConfig) LoadEndPointURL() string {
+func LoadEndPointURL(configFile string) string {
+	config, err := LoadConfig(configFile)
+	if err != nil {
+		return ""
+	}
 	return config.EndPoint
 }
 
 // LoadAPIKeyFromEnvOrConfig returns API Key from either Env or LastPassConfig file
 // If Env `LASTPASS_APIKEY` exists, that will be prioritized.
-func (config *LastPassConfig) LoadAPIKeyFromEnvOrConfig() string {
+func LoadAPIKeyFromEnvOrConfig(configFile string) string {
 	if secret := os.Getenv("LASTPASS_APIKEY"); secret != "" {
 		return secret
+	}
+	config, err := LoadConfig(configFile)
+	if err != nil {
+		return ""
 	}
 	return config.Secret
 }
 
 // LoadCompanyID returns Company ID provided by Lastpass.
-func (config *LastPassConfig) LoadCompanyID() string {
+func LoadCompanyIDFromEnvOrConfig(configFile string) string {
 	if id := os.Getenv("LASTPASS_COMPANY_ID"); id != "" {
 		return id
+	}
+	config, err := LoadConfig(configFile)
+	if err != nil {
+		return ""
 	}
 	return config.CompanyID
 }
