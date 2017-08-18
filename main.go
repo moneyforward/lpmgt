@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/urfave/cli"
 	"os"
 )
@@ -9,7 +8,7 @@ import (
 func main() {
 	app := cli.NewApp()
 	app.Name = "lastpass"
-	app.Version = fmt.Sprintf("%s (rev:%s)", version, gitcommit)
+	app.Version = version
 	app.Usage = "A CLI tool for Lastpass(Enterprise)"
 	app.Author = "Money Forward Co., Ltd."
 	app.Flags = []cli.Flag{
