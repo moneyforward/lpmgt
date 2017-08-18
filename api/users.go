@@ -48,7 +48,7 @@ func (u *User) Contains(users []string) bool {
 }
 
 func (us *Users) GetUsers() []User {
-	var users []User
+	users := []User{}
 	for _, user := range us.Users {
 		users = append(users, user)
 	}

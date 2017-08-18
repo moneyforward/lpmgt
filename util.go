@@ -8,7 +8,6 @@ import (
 	"lastpass_provisioning/logger"
 	"net/http"
 	"os"
-	"strings"
 )
 
 // JSONBodyDecoder reads the next JSON-encoded value from its
@@ -38,10 +37,5 @@ func PrettyPrintJSON(src interface{}) {
 func JSONMarshalIndent(src interface{}, prefix, indent string) string {
 	dataRaw, err := json.MarshalIndent(src, prefix, indent)
 	logger.DieIf(err)
-	return replaceAngleBrackets(string(dataRaw))
-}
-
-func replaceAngleBrackets(s string) string {
-	s = strings.Replace(s, "\\u003c", "<", -1)
-	return strings.Replace(s, "\\u003e", ">", -1)
+	return string(dataRaw)
 }

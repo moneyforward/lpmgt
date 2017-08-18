@@ -55,6 +55,14 @@ var commandDashboards = cli.Command{
 	},
 }
 
+type DashBoard struct {
+	From   lastpass_time.JsonLastPassTime `json:"from"`
+	To     lastpass_time.JsonLastPassTime `json:"to"`
+	Users  map[string][]api.User	`json:"users"`
+	Departments map[string][]api.User		`json:"department"`
+	Events map[string][]api.Event	`json:"events"`
+}
+
 // TODO refactor,
 func doDashboard(c *cli.Context) error {
 	if c.Bool("verbose") {
@@ -66,26 +74,44 @@ func doDashboard(c *cli.Context) error {
 		durationToAuditInDay = c.Int("duration")
 	}
 
+	d := &DashBoard{
+		Users: make(map[string][]api.User),
+		Departments: make(map[string][]api.User),
+		Events: make(map[string][]api.Event),
+	}
+
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
 	dayAgo := now.Add(-time.Duration(durationToAuditInDay) * time.Hour * 24)
-	t := lastpass_time.JsonLastPassTime{JsonTime: now}
-	f := lastpass_time.JsonLastPassTime{JsonTime: dayAgo}
-	fmt.Println(
-		fmt.Sprintf("----------------- Audits(%v ~ %v) -----------------", f.Format(), t.Format()))
+	//t := lastpass_time.JsonLastPassTime{JsonTime: now}
+	//f := lastpass_time.JsonLastPassTime{JsonTime: dayAgo}
+	d.From = lastpass_time.JsonLastPassTime{JsonTime: dayAgo}
+	d.To = lastpass_time.JsonLastPassTime{JsonTime: now}
+
+	//fmt.Println(
+	//	fmt.Sprintf("----------------- Audits(%v ~ %v) -----------------", f.Format(), t.Format()))
 
 	client := NewLastPassClientFromContext(c)
 	s := NewService(client)
 
-	fmt.Println("# Disabled Users")
+	//fmt.Println("# Admin Users")
+	AdminUsers, err := s.GetAdminUserData()
+	logger.ErrorIf(err)
+	d.Users["admin_users"] = AdminUsers
+	//PrettyPrintJSON(AdminUsers)
+
+	//fmt.Println("# Disabled Users")
 	disabledUsers, err := s.GetDisabledUser()
+	logger.DieIf(err)
 
-	for _, user := range disabledUsers {
-		fmt.Println(user.UserName)
-	}
+	d.Users["disabled_users"] = disabledUsers
+	//for _, user := range disabledUsers {
+	//	fmt.Println(user.UserName)
+	//}
 
-	fmt.Println("# Inactive Users")
+	//fmt.Println("# Inactive Users")
 	inactiveUsers, err := s.GetInactiveUser()
+	logger.ErrorIf(err)
 	inactiveDep := make(map[string][]api.User)
 	for _, u := range inactiveUsers {
 		for _, group := range u.Groups {
@@ -93,33 +119,29 @@ func doDashboard(c *cli.Context) error {
 		}
 	}
 	for dep, users := range inactiveDep {
-		fmt.Println(fmt.Sprintf("%v : %v", dep, len(users)))
+		//fmt.Println(fmt.Sprintf("%v : %v", dep, len(users)))
+		d.Departments[dep] = users
 	}
-
-	fmt.Println("# Admin Users")
-	AdminUsers, err := s.GetAdminUserData()
-	logger.DieIf(err)
-	PrettyPrintJSON(AdminUsers)
 
 	// Get Shared Folder Data
-	fmt.Println("# Super Shared Folders must be only shared within Admin Users")
+	//fmt.Println("# Super Shared Folders must be only shared within Admin Users")
 	res, err := client.GetSharedFolderData()
-	if err != nil {
-		logger.ErrorIf(err)
-	}
+	logger.ErrorIf(err)
+
 	var sharedFolders map[string]api.SharedFolder
 	err = JSONBodyDecoder(res, &sharedFolders)
-	if err != nil {
-		logger.ErrorIf(err)
-	}
+	logger.ErrorIf(err)
+
 	for _, sf := range sharedFolders {
 		if sf.ShareFolderName != "Super-Admins" {
 			break
 		}
 
+		d.Users["super_shared_folder_users"] = sf.Users
+
 		if len(sf.Users) > len(AdminUsers) {
-			fmt.Println("Some non-admin who joins Super Shared Folders")
-			PrettyPrintJSON(sf.Users)
+			//fmt.Println("Some non-admin who joins Super Shared Folders")
+			//PrettyPrintJSON(sf.Users)
 		} else {
 			for _, admin := range AdminUsers {
 				flag := false
@@ -129,27 +151,26 @@ func doDashboard(c *cli.Context) error {
 					}
 				}
 				if !flag {
-					fmt.Println("Some one who is non-admin is in Super Shared Folders")
-					PrettyPrintJSON(sf.Users)
+					//fmt.Println("Some one who is non-admin is in Super Shared Folders")
+					//PrettyPrintJSON(sf.Users)
 				}
 			}
 		}
 	}
 
-	fmt.Println("# Events")
-	res, err = client.GetEventReport("", "", f, t)
-	if err != nil {
-		logger.ErrorIf(err)
-	}
+	//fmt.Println("# Events")
+	res, err = client.GetEventReport("", "", d.From, d.To)
+	logger.ErrorIf(err)
 
 	var result api.Events
 	err = JSONBodyDecoder(res, &result)
-	if err != nil {
-		logger.ErrorIf(err)
-	}
+	logger.ErrorIf(err)
+
 	for _, event := range result.Events {
+		d.Events[event.Username] = result.Events
+
 		if event.IsAuditEvent() {
-			fmt.Println(event)
+			//fmt.Println(event)
 		}
 	}
 
@@ -160,20 +181,23 @@ func doDashboard(c *cli.Context) error {
 			if !ok {
 				return
 			}
-			res, err = client.GetEventReport(userName, "", f, t)
-			fmt.Println(fmt.Sprintf("## %v Login History", userName))
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
+			res, err = client.GetEventReport(userName, "", d.From, d.To)
+			//fmt.Println(fmt.Sprintf("## %v Login History", userName))
+			logger.ErrorIf(err)
+			//if err != nil {
+			//	fmt.Println(err)
+			//	return
+			//}
 			err = JSONBodyDecoder(res, &result)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			for _, event := range result.Events {
-				fmt.Println(event)
-			}
+			logger.ErrorIf(err)
+			//if err != nil {
+			//	fmt.Println(err)
+			//	return
+			//}
+			//for _, event := range result.Events {
+			//	fmt.Println(event)
+			//}
+			d.Events[userName] = result.Events
 		}
 	}
 
@@ -189,5 +213,31 @@ func doDashboard(c *cli.Context) error {
 	}
 	close(q)
 	wg.Wait()
+
+	out := fmt.Sprintf("# Admin Users And Activities\n")
+	for _, u := range d.Users["admin_users"] {
+		out = out + fmt.Sprintf("## %v: \n", u.UserName)
+		for us, events := range d.Events {
+			if us == u.UserName {
+				for _, event := range events{
+					out = out + fmt.Sprintf("%v\n",event)
+				}
+			}
+		}
+	}
+	out = out + fmt.Sprintf("\n# Disabled Users\n")
+	for _, u := range d.Users["disabled_users"] {
+		out = out + fmt.Sprintf("## %v: \n", u.UserName)
+	}
+	out = out + fmt.Sprintf("\n# Inactive Users")
+	for dep, us := range d.Departments {
+		out = out + fmt.Sprintf("\n## %v: %v\n", dep, len(us))
+		for _, u := range us {
+			out = out + fmt.Sprintf(u.UserName + ", ")
+		}
+	}
+
+	//PrettyPrintJSON(d.Users)
+	fmt.Println(out)
 	return nil
 }
