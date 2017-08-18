@@ -16,9 +16,9 @@ import (
 
 type LastpassClient struct {
 	URL        *url.URL
-	HttpClient *http.Client
-	CompanyId  string
-	ApiKey     string
+	HTTPClient *http.Client
+	CompanyID  string
+	APIKey     string
 	Verbose    bool
 	Logger     *log.Logger
 	UserAgent  string
@@ -42,38 +42,38 @@ func NewLastPassClientFromContext(c *cli.Context) *LastpassClient {
 	if err != nil {
 		logger.DieIf(err)
 	}
-	if config.LoadApiKeyFromEnvOrConfig() == "" {
+	if config.LoadAPIKeyFromEnvOrConfig() == "" {
 		err := errors.New(`
     LASTPASS_APIKEY environment variable is not set. (Try "export LASTPASS_APIKEY='<Your apikey>'")
 `)
 		logger.DieIf(err)
 	}
-	if config.LoadCompanyId() == "" {
+	if config.LoadCompanyID() == "" {
 		err := errors.New(`
     LASTPASS_COMPANY_ID environment variable is not set. (Try "export LASTPASS_COMPANY_ID='<Your lastpass company id>'")
 `)
 		logger.DieIf(err)
 	}
-	client, err := NewClient(config.LoadApiKeyFromEnvOrConfig(), config.LoadEndPointURL(), os.Getenv("DEBUG") != "")
+	client, err := NewClient(config.LoadAPIKeyFromEnvOrConfig(), config.LoadEndPointURL(), os.Getenv("DEBUG") != "")
 	logger.DieIf(err)
 
 	// CompanyID is a parameter only required by LastPass
 	// I am planning to separate general Client class later,
 	// so I will not put Company ID in NewClient argument.
-	client.CompanyId = config.LoadCompanyId()
+	client.CompanyID = config.LoadCompanyID()
 
 	return client
 }
 
-func NewClient(apiKey string, endpointUrl string, verbose bool) (*LastpassClient, error) {
-	parsedURL, err := url.ParseRequestURI(endpointUrl)
+func NewClient(apiKey string, endpointURL string, verbose bool) (*LastpassClient, error) {
+	parsedURL, err := url.ParseRequestURI(endpointURL)
 	if err != nil {
 		return nil, err
 	}
 	return &LastpassClient{
 		URL:        parsedURL,
-		HttpClient: http.DefaultClient,
-		ApiKey:     apiKey,
+		HTTPClient: http.DefaultClient,
+		APIKey:     apiKey,
 		Verbose:    verbose,
 		UserAgent:  defaultUserAgent,
 		Headers:    http.Header{},
@@ -82,7 +82,7 @@ func NewClient(apiKey string, endpointUrl string, verbose bool) (*LastpassClient
 }
 
 /*
-Get Shared Folder Data returns a JSON object containing information on all Shared Folders in the enterprise and the permissions granted to them.
+GetSharedFolderData returns a JSON object containing information on all Shared Folders in the enterprise and the permissions granted to them.
 # Request
 {
 	"cid": "8771312",
@@ -116,8 +116,8 @@ func (c *LastpassClient) GetSharedFolderData() (*http.Response, error) {
 	return c.DoRequest("getsfdata", nil)
 }
 
-/* Batch Change Group (cmd = batchchangegrp)
-group membership manipulation
+// ChangeGroupsMembership changes Group in batch(cmd = batchchangegrp)
+/*
 # Request
 
   {
@@ -157,9 +157,8 @@ func (c *LastpassClient) ChangeGroupsMembership(groups []api.BelongingGroup) (*h
 	return c.DoRequest("batchchangegrp", groups)
 }
 
-/*
-Get information on users enterprise.
-# Request
+// GetUserData gets information on users enterprise.
+/*Request
   {
     "cid": "8771312",
     "provhash": "<Your API secret>",
@@ -212,17 +211,18 @@ func (c *LastpassClient) GetUserData(user string) (*http.Response, error) {
 	return c.DoRequest("getuserdata", api.User{UserName: user})
 }
 
-// DisableMultifactor
+// DisableMultifactor disables multifactor setting of user
 func (c *LastpassClient) DisableMultifactor(user string) (*http.Response, error) {
 	return c.DoRequest("disablemultifactor", api.User{UserName: user})
 }
 
-// ResetPassword
+// ResetPassword reset password for the user
 func (c *LastpassClient) ResetPassword(user string) (*http.Response, error) {
 	return c.DoRequest("resetpassword", api.User{UserName: user})
 }
 
-// GetEventReport
+// GetEventReport fetches event of an user in certain period of time.
+// Filtering is also available by setting search string.
 func (c *LastpassClient) GetEventReport(user, search string, from, to lastpass_time.JsonLastPassTime) (*http.Response, error) {
 	data := struct {
 		From   lastpass_time.JsonLastPassTime `json:"from"`
@@ -234,7 +234,8 @@ func (c *LastpassClient) GetEventReport(user, search string, from, to lastpass_t
 	return c.DoRequest("reporting", data)
 }
 
-// GetAllEventReports
+// GetAllEventReports fetches event of all users in certain period of time.
+// Filtering is also available by setting search string.
 func (c *LastpassClient) GetAllEventReports() (*http.Response, error) {
 	data := struct {
 		From   lastpass_time.JsonLastPassTime `json:"from"`
@@ -266,7 +267,7 @@ func (c *LastpassClient) ExecRequest(req *http.Request) (resp *http.Response, er
 			req.Header.Add(header, v)
 		}
 	}
-	req.Header.Set("X-Api-Key", c.ApiKey)
+	req.Header.Set("X-Api-Key", c.APIKey)
 	req.Header.Set("User-Agent", c.UserAgent)
 
 	if c.Verbose {
@@ -275,7 +276,7 @@ func (c *LastpassClient) ExecRequest(req *http.Request) (resp *http.Response, er
 			log.Printf("%s", dump)
 		}
 	}
-	resp, err = c.HttpClient.Do(req)
+	resp, err = c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +292,7 @@ func (c *LastpassClient) ExecRequest(req *http.Request) (resp *http.Response, er
 	return resp, nil
 }
 
-// DoRequest
+// DoRequest executes LastPass specific request in JSON format and returns http Response
 func (c *LastpassClient) DoRequest(command string, data interface{}) (*http.Response, error) {
 	body := struct {
 		CompanyID        string      `json:"cid"`
@@ -299,8 +300,8 @@ func (c *LastpassClient) DoRequest(command string, data interface{}) (*http.Resp
 		Command          string      `json:"cmd"`
 		Data             interface{} `json:"data"`
 	}{
-		CompanyID:        c.CompanyId,
-		ProvisioningHash: c.ApiKey,
+		CompanyID:        c.CompanyID,
+		ProvisioningHash: c.APIKey,
 		Command:          command,
 	}
 

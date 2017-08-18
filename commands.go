@@ -103,8 +103,8 @@ func doDashboard(c *cli.Context) error {
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
 	dayAgo := now.Add(-time.Duration(2) * time.Hour * 24)
-	t := lastpass_time.JsonLastPassTime{now}
-	f := lastpass_time.JsonLastPassTime{dayAgo}
+	t := lastpass_time.JsonLastPassTime{JsonTime: now}
+	f := lastpass_time.JsonLastPassTime{JsonTime: dayAgo}
 
 	header := fmt.Sprintf("# Events(%v ~ %v)", f.Format(), t.Format())
 	fmt.Println(header)

@@ -7,7 +7,7 @@ import (
 )
 
 type Config struct {
-	CompanyId string `yaml:"company_id"`
+	CompanyID string `yaml:"company_id"`
 	EndPoint  string `yaml:"end_point_url"`
 	Secret    string `yaml:"secret"` // API Key
 	ConfFile  string
@@ -40,16 +40,16 @@ func (config *Config) LoadEndPointURL() string {
 	return config.EndPoint
 }
 
-func (config *Config) LoadApiKeyFromEnvOrConfig() string {
+func (config *Config) LoadAPIKeyFromEnvOrConfig() string {
 	if secret := os.Getenv("LASTPASS_APIKEY"); secret != "" {
 		return secret
 	}
 	return config.Secret
 }
 
-func (config *Config) LoadCompanyId() string {
+func (config *Config) LoadCompanyID() string {
 	if id := os.Getenv("LASTPASS_COMPANY_ID"); id != "" {
 		return id
 	}
-	return config.CompanyId
+	return config.CompanyID
 }

@@ -11,7 +11,8 @@ import (
 	"strings"
 )
 
-// DecodeBody
+// DecodeBody reads the next JSON-encoded value from its
+// input and stores it in the value pointed to by out.
 func DecodeBody(resp *http.Response, out interface{}) error {
 	defer resp.Body.Close()
 	return json.NewDecoder(resp.Body).Decode(out)
