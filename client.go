@@ -14,15 +14,20 @@ import (
 	"os"
 )
 
+// Client is a standard client
+type Client struct {
+	URL       *url.URL
+	APIKey    string
+	Verbose   bool
+	UserAgent string
+	Logger    *log.Logger
+	Headers   http.Header
+}
+
+// LastpassClient is a Client that
 type LastpassClient struct {
-	URL        *url.URL
-	HTTPClient *http.Client
-	CompanyID  string
-	APIKey     string
-	Verbose    bool
-	Logger     *log.Logger
-	UserAgent  string
-	Headers    http.Header
+	Client    *Client
+	CompanyID string
 }
 
 type Request struct {
@@ -54,30 +59,28 @@ func NewLastPassClientFromContext(c *cli.Context) *LastpassClient {
 `)
 		logger.DieIf(err)
 	}
+
 	client, err := NewClient(config.LoadAPIKeyFromEnvOrConfig(), config.LoadEndPointURL(), os.Getenv("DEBUG") != "")
 	logger.DieIf(err)
 
-	// CompanyID is a parameter only required by LastPass
-	// I am planning to separate general Client class later,
-	// so I will not put Company ID in NewClient argument.
-	client.CompanyID = config.LoadCompanyID()
-
-	return client
+	return &LastpassClient{
+		Client:    client,
+		CompanyID: config.LoadCompanyID(),
+	}
 }
 
-func NewClient(apiKey string, endpointURL string, verbose bool) (*LastpassClient, error) {
+func NewClient(apiKey string, endpointURL string, verbose bool) (*Client, error) {
 	parsedURL, err := url.ParseRequestURI(endpointURL)
 	if err != nil {
 		return nil, err
 	}
-	return &LastpassClient{
-		URL:        parsedURL,
-		HTTPClient: http.DefaultClient,
-		APIKey:     apiKey,
-		Verbose:    verbose,
-		UserAgent:  defaultUserAgent,
-		Headers:    http.Header{},
-		Logger:     nil,
+	return &Client{
+		URL:       parsedURL,
+		APIKey:    apiKey,
+		Verbose:   verbose,
+		UserAgent: defaultUserAgent,
+		Headers:   http.Header{},
+		Logger:    nil,
 	}, nil
 }
 
@@ -247,7 +250,7 @@ func (c *LastpassClient) GetAllEventReports() (*http.Response, error) {
 	return c.DoRequest("reporting", data)
 }
 
-func (c *LastpassClient) requestJSON(method string, path string, payload interface{}) (*http.Response, error) {
+func (c *Client) requestJSON(method string, path string, payload interface{}) (*http.Response, error) {
 	body, err := JSONReader(payload)
 	if err != nil {
 		return nil, err
@@ -261,7 +264,7 @@ func (c *LastpassClient) requestJSON(method string, path string, payload interfa
 	return c.ExecRequest(req)
 }
 
-func (c *LastpassClient) ExecRequest(req *http.Request) (resp *http.Response, err error) {
+func (c *Client) ExecRequest(req *http.Request) (resp *http.Response, err error) {
 	for header, values := range c.Headers {
 		for _, v := range values {
 			req.Header.Add(header, v)
@@ -276,7 +279,7 @@ func (c *LastpassClient) ExecRequest(req *http.Request) (resp *http.Response, er
 			log.Printf("%s", dump)
 		}
 	}
-	resp, err = c.HTTPClient.Do(req)
+	resp, err = http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +304,7 @@ func (c *LastpassClient) DoRequest(command string, data interface{}) (*http.Resp
 		Data             interface{} `json:"data"`
 	}{
 		CompanyID:        c.CompanyID,
-		ProvisioningHash: c.APIKey,
+		ProvisioningHash: c.Client.APIKey,
 		Command:          command,
 	}
 
@@ -309,5 +312,5 @@ func (c *LastpassClient) DoRequest(command string, data interface{}) (*http.Resp
 		body.Data = data
 	}
 
-	return c.requestJSON(http.MethodPost, "", body)
+	return c.Client.requestJSON(http.MethodPost, "", body)
 }

@@ -18,6 +18,7 @@ func DecodeBody(resp *http.Response, out interface{}) error {
 	return json.NewDecoder(resp.Body).Decode(out)
 }
 
+// JSONReader reads the value and converts it to JSON-encoded value
 func JSONReader(v interface{}) (io.Reader, error) {
 	buf := new(bytes.Buffer)
 	err := json.NewEncoder(buf).Encode(v)
