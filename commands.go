@@ -55,6 +55,7 @@ var commandDashboards = cli.Command{
 	},
 }
 
+// TODO refactor,
 func doDashboard(c *cli.Context) error {
 	if c.Bool("verbose") {
 		os.Setenv("DEBUG", "1")
@@ -98,12 +99,10 @@ func doDashboard(c *cli.Context) error {
 	fmt.Println("# Admin Users")
 	AdminUsers, err := s.GetAdminUserData()
 	logger.DieIf(err)
-	for _, admin := range AdminUsers {
-		PrettyPrintJSON(admin)
-	}
+	PrettyPrintJSON(AdminUsers)
 
 	// Get Shared Folder Data
-	fmt.Println("# Super Shared Folders")
+	fmt.Println("# Super Shared Folders must be only shared within Admin Users")
 	res, err := client.GetSharedFolderData()
 	if err != nil {
 		logger.ErrorIf(err)
@@ -114,9 +113,25 @@ func doDashboard(c *cli.Context) error {
 		logger.ErrorIf(err)
 	}
 	for _, sf := range sharedFolders {
-		if sf.ShareFolderName == "Super-Admins" {
-			for _, user := range sf.Users {
-				fmt.Println(sf.ShareFolderName + " : " + user.UserName)
+		if sf.ShareFolderName != "Super-Admins" {
+			break
+		}
+
+		if len(sf.Users) > len(AdminUsers) {
+			fmt.Println("Some non-admin who joins Super Shared Folders")
+			PrettyPrintJSON(sf.Users)
+		} else {
+			for _, admin := range AdminUsers {
+				flag := false
+				for _, susers := range sf.Users {
+					if admin.UserName != susers.UserName {
+						flag = true
+					}
+				}
+				if !flag {
+					fmt.Println("Some one who is non-admin is in Super Shared Folders")
+					PrettyPrintJSON(sf.Users)
+				}
 			}
 		}
 	}
