@@ -1,17 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
+	"github.com/urfave/cli"
 	"lastpass_provisioning/api"
 	"lastpass_provisioning/lastpass_time"
+	"lastpass_provisioning/logger"
 	"log"
 	"net/http"
-	"net/url"
-	"github.com/urfave/cli"
-	"lastpass_provisioning/logger"
-	"os"
 	"net/http/httputil"
-	"fmt"
+	"net/url"
+	"os"
 )
 
 type LastpassClient struct {
@@ -31,7 +31,6 @@ type Request struct {
 	Command          string      `json:"cmd"`
 	Data             interface{} `json:"data"`
 }
-
 
 func init() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
@@ -81,8 +80,6 @@ func NewClient(apiKey string, endpointUrl string, verbose bool) (*LastpassClient
 		Logger:     nil,
 	}, nil
 }
-
-
 
 /*
 Get Shared Folder Data returns a JSON object containing information on all Shared Folders in the enterprise and the permissions granted to them.

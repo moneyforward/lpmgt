@@ -42,7 +42,7 @@ func (s *UserService) DeleteUser(name string, mode DeactivationMode) error {
 	return err
 }
 
-func (s *UserService) GetInactiveUser() ([]api.User, error)  {
+func (s *UserService) GetInactiveUser() ([]api.User, error) {
 	s.command = "getuserdata"
 	s.data = api.User{IsAdmin: false}
 	res, err := s.DoRequest()

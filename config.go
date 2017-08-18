@@ -9,12 +9,12 @@ import (
 type Config struct {
 	CompanyId string `yaml:"company_id"`
 	EndPoint  string `yaml:"end_point_url"`
-	Secret    string `yaml:"secret"`	// API Key
+	Secret    string `yaml:"secret"` // API Key
 	ConfFile  string
 }
 
 const (
-	defaultBaseURL ="https://lastpass.com/enterprise_apidoc.php"
+	defaultBaseURL   = "https://lastpass.com/enterprise_apidoc.php"
 	defaultUserAgent = "lastpass-client-go"
 )
 

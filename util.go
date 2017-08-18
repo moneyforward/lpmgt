@@ -3,12 +3,12 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"io"
-	"net/http"
 	"fmt"
+	"io"
+	"lastpass_provisioning/logger"
+	"net/http"
 	"os"
 	"strings"
-	"lastpass_provisioning/logger"
 )
 
 // DecodeBody

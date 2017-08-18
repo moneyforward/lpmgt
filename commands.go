@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/urfave/cli"
 	"fmt"
-	"lastpass_provisioning/logger"
-	"time"
-	"sync"
+	"github.com/urfave/cli"
 	"lastpass_provisioning/api"
 	"lastpass_provisioning/lastpass_time"
+	"lastpass_provisioning/logger"
+	"sync"
+	"time"
 )
 
 func init() {
@@ -43,12 +43,12 @@ var Commands = []cli.Command{
 }
 
 var commandDashboards = cli.Command{
-	Name:	"dashboard",
-	Usage:  "Report summary",
-	ArgsUsage: "",
+	Name:        "dashboard",
+	Usage:       "Report summary",
+	ArgsUsage:   "",
 	Description: `show audit related dashboard`,
-	Action: doDashboard,
-	Flags: []cli.Flag{},
+	Action:      doDashboard,
+	Flags:       []cli.Flag{},
 }
 
 func doDashboard(c *cli.Context) error {
