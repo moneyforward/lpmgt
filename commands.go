@@ -8,6 +8,7 @@ import (
 	"lastpass_provisioning/logger"
 	"sync"
 	"time"
+	"os"
 )
 
 func init() {
@@ -45,13 +46,33 @@ var Commands = []cli.Command{
 var commandDashboards = cli.Command{
 	Name:        "dashboard",
 	Usage:       "Report summary",
-	ArgsUsage:   "",
+	ArgsUsage:   "[--verbose | -v] [--period | -d <duration>]",
 	Description: `show audit related dashboard`,
 	Action:      doDashboard,
-	Flags:       []cli.Flag{},
+	Flags:       []cli.Flag{
+		cli.IntFlag{Name:  "duration, d", Usage: "Audits for past <duration> day"},
+		cli.BoolFlag{Name: "verbose, v", Usage: "Verbose output mode"},
+	},
 }
 
 func doDashboard(c *cli.Context) error {
+	if c.Bool("verbose") {
+		os.Setenv("DEBUG", "1")
+	}
+
+	durationToAuditInDay := 1
+	if c.Int("duration") >= 1 {
+		durationToAuditInDay = c.Int("duration")
+	}
+
+	loc, _ := time.LoadLocation("Asia/Tokyo")
+	now := time.Now().In(loc)
+	dayAgo := now.Add(-time.Duration(durationToAuditInDay) * time.Hour * 24)
+	t := lastpass_time.JsonLastPassTime{JsonTime: now}
+	f := lastpass_time.JsonLastPassTime{JsonTime: dayAgo}
+	fmt.Println(
+		fmt.Sprintf("----------------- Audits(%v ~ %v) -----------------", f.Format(), t.Format()))
+
 	client := NewLastPassClientFromContext(c)
 	s := NewService(client)
 
@@ -100,15 +121,7 @@ func doDashboard(c *cli.Context) error {
 		}
 	}
 
-	loc, _ := time.LoadLocation("Asia/Tokyo")
-	now := time.Now().In(loc)
-	dayAgo := now.Add(-time.Duration(2) * time.Hour * 24)
-	t := lastpass_time.JsonLastPassTime{JsonTime: now}
-	f := lastpass_time.JsonLastPassTime{JsonTime: dayAgo}
-
-	header := fmt.Sprintf("# Events(%v ~ %v)", f.Format(), t.Format())
-	fmt.Println(header)
-
+	fmt.Println("# Events")
 	res, err = client.GetEventReport("", "", f, t)
 	if err != nil {
 		logger.ErrorIf(err)

@@ -8,9 +8,7 @@ import (
 var logger = &colorine.Logger{
 	Prefixes: colorine.Prefixes{
 		"warning": colorine.Warn,
-
 		"error": colorine.Error,
-
 		"":        colorine.Info,
 		"created": colorine.Info,
 		"updated": colorine.Info,
