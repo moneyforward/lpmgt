@@ -29,18 +29,7 @@ OPTIONS:
 
 // Commands cli.Command object list
 var Commands = []cli.Command{
-	//commandStatus,
-	//commandHosts,
-	//commandCreate,
-	//commandUpdate,
-	//commandThrow,
-	//commandFetch,
-	//commandRetire,
-	//commandServices,
-	//commandMonitors,
-	//commandAlerts,
 	commandDashboards,
-	//commandAnnotations,
 }
 
 var commandDashboards = cli.Command{
@@ -83,31 +72,19 @@ func doDashboard(c *cli.Context) error {
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
 	dayAgo := now.Add(-time.Duration(durationToAuditInDay) * time.Hour * 24)
-	//t := lastpass_time.JsonLastPassTime{JsonTime: now}
-	//f := lastpass_time.JsonLastPassTime{JsonTime: dayAgo}
 	d.From = lastpass_time.JsonLastPassTime{JsonTime: dayAgo}
 	d.To = lastpass_time.JsonLastPassTime{JsonTime: now}
-
-	//fmt.Println(
-	//	fmt.Sprintf("----------------- Audits(%v ~ %v) -----------------", f.Format(), t.Format()))
 
 	client := NewLastPassClientFromContext(c)
 	s := NewService(client)
 
-	//fmt.Println("# Admin Users")
 	AdminUsers, err := s.GetAdminUserData()
 	logger.ErrorIf(err)
 	d.Users["admin_users"] = AdminUsers
-	//PrettyPrintJSON(AdminUsers)
 
-	//fmt.Println("# Disabled Users")
 	disabledUsers, err := s.GetDisabledUser()
 	logger.DieIf(err)
-
 	d.Users["disabled_users"] = disabledUsers
-	//for _, user := range disabledUsers {
-	//	fmt.Println(user.UserName)
-	//}
 
 	inactiveUsers, err := s.GetInactiveUser()
 	logger.ErrorIf(err)
@@ -144,7 +121,7 @@ func doDashboard(c *cli.Context) error {
 	logger.ErrorIf(err)
 
 	for _, event := range result.Events {
-		d.Events[event.Username] = result.Events
+		d.Events[event.Username] = append(d.Events[event.Username], event)
 	}
 
 	GetLoginEvent := func(wg *sync.WaitGroup, q chan string) {
@@ -159,7 +136,6 @@ func doDashboard(c *cli.Context) error {
 
 			err = JSONBodyDecoder(res, &result)
 			logger.ErrorIf(err)
-
 			d.Events[userName] = result.Events
 		}
 	}
@@ -192,6 +168,13 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	out = out + fmt.Sprintf("\n# Audit Events\n")
+	for _, events := range d.Events {
+		for _, event := range events {
+			if event.IsAuditEvent() {
+				out = out + fmt.Sprintf("%v\n", event)
+			}
+		}
+	}
 
 	out = out + fmt.Sprintf("\n# Disabled Users\n")
 	for _, u := range d.Users["disabled_users"] {
