@@ -1,10 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"lastpass_provisioning/api"
 	"net/http"
-	"fmt"
 )
 
 // UserService is a service class that sends a request to LastPass provisioning API.
@@ -107,7 +107,7 @@ func (s *UserService) BatchAdd(users []api.User) error {
 	return err
 }
 
-//
+// UpdateUser updates user's info.
 func (s *UserService) UpdateUser(user api.User) error {
 	s.command = "batchadd"
 	s.data = user

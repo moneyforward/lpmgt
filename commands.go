@@ -40,7 +40,6 @@ var Commands = []cli.Command{
 	commandUpdate,
 }
 
-
 // Update command with subcommands
 var commandUpdate = cli.Command{
 	Name:  "update",
@@ -54,14 +53,14 @@ var subCommandUpdateUser = cli.Command{
 	Name:        "user",
 	Usage:       "update user <email>",
 	Description: `update a <email>`,
-	ArgsUsage: "<email>",
+	ArgsUsage:   "<email>",
 	Subcommands: []cli.Command{
 		{
-			Name: "transfer",
-			Usage: "transfer user",
+			Name:        "transfer",
+			Usage:       "transfer user",
 			ArgsUsage:   "[[--leave | -l <department>]...] [[--join | -j <department>]...]",
 			Description: "User can specify either --leave or --join to move department",
-			Action: doTransferUser,
+			Action:      doTransferUser,
 			Flags: []cli.Flag{
 				cli.StringSliceFlag{Name: "leave, l", Value: &cli.StringSlice{}, Usage: "leave current department"},
 				cli.StringSliceFlag{Name: "join, j", Value: &cli.StringSlice{}, Usage: "join new department"},
@@ -88,7 +87,7 @@ func doTransferUser(c *cli.Context) error {
 
 	// Leave
 	leave := c.StringSlice("leave")
-	for i := 0; i < len(leave); i ++ {
+	for i := 0; i < len(leave); i++ {
 		newDeps := []string{}
 		for _, dep := range user.Groups {
 			if dep != leave[i] {
@@ -104,7 +103,6 @@ func doTransferUser(c *cli.Context) error {
 	logger.Log("updated", user.UserName)
 	return nil
 }
-
 
 // Delete command with subcommands
 var commandDelete = cli.Command{
