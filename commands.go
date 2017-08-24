@@ -361,6 +361,10 @@ func doDashboard(c *cli.Context) error {
 	logger.DieIf(err)
 	d.Users["disabled_users"] = disabledUsers
 
+	non2faUsers, err := s.GetNon2faUsers()
+	logger.DieIf(err)
+	d.Users["non2fa_users"] = non2faUsers
+
 	inactiveUsers, err := s.GetInactiveUsers()
 	logger.DieIf(err)
 	inactiveDep := make(map[string][]api.User)
