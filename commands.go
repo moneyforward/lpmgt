@@ -31,6 +31,8 @@ OPTIONS:
 }
 
 // Commands cli.Command object list
+// TODO List Groups
+// TODO List API Activities
 var Commands = []cli.Command{
 	commandDashboards,
 	commandCreate,
