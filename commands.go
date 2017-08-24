@@ -57,39 +57,33 @@ var subcommandCreateUser = cli.Command{
 
 func doAddUserFroms(c *cli.Context) error {
 	if c.String("bulk") == "" {
-		fmt.Println(errors.New("Need to specify file name."))
-		return errors.New("Need to specify file name.")
+		logger.DieIf(errors.New("Need to specify file name."))
 	}
 
-	hoge, err := loadConfir(c.String("bulk"))
+	users, err := loadAddingUsers(c.String("bulk"))
 	if err != nil {
-		fmt.Println(err)
-		return err
+		logger.DieIf(err)
 	}
 
 	client := NewLastPassClientFromContext(c)
 	s := NewService(client)
-	fmt.Println(hoge)
-	if err := s.BatchAdd(hoge); err != nil {
-		fmt.Println(err)
-	}
-	return err
+	return s.BatchAdd(users)
 }
 
-func loadConfir(configFile string) (config []api.User, err error) {
-	f, err := ioutil.ReadFile(configFile)
+func loadAddingUsers(usersFile string) (config []api.User, err error) {
+	f, err := ioutil.ReadFile(usersFile)
 	if err != nil {
 		return
 	}
 
-	hoge := struct {
+	data := struct {
 		Data []api.User `json:"data"`
 	}{}
 
-	//buf := new(bytes.Buffer)
-	err = json.Unmarshal(f, &hoge)
-	config = hoge.Data
-	//err = yaml.Unmarshal(f, &config)
+	if err = json.Unmarshal(f, &data); err != nil {
+		return
+	}
+	config = data.Data
 	return
 }
 
@@ -140,7 +134,7 @@ func doDashboard(c *cli.Context) error {
 	s := NewService(client)
 
 	AdminUsers, err := s.GetAdminUserData()
-	logger.ErrorIf(err)
+	logger.DieIf(err)
 	d.Users["admin_users"] = AdminUsers
 
 	disabledUsers, err := s.GetDisabledUser()
@@ -148,7 +142,7 @@ func doDashboard(c *cli.Context) error {
 	d.Users["disabled_users"] = disabledUsers
 
 	inactiveUsers, err := s.GetInactiveUser()
-	logger.ErrorIf(err)
+	logger.DieIf(err)
 	inactiveDep := make(map[string][]api.User)
 	for _, u := range inactiveUsers {
 		for _, group := range u.Groups {
@@ -161,11 +155,11 @@ func doDashboard(c *cli.Context) error {
 
 	// Get Shared Folder Data
 	res, err := client.GetSharedFolderData()
-	logger.ErrorIf(err)
+	logger.DieIf(err)
 
 	var sharedFolders map[string]api.SharedFolder
 	err = JSONBodyDecoder(res, &sharedFolders)
-	logger.ErrorIf(err)
+	logger.DieIf(err)
 
 	for _, sf := range sharedFolders {
 		if sf.ShareFolderName != "Super-Admins" {
@@ -175,11 +169,11 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	res, err = client.GetEventReport("", "", d.From, d.To)
-	logger.ErrorIf(err)
+	logger.DieIf(err)
 
 	var result api.Events
 	err = JSONBodyDecoder(res, &result)
-	logger.ErrorIf(err)
+	logger.DieIf(err)
 
 	for _, event := range result.Events {
 		d.Events[event.Username] = append(d.Events[event.Username], event)
@@ -193,10 +187,10 @@ func doDashboard(c *cli.Context) error {
 				return
 			}
 			res, err = client.GetEventReport(userName, "", d.From, d.To)
-			logger.ErrorIf(err)
+			logger.DieIf(err)
 
 			err = JSONBodyDecoder(res, &result)
-			logger.ErrorIf(err)
+			logger.DieIf(err)
 			d.Events[userName] = result.Events
 		}
 	}
