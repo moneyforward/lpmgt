@@ -41,23 +41,27 @@ var commandCreate = cli.Command {
 	Usage:	"Create a new object",
 	Subcommands: []cli.Command {
 		subcommandCreateUser,
-		subcommandCreateUserInBulk,
 	},
 }
 
 var subcommandCreateUser = cli.Command{
 	Name:        "user",
 	Usage:       "create an users",
-	ArgsUsage:   "[--dept | -d <department>] <username>",
+	ArgsUsage:   "[--bulk | -b <file>] [--dept | -d <department>] <username>",
 	Description: ``,
 	Action:	doAddUser,
 	Flags:	[]cli.Flag {
 		cli.StringFlag{Name: "email, e", Value: "", Usage: "Create user with <email>"},
 		cli.StringSliceFlag{Name: "dept, d", Value: &cli.StringSlice{}, Usage: "Create user with <email> in <department>"},
+		cli.StringFlag{Name: "bulk, b", Value: "", Usage: "Load users from a JSON <file>"},
 	},
 }
 
 func doAddUser(c *cli.Context) error {
+	if c.String("bulk") != "" {
+		return doAddUsersInBulk(c)
+	}
+
 	argUserName := c.Args().Get(0)
 	if argUserName == "" {
 		logger.DieIf(errors.New("Email(username) has to be specified"))
@@ -80,22 +84,8 @@ func doAddUser(c *cli.Context) error {
 	return nil
 }
 
-var subcommandCreateUserInBulk = cli.Command{
-	Name:        "users",
-	Usage:       "bulk create users",
-	ArgsUsage:   "[--bulk | -b] <file>",
-	Description: `To register users in a bulk, please specify a json file.`,
-	Action:      doAddUsersInBulk,
-	Flags:	[]cli.Flag{
-		cli.StringFlag{Name: "bulk, b", Value: "", Usage: "Load users from a JSON <file>"},
-	},
-}
 
 func doAddUsersInBulk(c *cli.Context) error {
-	if c.String("bulk") == "" {
-		logger.DieIf(errors.New("Need to specify file name."))
-	}
-
 	users, err := loadAddingUsers(c.String("bulk"))
 	if err != nil {
 		logger.DieIf(err)
