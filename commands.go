@@ -50,12 +50,12 @@ var commandDelete = cli.Command{
 
 var subCommandDeleteUser = cli.Command{
 	Name:        "user",
-	Usage:       "delete user",
-	Description: `delete a <username>`,
-	ArgsUsage:   "[--mode | -m <deleteMode>] <username>",
+	Usage:       "delete user <email>",
+	Description: `delete a <email> by choosing either 'deactivate(default)' or 'delete'`,
+	ArgsUsage:   "[--mode | -m <deleteMode>] <email>",
 	Action:      doDeleteUser,
 	Flags: []cli.Flag {
-		cli.StringFlag{Name: "mode, m", Value:"Deactivate", Usage: "deleteMode"},
+		cli.StringFlag{Name: "mode, m", Value:"deactivate", Usage: "deleteMode"},
 	},
 }
 
@@ -65,10 +65,20 @@ func doDeleteUser(c * cli.Context) error {
 		logger.DieIf(errors.New("Email(username) has to be specified"))
 	}
 
+	var mode = DeactivationMode(Deactivate)
+	switch c.String("mode") {
+	case "deactivate":
+		mode = Deactivate
+	case "delete":
+		mode = Delete
+	default:
+		mode = Deactivate
+	}
+
 	client := NewLastPassClientFromContext(c)
-	err := NewService(client).DeleteUser(argUserName, Deactivate)
+	err := NewService(client).DeleteUser(argUserName, mode)
 	logger.DieIf(err)
-	logger.Log("Deactivate", argUserName)
+	logger.Log(c.String("mode"), argUserName)
 	return nil
 }
 
@@ -84,8 +94,8 @@ var commandDescribe = cli.Command{
 var subCommandDescribeUser = cli.Command{
 	Name: "user",
 	Usage: "describe user",
-	Description: `Show the information of the user with <username>`,
-	ArgsUsage:   "<username>",
+	Description: `Show the information of the user with <email>`,
+	ArgsUsage:   "<email>",
 	Action: doDescribeUser,
 }
 
@@ -116,6 +126,7 @@ var subcommandGetUsers = cli.Command {
 	Name:        "users",
 	Usage:       "get users",
 	ArgsUsage:   "[--filter, -f <option>]",
+	Description: "Use --filter to filter users. You can choose from either `non2fa`, `inactive`, `disabled`, or `admin`",
 	Action:		doGetUser,
 	Flags: []cli.Flag {
 		cli.StringFlag{Name: "filter, f", Value:"all", Usage: "Filter fetching users"},
