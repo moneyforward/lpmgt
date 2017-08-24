@@ -41,21 +41,34 @@ var commandCreate = cli.Command {
 	Usage:	"Create a new object",
 	Subcommands: []cli.Command {
 		subcommandCreateUser,
+		subcommandCreateUserInBulk,
 	},
 }
 
 var subcommandCreateUser = cli.Command{
-	Name:	"user",
-	Usage:	"hoge",
-	ArgsUsage: "[--bulk | -b] <file>",
-	Description:`To register users in a bulk, please specify a yaml file.`,
-	Action: doAddUserFroms,
+	Name:        "user",
+	Usage:       "create an users",
+	ArgsUsage:   "[--email | -e <email>] [--dept | -d <department>]",
+	Description: ``,
+	Action:	doAddUser,
+	Flags:	[]cli.Flag {
+		cli.StringFlag{Name: "email, e", Value: "", Usage: "Create user with <email>"},
+		cli.StringFlag{Name: "dept, d", Value: "", Usage: "Create user with <email> in <department>"},
+	},
+}
+
+var subcommandCreateUserInBulk = cli.Command{
+	Name:        "users",
+	Usage:       "bulk create users",
+	ArgsUsage:   "[--bulk | -b] <file>",
+	Description: `To register users in a bulk, please specify a json file.`,
+	Action:      doAddUsersInBulk,
 	Flags:	[]cli.Flag{
 		cli.StringFlag{Name: "bulk, b", Value: "", Usage: "Load users from a JSON <file>"},
 	},
 }
 
-func doAddUserFroms(c *cli.Context) error {
+func doAddUsersInBulk(c *cli.Context) error {
 	if c.String("bulk") == "" {
 		logger.DieIf(errors.New("Need to specify file name."))
 	}
