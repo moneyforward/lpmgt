@@ -48,7 +48,7 @@ var commandCreate = cli.Command {
 var subcommandCreateUser = cli.Command{
 	Name:        "user",
 	Usage:       "create an users",
-	ArgsUsage:   "[--email | -e <email>] [--dept | -d <department>]",
+	ArgsUsage:   "[--dept | -d <department>] <username>",
 	Description: ``,
 	Action:	doAddUser,
 	Flags:	[]cli.Flag {
@@ -58,17 +58,26 @@ var subcommandCreateUser = cli.Command{
 }
 
 func doAddUser(c *cli.Context) error {
+	argUserName := c.Args().Get(0)
+	if argUserName == "" {
+		logger.DieIf(errors.New("Email(username) has to be specified"))
+	}
+
 	user :=  api.User{
-		UserName: c.String("email"),
+		UserName: argUserName,
 		Groups: c.StringSlice("dept"),
 	}
 
-	if user.UserName == "" {
-		logger.DieIf(errors.New("Email(username) has to be specified"))
-	}
 	client := NewLastPassClientFromContext(c)
-	s := NewService(client)
-	return s.BatchAdd([]api.User{user})
+	err := NewService(client).BatchAdd([]api.User{user})
+	logger.DieIf(err)
+
+	message := user.UserName
+	for _, dep := range user.Groups {
+		message += fmt.Sprintf(" in %v", dep)
+	}
+	logger.Log("created", message)
+	return nil
 }
 
 var subcommandCreateUserInBulk = cli.Command{
@@ -93,8 +102,18 @@ func doAddUsersInBulk(c *cli.Context) error {
 	}
 
 	client := NewLastPassClientFromContext(c)
-	s := NewService(client)
-	return s.BatchAdd(users)
+	err = NewService(client).BatchAdd(users)
+	logger.DieIf(err)
+
+	for _, user := range users {
+		message := user.UserName
+		for _, dep := range user.Groups {
+			message += fmt.Sprintf(" in %v", dep)
+		}
+		logger.Log("created", message)
+	}
+
+	return err
 }
 
 func loadAddingUsers(usersFile string) (config []api.User, err error) {
