@@ -209,9 +209,9 @@ func (c *LastpassClient) ChangeGroupsMembership(groups []api.BelongingGroup) (*h
 }
 */
 // GetUserData
-func (c *LastpassClient) GetUserData(user string) (*http.Response, error) {
-	return c.DoRequest("getuserdata", api.User{UserName: user})
-}
+//func (c *LastpassClient) GetUserData(user string) (*http.Response, error) {
+//	return c.DoRequest("getuserdata", api.User{UserName: user})
+//}
 
 // DisableMultifactor disables multifactor setting of user
 func (c *LastpassClient) DisableMultifactor(user string) (*http.Response, error) {

@@ -34,6 +34,51 @@ OPTIONS:
 var Commands = []cli.Command{
 	commandDashboards,
 	commandCreate,
+	commandGet,
+	commandDescribe,
+}
+
+var commandDescribe = cli.Command{
+	Name:	"describe",
+	Usage:  "describe specific object",
+	Subcommands: []cli.Command {
+		subCommandDescribeUser,
+	},
+}
+
+var subCommandDescribeUser = cli.Command{
+	Name: "user",
+	Usage: "describe user",
+	Description: `Show the information of the user with <username>`,
+	ArgsUsage:   "<username>",
+	Action: doDescribeUser,
+}
+
+func doDescribeUser(c * cli.Context) error {
+	argUserName := c.Args().Get(0)
+	if argUserName == "" {
+		logger.DieIf(errors.New("Email(username) has to be specified"))
+	}
+
+	client := NewLastPassClientFromContext(c)
+	user, err := NewService(client).GetUserData(argUserName)
+	logger.DieIf(err)
+	PrettyPrintJSON(user)
+
+	return nil
+}
+
+var commandGet = cli.Command{
+	Name:	"get",
+	Usage:  "Get objects",
+	Subcommands: []cli.Command {
+		subcommandGetUsers,
+	},
+}
+
+var subcommandGetUsers = cli.Command {
+	Name:        "users",
+	Usage:       "get users",
 }
 
 var commandCreate = cli.Command {
