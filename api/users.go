@@ -1,5 +1,7 @@
 package api
 
+import "fmt"
+
 type User struct {
 	UserName               string   `json:"username"`
 	FullName               string   `json:"fullname,omitempty"`
@@ -32,12 +34,6 @@ type Users struct {
 	Invited []string            `json:"invited,omitempty"`
 }
 
-func ConstructUser(email string, groupName ...string) *User {
-	u := &User{UserName: email}
-	u.Groups = groupName
-	return u
-}
-
 func (u *User) Contains(users []string) bool {
 	for _, user := range users {
 		if user == u.UserName {
@@ -62,4 +58,10 @@ func (us *Users) GetInactiveUsers() (users []User) {
 		}
 	}
 	return
+}
+
+func PrintUserNames(users []User) {
+	for _, user := range users {
+		fmt.Println(user.UserName)
+	}
 }

@@ -159,60 +159,6 @@ func (c *LastpassClient) ChangeGroupsMembership(groups []api.BelongingGroup) (*h
 	return c.DoRequest("batchchangegrp", groups)
 }
 
-// GetUserData gets information on users enterprise.
-/*Request
-  {
-    "cid": "8771312",
-    "provhash": "<Your API secret>",
-    "cmd": "getuserdata",
-    "data": {
-        "username": "user1@lastpass.com" // This can be either UserName, disabled, or admin
-    }
-  }
-
-# Response
-  {
-    "Users": {
-        "101": {
-            "username": "user1@lastpass.com",
-            "fullname": "Ned Flanders",
-            "mpstrength": "100",
-            "created": "2014-03-12 10:02:56",
-            "last_pw_change": "2015-05-19 10:58:33",
-            "last_login": "2015-05-29 11:45:05",
-            "disabled": false,
-            "neverloggedin": false,
-            "linked": "personal.account@mydomain.com",
-            "sites": 72,
-            "notes": 19,
-            "formfills": 2,
-            "applications": 0,
-            "attachments": 1,
-            "groups": [
-                "Domain Admins",
-                "Dev Team",
-                "Support Team"
-            ]
-        }
-    },
-    "Groups": {
-        "Domain Admins": [
-            "user1@lastpass.com"
-        ],
-        "Dev Team": [
-            "user1@lastpass.com"
-        ],
-        "Support Team": [
-            "user1@lastpass.com"
-        ]
-    }
-}
-*/
-// GetUserData
-//func (c *LastpassClient) GetUserData(user string) (*http.Response, error) {
-//	return c.DoRequest("getuserdata", api.User{UserName: user})
-//}
-
 // DisableMultifactor disables multifactor setting of user
 func (c *LastpassClient) DisableMultifactor(user string) (*http.Response, error) {
 	return c.DoRequest("disablemultifactor", api.User{UserName: user})

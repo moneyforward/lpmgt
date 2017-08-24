@@ -112,7 +112,24 @@ func (s *UserService) DeleteUser(name string, mode DeactivationMode) error {
 	return err
 }
 
-func (s *UserService) GetInactiveUser() ([]api.User, error) {
+// GetAllUsers simply retrieves all users
+func (s *UserService) GetAllUsers() ([]api.User, error) {
+	s.command = "getuserdata"
+	s.data = api.User{}
+	res, err := s.DoRequest()
+	if err != nil {
+		return nil, err
+	}
+	var nonAdminUsers api.Users
+	err = JSONBodyDecoder(res, &nonAdminUsers)
+	if err != nil {
+		return nil, err
+	}
+	return nonAdminUsers.GetUsers(), nil
+}
+
+// GetInactiveUsers is Deactivated user(Deleted user in mode 0)
+func (s *UserService) GetInactiveUsers() ([]api.User, error) {
 	s.command = "getuserdata"
 	s.data = api.User{IsAdmin: false}
 	res, err := s.DoRequest()
@@ -120,15 +137,16 @@ func (s *UserService) GetInactiveUser() ([]api.User, error) {
 		return nil, err
 	}
 
-	var AdminUsers api.Users
-	err = JSONBodyDecoder(res, &AdminUsers)
+	var nonAdminUsers api.Users
+	err = JSONBodyDecoder(res, &nonAdminUsers)
 	if err != nil {
 		return nil, err
 	}
-	return AdminUsers.GetInactiveUsers(), nil
+	return nonAdminUsers.GetInactiveUsers(), nil
 }
 
-func (s *UserService) GetDisabledUser() ([]api.User, error) {
+// GetDisabledUsers gets Deactivated user(Deleted user in mode 0)
+func (s *UserService) GetDisabledUsers() ([]api.User, error) {
 	s.command = "getuserdata"
 	s.data = api.User{Disabled: true}
 	res, err := s.DoRequest()
@@ -144,6 +162,7 @@ func (s *UserService) GetDisabledUser() ([]api.User, error) {
 	return Users.GetUsers(), nil
 }
 
+// GetAdminUser gets admin users
 func (s *UserService) GetAdminUserData() ([]api.User, error) {
 	s.command = "getuserdata"
 	s.data = api.User{IsAdmin: true}

@@ -38,6 +38,8 @@ var Commands = []cli.Command{
 	commandDescribe,
 }
 
+
+// Describe command with subcommands
 var commandDescribe = cli.Command{
 	Name:	"describe",
 	Usage:  "describe specific object",
@@ -68,6 +70,7 @@ func doDescribeUser(c * cli.Context) error {
 	return nil
 }
 
+// Get command with subcommands
 var commandGet = cli.Command{
 	Name:	"get",
 	Usage:  "Get objects",
@@ -79,6 +82,33 @@ var commandGet = cli.Command{
 var subcommandGetUsers = cli.Command {
 	Name:        "users",
 	Usage:       "get users",
+	ArgsUsage:   "[--filter, -f <option>]",
+	Action:		doGetUser,
+	Flags: []cli.Flag {
+		cli.StringFlag{Name: "filter, f", Value:"all", Usage: "Filter fetching users"},
+	},
+}
+
+func doGetUser(c *cli.Context) (err error) {
+	client := NewLastPassClientFromContext(c)
+	s := NewService(client)
+
+	var users []api.User
+
+	switch c.String("filter") {
+	case "non2fa":
+	case "inactive":
+		users, err = s.GetInactiveUsers()
+	case "disabled":
+		users, err = s.GetDisabledUsers()
+	case "admin":
+		users, err = s.GetAdminUserData()
+	default:
+		users, err = s.GetAllUsers()
+	}
+	logger.DieIf(err)
+	api.PrintUserNames(users)
+	return nil
 }
 
 var commandCreate = cli.Command {
@@ -93,7 +123,7 @@ var subcommandCreateUser = cli.Command{
 	Name:        "user",
 	Usage:       "create an users",
 	ArgsUsage:   "[--bulk | -b <file>] [--dept | -d <department>] <username>",
-	Description: ``,
+	Description: `Create one or more users specifying either username or pre-configured file.`,
 	Action:	doAddUser,
 	Flags:	[]cli.Flag {
 		cli.StringFlag{Name: "email, e", Value: "", Usage: "Create user with <email>"},
@@ -218,11 +248,11 @@ func doDashboard(c *cli.Context) error {
 	logger.DieIf(err)
 	d.Users["admin_users"] = AdminUsers
 
-	disabledUsers, err := s.GetDisabledUser()
+	disabledUsers, err := s.GetDisabledUsers()
 	logger.DieIf(err)
 	d.Users["disabled_users"] = disabledUsers
 
-	inactiveUsers, err := s.GetInactiveUser()
+	inactiveUsers, err := s.GetInactiveUsers()
 	logger.DieIf(err)
 	inactiveDep := make(map[string][]api.User)
 	for _, u := range inactiveUsers {
