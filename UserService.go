@@ -3,6 +3,7 @@ package main
 import (
 	"lastpass_provisioning/api"
 	"net/http"
+	"fmt"
 )
 
 type UserService struct {
@@ -103,11 +104,12 @@ func (s *UserService) BatchAdd(users []api.User) error {
 2 - Delete user. This will delete the account entirely.
 */
 func (s *UserService) DeleteUser(name string, mode DeactivationMode) error {
-	s.command = "deleteaction"
+	s.command = "deluser"
 	s.data = struct {
 		UserName     string `json:"username"`
 		DeleteAction int    `json:"deleteaction"`
 	}{UserName: name, DeleteAction: int(mode)}
+	fmt.Println(int(mode))
 	_, err := s.DoRequest()
 	return err
 }
