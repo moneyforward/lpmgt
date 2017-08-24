@@ -9,6 +9,9 @@ import (
 	"sync"
 	"time"
 	"os"
+	"github.com/pkg/errors"
+	"io/ioutil"
+	"gopkg.in/yaml.v2"
 )
 
 func init() {
@@ -30,6 +33,50 @@ OPTIONS:
 // Commands cli.Command object list
 var Commands = []cli.Command{
 	commandDashboards,
+	commandCreate,
+}
+
+var commandCreate = cli.Command {
+	Name:	"create",
+	Usage:	"Create a new object",
+	Subcommands: []cli.Command {
+		subcommandCreateUser,
+	},
+}
+
+var subcommandCreateUser = cli.Command{
+	Name:	"user",
+	Usage:	"hoge",
+	ArgsUsage: "[--bulk | -b] <file>",
+	Description:`To register users in a bulk, please specify a yaml file.`,
+	Action: doAddUserFroms,
+	Flags:	[]cli.Flag{
+		cli.StringFlag{Name: "bulk, b", Value: "", Usage: "Load users from a yaml file"},
+	},
+}
+
+func doAddUserFroms(c *cli.Context) error {
+	if c.String("bulk") == "" {
+		return errors.New("Need to specify file name.")
+	}
+
+	hoge, err := loadConfir("bulk")
+	if err != nil {
+		return err
+	}
+
+	client := NewLastPassClientFromContext(c)
+	s := NewService(client)
+	return s.BatchAdd(hoge)
+}
+
+func loadConfir(configFile string) (config []api.User, err error) {
+	f, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		return
+	}
+	err = yaml.Unmarshal(f, &config)
+	return
 }
 
 var commandDashboards = cli.Command{
