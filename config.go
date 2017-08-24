@@ -60,7 +60,7 @@ func LoadAPIKeyFromEnvOrConfig(configFile string) string {
 	return config.Secret
 }
 
-// LoadCompanyID returns Company ID provided by Lastpass.
+// LoadCompanyIDFromEnvOrConfig returns Company ID provided by Lastpass.
 func LoadCompanyIDFromEnvOrConfig(configFile string) string {
 	if id := os.Getenv("LASTPASS_COMPANY_ID"); id != "" {
 		return id

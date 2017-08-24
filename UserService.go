@@ -1,22 +1,27 @@
 package main
 
 import (
+	"fmt"
 	"lastpass_provisioning/api"
 	"net/http"
-	"fmt"
 )
 
+// UserService is a service class that sends a request to LastPass provisioning API.
 type UserService struct {
 	client  *LastpassClient
 	command string
 	data    interface{}
 }
 
+// DeactivationMode is enum which deactivate/delete users
 type DeactivationMode int
 
 const (
+	// Deactivate deactivates user
 	Deactivate DeactivationMode = iota
+	// Remove removes user from Org
 	Remove
+	// Delete deletes user account (completely)
 	Delete
 )
 
@@ -73,7 +78,7 @@ const (
 func (s *UserService) GetUserData(userName string) (user api.User, err error) {
 	s.command = "getuserdata"
 	s.data = api.User{UserName: userName}
-	res, err := s.DoRequest()
+	res, err := s.doRequest()
 
 	if err != nil {
 		return
@@ -90,12 +95,11 @@ func (s *UserService) GetUserData(userName string) (user api.User, err error) {
 	return
 }
 
-
 // BatchAdd - add users.
 func (s *UserService) BatchAdd(users []api.User) error {
 	s.command = "batchadd"
 	s.data = users
-	_, err := s.DoRequest()
+	_, err := s.doRequest()
 	return err
 }
 
@@ -112,14 +116,15 @@ func (s *UserService) DeleteUser(name string, mode DeactivationMode) error {
 		DeleteAction int    `json:"deleteaction"`
 	}{UserName: name, DeleteAction: int(mode)}
 	fmt.Println(int(mode))
-	_, err := s.DoRequest()
+	_, err := s.doRequest()
 	return err
 }
 
+// GetNon2faUsers retrieves users without 2 factor authentication setting.
 func (s *UserService) GetNon2faUsers() ([]api.User, error) {
 	s.command = "getuserdata"
 	s.data = api.User{}
-	res, err := s.DoRequest()
+	res, err := s.doRequest()
 	var users api.Users
 	err = JSONBodyDecoder(res, &users)
 	if err != nil {
@@ -132,7 +137,7 @@ func (s *UserService) GetNon2faUsers() ([]api.User, error) {
 func (s *UserService) GetAllUsers() ([]api.User, error) {
 	s.command = "getuserdata"
 	s.data = api.User{}
-	res, err := s.DoRequest()
+	res, err := s.doRequest()
 	if err != nil {
 		return nil, err
 	}
@@ -144,11 +149,11 @@ func (s *UserService) GetAllUsers() ([]api.User, error) {
 	return nonAdminUsers.GetUsers(), nil
 }
 
-// GetNeverLoggedInUsers is Deactivated user(Deleted user in mode 0)
+// GetInactiveUsers is Deactivated user(Deleted user in mode 0)
 func (s *UserService) GetInactiveUsers() ([]api.User, error) {
 	s.command = "getuserdata"
 	s.data = api.User{IsAdmin: false}
-	res, err := s.DoRequest()
+	res, err := s.doRequest()
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +170,7 @@ func (s *UserService) GetInactiveUsers() ([]api.User, error) {
 func (s *UserService) GetDisabledUsers() ([]api.User, error) {
 	s.command = "getuserdata"
 	s.data = api.User{Disabled: true}
-	res, err := s.DoRequest()
+	res, err := s.doRequest()
 	if err != nil {
 		return nil, err
 	}
@@ -178,11 +183,11 @@ func (s *UserService) GetDisabledUsers() ([]api.User, error) {
 	return Users.GetUsers(), nil
 }
 
-// GetAdminUser gets admin users
+// GetAdminUserData gets admin users
 func (s *UserService) GetAdminUserData() ([]api.User, error) {
 	s.command = "getuserdata"
 	s.data = api.User{IsAdmin: true}
-	res, err := s.DoRequest()
+	res, err := s.doRequest()
 	if err != nil {
 		return nil, err
 	}
@@ -195,10 +200,11 @@ func (s *UserService) GetAdminUserData() ([]api.User, error) {
 	return AdminUsers.GetUsers(), nil
 }
 
+// NewService creates a new UserService
 func NewService(client *LastpassClient) (s *UserService) {
 	return &UserService{client: client}
 }
 
-func (s *UserService) DoRequest() (*http.Response, error) {
+func (s *UserService) doRequest() (*http.Response, error) {
 	return s.client.DoRequest(s.command, s.data)
 }

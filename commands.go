@@ -1,17 +1,17 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/urfave/cli"
+	"io/ioutil"
 	"lastpass_provisioning/api"
 	"lastpass_provisioning/lastpass_time"
 	"lastpass_provisioning/logger"
+	"os"
 	"sync"
 	"time"
-	"os"
-	"github.com/pkg/errors"
-	"io/ioutil"
-	"encoding/json"
 )
 
 func init() {
@@ -41,9 +41,9 @@ var Commands = []cli.Command{
 
 // Delete command with subcommands
 var commandDelete = cli.Command{
-	Name:	"delete",
-	Usage:  "delete specific object",
-	Subcommands: []cli.Command {
+	Name:  "delete",
+	Usage: "delete specific object",
+	Subcommands: []cli.Command{
 		subCommandDeleteUser,
 	},
 }
@@ -54,12 +54,12 @@ var subCommandDeleteUser = cli.Command{
 	Description: `delete a <email> by choosing either 'deactivate(default)' or 'delete'`,
 	ArgsUsage:   "[--mode | -m <deleteMode>] <email>",
 	Action:      doDeleteUser,
-	Flags: []cli.Flag {
-		cli.StringFlag{Name: "mode, m", Value:"deactivate", Usage: "deleteMode"},
+	Flags: []cli.Flag{
+		cli.StringFlag{Name: "mode, m", Value: "deactivate", Usage: "deleteMode"},
 	},
 }
 
-func doDeleteUser(c * cli.Context) error {
+func doDeleteUser(c *cli.Context) error {
 	argUserName := c.Args().Get(0)
 	if argUserName == "" {
 		logger.DieIf(errors.New("Email(username) has to be specified"))
@@ -84,22 +84,22 @@ func doDeleteUser(c * cli.Context) error {
 
 // Describe command with subcommands
 var commandDescribe = cli.Command{
-	Name:	"describe",
-	Usage:  "describe specific object",
-	Subcommands: []cli.Command {
+	Name:  "describe",
+	Usage: "describe specific object",
+	Subcommands: []cli.Command{
 		subCommandDescribeUser,
 	},
 }
 
 var subCommandDescribeUser = cli.Command{
-	Name: "user",
-	Usage: "describe user",
+	Name:        "user",
+	Usage:       "describe user",
 	Description: `Show the information of the user with <email>`,
 	ArgsUsage:   "<email>",
-	Action: doDescribeUser,
+	Action:      doDescribeUser,
 }
 
-func doDescribeUser(c * cli.Context) error {
+func doDescribeUser(c *cli.Context) error {
 	argUserName := c.Args().Get(0)
 	if argUserName == "" {
 		logger.DieIf(errors.New("Email(username) has to be specified"))
@@ -115,21 +115,21 @@ func doDescribeUser(c * cli.Context) error {
 
 // Get command with subcommands
 var commandGet = cli.Command{
-	Name:	"get",
-	Usage:  "Get objects",
-	Subcommands: []cli.Command {
+	Name:  "get",
+	Usage: "Get objects",
+	Subcommands: []cli.Command{
 		subcommandGetUsers,
 	},
 }
 
-var subcommandGetUsers = cli.Command {
+var subcommandGetUsers = cli.Command{
 	Name:        "users",
 	Usage:       "get users",
 	ArgsUsage:   "[--filter, -f <option>]",
 	Description: "Use --filter to filter users. You can choose from either `non2fa`, `inactive`, `disabled`, or `admin`",
-	Action:		doGetUser,
-	Flags: []cli.Flag {
-		cli.StringFlag{Name: "filter, f", Value:"all", Usage: "Filter fetching users"},
+	Action:      doGetUser,
+	Flags: []cli.Flag{
+		cli.StringFlag{Name: "filter, f", Value: "all", Usage: "Filter fetching users"},
 	},
 }
 
@@ -157,10 +157,10 @@ func doGetUser(c *cli.Context) (err error) {
 	return nil
 }
 
-var commandCreate = cli.Command {
-	Name:	"create",
-	Usage:	"Create a new object",
-	Subcommands: []cli.Command {
+var commandCreate = cli.Command{
+	Name:  "create",
+	Usage: "Create a new object",
+	Subcommands: []cli.Command{
 		subcommandCreateUser,
 	},
 }
@@ -170,8 +170,8 @@ var subcommandCreateUser = cli.Command{
 	Usage:       "create an users",
 	ArgsUsage:   "[--bulk | -b <file>] [--dept | -d <department>] <username>",
 	Description: `Create one or more users specifying either username or pre-configured file.`,
-	Action:	doAddUser,
-	Flags:	[]cli.Flag {
+	Action:      doAddUser,
+	Flags: []cli.Flag{
 		cli.StringFlag{Name: "email, e", Value: "", Usage: "Create user with <email>"},
 		cli.StringSliceFlag{Name: "dept, d", Value: &cli.StringSlice{}, Usage: "Create user with <email> in <department>"},
 		cli.StringFlag{Name: "bulk, b", Value: "", Usage: "Load users from a JSON <file>"},
@@ -188,9 +188,9 @@ func doAddUser(c *cli.Context) error {
 		logger.DieIf(errors.New("Email(username) has to be specified"))
 	}
 
-	user :=  api.User{
+	user := api.User{
 		UserName: argUserName,
-		Groups: c.StringSlice("dept"),
+		Groups:   c.StringSlice("dept"),
 	}
 
 	client := NewLastPassClientFromContext(c)
@@ -204,7 +204,6 @@ func doAddUser(c *cli.Context) error {
 	logger.Log("created", message)
 	return nil
 }
-
 
 func doAddUsersInBulk(c *cli.Context) error {
 	users, err := loadAddingUsers(c.String("bulk"))
@@ -250,18 +249,18 @@ var commandDashboards = cli.Command{
 	ArgsUsage:   "[--verbose | -v] [--period | -d <duration>]",
 	Description: `show audit related dashboard`,
 	Action:      doDashboard,
-	Flags:       []cli.Flag{
-		cli.IntFlag{Name:  "duration, d", Usage: "Audits for past <duration> day"},
+	Flags: []cli.Flag{
+		cli.IntFlag{Name: "duration, d", Usage: "Audits for past <duration> day"},
 		cli.BoolFlag{Name: "verbose, v", Usage: "Verbose output mode"},
 	},
 }
 
-type DashBoard struct {
-	From   lastpass_time.JsonLastPassTime `json:"from"`
-	To     lastpass_time.JsonLastPassTime `json:"to"`
-	Users  map[string][]api.User	`json:"users"`
-	Departments map[string][]api.User		`json:"department"`
-	Events map[string][]api.Event	`json:"events"`
+type dashBoard struct {
+	From        lastpass_time.JsonLastPassTime `json:"from"`
+	To          lastpass_time.JsonLastPassTime `json:"to"`
+	Users       map[string][]api.User          `json:"users"`
+	Departments map[string][]api.User          `json:"department"`
+	Events      map[string][]api.Event         `json:"events"`
 }
 
 // TODO refactor,
@@ -275,10 +274,10 @@ func doDashboard(c *cli.Context) error {
 		durationToAuditInDay = c.Int("duration")
 	}
 
-	d := &DashBoard{
-		Users: make(map[string][]api.User),
+	d := &dashBoard{
+		Users:       make(map[string][]api.User),
 		Departments: make(map[string][]api.User),
-		Events: make(map[string][]api.Event),
+		Events:      make(map[string][]api.Event),
 	}
 
 	loc, _ := time.LoadLocation("Asia/Tokyo")
@@ -396,7 +395,7 @@ func doDashboard(c *cli.Context) error {
 	for dep, us := range d.Departments {
 		out = out + fmt.Sprintf("\n## %v: %v\n", dep, len(us))
 		for _, u := range us {
-			out = out + fmt.Sprintf(u.UserName + ", ")
+			out = out + fmt.Sprintf(u.UserName+", ")
 		}
 	}
 
