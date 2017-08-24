@@ -3,10 +3,9 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
-	"lastpass_provisioning/logger"
 	"net/http"
+	"fmt"
 	"os"
 )
 
@@ -28,14 +27,12 @@ func JSONReader(v interface{}) (io.Reader, error) {
 	return buf, nil
 }
 
-// PrettyPrintJSON output indented json via stdout.
-func PrettyPrintJSON(src interface{}) {
-	fmt.Fprintln(os.Stdout, JSONMarshalIndent(src, "", "    "))
-}
-
-// JSONMarshalIndent call json.MarshalIndent and replace encoded angle brackets
-func JSONMarshalIndent(src interface{}, prefix, indent string) string {
-	dataRaw, err := json.MarshalIndent(src, prefix, indent)
-	logger.DieIf(err)
-	return string(dataRaw)
+// PrintIndentedJSON output indented json via stdout.
+func PrintIndentedJSON(originalJSON interface{}) error {
+	dataRaw, err := json.MarshalIndent(originalJSON, "", "    ")
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(os.Stdout, string(dataRaw))
+	return nil
 }

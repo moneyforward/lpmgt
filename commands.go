@@ -63,7 +63,7 @@ func doDescribeUser(c * cli.Context) error {
 	client := NewLastPassClientFromContext(c)
 	user, err := NewService(client).GetUserData(argUserName)
 	logger.DieIf(err)
-	PrettyPrintJSON(user)
+	logger.DieIf(PrintIndentedJSON(user))
 
 	return nil
 }
