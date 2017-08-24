@@ -53,8 +53,22 @@ var subcommandCreateUser = cli.Command{
 	Action:	doAddUser,
 	Flags:	[]cli.Flag {
 		cli.StringFlag{Name: "email, e", Value: "", Usage: "Create user with <email>"},
-		cli.StringFlag{Name: "dept, d", Value: "", Usage: "Create user with <email> in <department>"},
+		cli.StringSliceFlag{Name: "dept, d", Value: &cli.StringSlice{}, Usage: "Create user with <email> in <department>"},
 	},
+}
+
+func doAddUser(c *cli.Context) error {
+	user :=  api.User{
+		UserName: c.String("email"),
+		Groups: c.StringSlice("dept"),
+	}
+
+	if user.UserName == "" {
+		logger.DieIf(errors.New("Email(username) has to be specified"))
+	}
+	client := NewLastPassClientFromContext(c)
+	s := NewService(client)
+	return s.BatchAdd([]api.User{user})
 }
 
 var subcommandCreateUserInBulk = cli.Command{

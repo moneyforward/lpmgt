@@ -19,6 +19,7 @@ const (
 	Delete
 )
 
+// BatchAdd - add users.
 func (s *UserService) BatchAdd(users []api.User) error {
 	s.command = "batchadd"
 	s.data = users
