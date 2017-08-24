@@ -69,7 +69,7 @@ const (
 }
 */
 // GetUserData
-func (s *UserService) GetUserData(userName string) (user api.Users, err error) {
+func (s *UserService) GetUserData(userName string) (user api.User, err error) {
 	s.command = "getuserdata"
 	s.data = api.User{UserName: userName}
 	res, err := s.DoRequest()
@@ -78,7 +78,12 @@ func (s *UserService) GetUserData(userName string) (user api.Users, err error) {
 		return
 	}
 
-	err = JSONBodyDecoder(res, &user)
+	users := &api.Users{}
+	err = JSONBodyDecoder(res, users)
+	if err != nil {
+		return
+	}
+	user = users.GetUsers()[0]
 	return
 }
 
