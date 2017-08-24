@@ -76,18 +76,17 @@ func doTransferUser(c *cli.Context) error {
 		logger.DieIf(errors.New("Email(username) has to be specified"))
 	}
 
-	// First Pull original user data
 	client := NewLastPassClientFromContext(c)
 	s := NewService(client)
+
+	// Fetch User if he/she exists
 	user, err := s.GetUserData(argUserName)
 	logger.DieIf(err)
 
-	if user.UserName == "" {
-		eMessage := fmt.Sprintf("User %v does not exist", argUserName)
-		logger.DieIf(errors.New(eMessage))
-	}
-
+	// Join
 	user.Groups = append(user.Groups, c.StringSlice("join")...)
+
+	// Leave
 	leave := c.StringSlice("leave")
 	for i := 0; i < len(leave); i ++ {
 		newDeps := []string{}
@@ -99,6 +98,7 @@ func doTransferUser(c *cli.Context) error {
 		user.Groups = newDeps
 	}
 
+	// Update
 	err = s.UpdateUser(user)
 	logger.DieIf(err)
 	logger.Log("updated", user.UserName)
@@ -175,11 +175,6 @@ func doDescribeUser(c *cli.Context) error {
 	client := NewLastPassClientFromContext(c)
 	user, err := NewService(client).GetUserData(argUserName)
 	logger.DieIf(err)
-
-	if user.UserName == "" {
-		eMessage := fmt.Sprintf("User %v does not exist", argUserName)
-		logger.DieIf(errors.New(eMessage))
-	}
 
 	PrintIndentedJSON(user)
 	return nil

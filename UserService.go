@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 	"lastpass_provisioning/api"
 	"net/http"
+	"fmt"
 )
 
 // UserService is a service class that sends a request to LastPass provisioning API.
@@ -91,6 +92,9 @@ func (s *UserService) GetUserData(userName string) (user api.User, err error) {
 	}
 	if len(users.GetUsers()) != 0 {
 		user = users.GetUsers()[0]
+	} else {
+		eMessage := fmt.Sprintf("User %v does not exist", userName)
+		return user, errors.New(eMessage)
 	}
 	return
 }
