@@ -1,12 +1,12 @@
 {
-    Users: [
+    "data": [
       {
-        username: "tanaka.shuhei@moneyforward.co.jp",
-        Groups: ["カスタマーサポート本部"]
+        "username": "tanaka.shuhei@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
       },
       {
-        username: "fukasawa.masaharu@moneyforward.co.jp",
-        Groups: ["カスタマーサポート本部"]
+        "username": "fukasawa.masaharu@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
       }
     ]
 }

@@ -11,7 +11,7 @@ import (
 	"os"
 	"github.com/pkg/errors"
 	"io/ioutil"
-	"gopkg.in/yaml.v2"
+	"encoding/json"
 )
 
 func init() {
@@ -51,23 +51,29 @@ var subcommandCreateUser = cli.Command{
 	Description:`To register users in a bulk, please specify a yaml file.`,
 	Action: doAddUserFroms,
 	Flags:	[]cli.Flag{
-		cli.StringFlag{Name: "bulk, b", Value: "", Usage: "Load users from a yaml file"},
+		cli.StringFlag{Name: "bulk, b", Value: "", Usage: "Load users from a JSON <file>"},
 	},
 }
 
 func doAddUserFroms(c *cli.Context) error {
 	if c.String("bulk") == "" {
+		fmt.Println(errors.New("Need to specify file name."))
 		return errors.New("Need to specify file name.")
 	}
 
-	hoge, err := loadConfir("bulk")
+	hoge, err := loadConfir(c.String("bulk"))
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 
 	client := NewLastPassClientFromContext(c)
 	s := NewService(client)
-	return s.BatchAdd(hoge)
+	fmt.Println(hoge)
+	if err := s.BatchAdd(hoge); err != nil {
+		fmt.Println(err)
+	}
+	return err
 }
 
 func loadConfir(configFile string) (config []api.User, err error) {
@@ -75,7 +81,15 @@ func loadConfir(configFile string) (config []api.User, err error) {
 	if err != nil {
 		return
 	}
-	err = yaml.Unmarshal(f, &config)
+
+	hoge := struct {
+		Data []api.User `json:"data"`
+	}{}
+
+	//buf := new(bytes.Buffer)
+	err = json.Unmarshal(f, &hoge)
+	config = hoge.Data
+	//err = yaml.Unmarshal(f, &config)
 	return
 }
 
