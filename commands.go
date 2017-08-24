@@ -49,17 +49,17 @@ var commandDelete = cli.Command{
 }
 
 var subCommandDeleteUser = cli.Command{
-	Name: "user",
-	Usage: "delete user",
+	Name:        "user",
+	Usage:       "delete user",
 	Description: `delete a <username>`,
 	ArgsUsage:   "[--mode | -m <deleteMode>] <username>",
-	Action: deDeleteUser,
+	Action:      doDeleteUser,
 	Flags: []cli.Flag {
 		cli.StringFlag{Name: "mode, m", Value:"Deactivate", Usage: "deleteMode"},
 	},
 }
 
-func deDeleteUser(c * cli.Context) error {
+func doDeleteUser(c * cli.Context) error {
 	argUserName := c.Args().Get(0)
 	if argUserName == "" {
 		logger.DieIf(errors.New("Email(username) has to be specified"))
