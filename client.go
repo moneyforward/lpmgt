@@ -118,47 +118,6 @@ func (c *LastpassClient) GetSharedFolderData() (*http.Response, error) {
 	return c.DoRequest("getsfdata", nil)
 }
 
-// ChangeGroupsMembership changes Group in batch(cmd = batchchangegrp)
-/*
-# Request
-
-  {
-    "cid": "8771312",
-    "provhash": "<Your API secret>",
-    "cmd": "batchchangegrp",
-    "data": [
-        {
-            "username": "user1@lastpass.com",
-            "add": [
-                "Group1",
-                "Group2"
-            ]
-        },
-        {
-            "username": "user2@lastpass.com",
-            "add": [
-                "Group1"
-            ],
-            "del": [
-                "Group2",
-                "Group3"
-            ]
-        }
-    ]
-}
-
-# Response
-{
-    "status": "WARN", // OK, WARN or FAIL
-    "errors": [
-        "user2@lastpass.com does not exist"
-    ]
-}
-*/
-func (c *LastpassClient) ChangeGroupsMembership(groups []api.BelongingGroup) (*http.Response, error) {
-	return c.DoRequest("batchchangegrp", groups)
-}
-
 // DisableMultifactor disables multifactor setting of user
 func (c *LastpassClient) DisableMultifactor(user string) (*http.Response, error) {
 	return c.DoRequest("disablemultifactor", api.User{UserName: user})

@@ -37,7 +37,74 @@ var Commands = []cli.Command{
 	commandGet,
 	commandDescribe,
 	commandDelete,
+	commandUpdate,
 }
+
+
+// Update command with subcommands
+var commandUpdate = cli.Command{
+	Name:  "update",
+	Usage: "update specific object",
+	Subcommands: []cli.Command{
+		subCommandUpdateUser,
+	},
+}
+
+var subCommandUpdateUser = cli.Command{
+	Name:        "user",
+	Usage:       "update user <email>",
+	Description: `update a <email>`,
+	ArgsUsage: "<email>",
+	Subcommands: []cli.Command{
+		{
+			Name: "transfer",
+			Usage: "transfer user",
+			ArgsUsage:   "[[--leave | -l <department>]...] [[--join | -j <department>]...]",
+			Description: "User can specify either --leave or --join to move department",
+			Action: doTransferUser,
+			Flags: []cli.Flag{
+				cli.StringSliceFlag{Name: "leave, l", Value: &cli.StringSlice{}, Usage: "leave current department"},
+				cli.StringSliceFlag{Name: "join, j", Value: &cli.StringSlice{}, Usage: "join new department"},
+			},
+		},
+	},
+}
+
+func doTransferUser(c *cli.Context) error {
+	argUserName := c.Args().Get(0)
+	if argUserName == "" {
+		logger.DieIf(errors.New("Email(username) has to be specified"))
+	}
+
+	// First Pull original user data
+	client := NewLastPassClientFromContext(c)
+	s := NewService(client)
+	user, err := s.GetUserData(argUserName)
+	logger.DieIf(err)
+
+	if user.UserName == "" {
+		eMessage := fmt.Sprintf("User %v does not exist", argUserName)
+		logger.DieIf(errors.New(eMessage))
+	}
+
+	user.Groups = append(user.Groups, c.StringSlice("join")...)
+	leave := c.StringSlice("leave")
+	for i := 0; i < len(leave); i ++ {
+		newDeps := []string{}
+		for _, dep := range user.Groups {
+			if dep != leave[i] {
+				newDeps = append(newDeps, dep)
+			}
+		}
+		user.Groups = newDeps
+	}
+
+	err = s.UpdateUser(user)
+	logger.DieIf(err)
+	logger.Log("updated", user.UserName)
+	return nil
+}
+
 
 // Delete command with subcommands
 var commandDelete = cli.Command{
@@ -108,8 +175,13 @@ func doDescribeUser(c *cli.Context) error {
 	client := NewLastPassClientFromContext(c)
 	user, err := NewService(client).GetUserData(argUserName)
 	logger.DieIf(err)
-	logger.DieIf(PrintIndentedJSON(user))
 
+	if user.UserName == "" {
+		eMessage := fmt.Sprintf("User %v does not exist", argUserName)
+		logger.DieIf(errors.New(eMessage))
+	}
+
+	PrintIndentedJSON(user)
 	return nil
 }
 
@@ -127,13 +199,13 @@ var subcommandGetUsers = cli.Command{
 	Usage:       "get users",
 	ArgsUsage:   "[--filter, -f <option>]",
 	Description: "Use --filter to filter users. You can choose from either `non2fa`, `inactive`, `disabled`, or `admin`",
-	Action:      doGetUser,
+	Action:      doGetUsers,
 	Flags: []cli.Flag{
 		cli.StringFlag{Name: "filter, f", Value: "all", Usage: "Filter fetching users"},
 	},
 }
 
-func doGetUser(c *cli.Context) (err error) {
+func doGetUsers(c *cli.Context) (err error) {
 	client := NewLastPassClientFromContext(c)
 	s := NewService(client)
 
@@ -153,7 +225,6 @@ func doGetUser(c *cli.Context) (err error) {
 	}
 	logger.DieIf(err)
 	api.PrintUserNames(users)
-	fmt.Println(len(users))
 	return nil
 }
 

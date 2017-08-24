@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 	"lastpass_provisioning/api"
 	"net/http"
 )
@@ -103,6 +103,22 @@ func (s *UserService) BatchAdd(users []api.User) error {
 	return err
 }
 
+//
+func (s *UserService) UpdateUser(user api.User) error {
+	s.command = "batchadd"
+	s.data = user
+	res, err := s.doRequest()
+	status := &api.ApiResultStatus{}
+	err = JSONBodyDecoder(res, status)
+	if err != nil {
+		return err
+	}
+	if !status.IsOK() {
+		return errors.New(status.Status)
+	}
+	return nil
+}
+
 // DeleteUser - delete individual users.
 /*
 0 - Deactivate user. This blocks logins but retains data and enterprise membership
@@ -115,7 +131,6 @@ func (s *UserService) DeleteUser(name string, mode DeactivationMode) error {
 		UserName     string `json:"username"`
 		DeleteAction int    `json:"deleteaction"`
 	}{UserName: name, DeleteAction: int(mode)}
-	fmt.Println(int(mode))
 	_, err := s.doRequest()
 	return err
 }
@@ -152,7 +167,7 @@ func (s *UserService) GetAllUsers() ([]api.User, error) {
 // GetInactiveUsers is Deactivated user(Deleted user in mode 0)
 func (s *UserService) GetInactiveUsers() ([]api.User, error) {
 	s.command = "getuserdata"
-	s.data = api.User{IsAdmin: false}
+	s.data = api.User{}
 	res, err := s.doRequest()
 	if err != nil {
 		return nil, err
@@ -199,6 +214,47 @@ func (s *UserService) GetAdminUserData() ([]api.User, error) {
 	}
 	return AdminUsers.GetUsers(), nil
 }
+
+// ChangeGroupsMembership changes Group in batch(cmd = batchchangegrp)
+/*
+# Request
+
+  {
+    "cid": "8771312",
+    "provhash": "<Your API secret>",
+    "cmd": "batchchangegrp",
+    "data": [
+        {
+            "username": "user1@lastpass.com",
+            "add": [
+                "Group1",
+                "Group2"
+            ]
+        },
+        {
+            "username": "user2@lastpass.com",
+            "add": [
+                "Group1"
+            ],
+            "del": [
+                "Group2",
+                "Group3"
+            ]
+        }
+    ]
+}
+
+# Response
+{
+    "status": "WARN", // OK, WARN or FAIL
+    "errors": [
+        "user2@lastpass.com does not exist"
+    ]
+}
+*/
+//func (s *UserService) ChangeGroupsMembership(groups []api.TransferringUser) (*http.Response, error) {
+//	return .DoRequest("batchchangegrp", groups)
+//}
 
 // NewService creates a new UserService
 func NewService(client *LastpassClient) (s *UserService) {

@@ -34,6 +34,12 @@ type Users struct {
 	Invited []string            `json:"invited,omitempty"`
 }
 
+type TransferringUser struct {
+	Username   string   `json:"username"`
+	JoiningDepName []string `json:"add,omitempty"`
+	LeavingDepName []string `json:"del,omitempty"`
+}
+
 func (u *User) Contains(users []string) bool {
 	for _, user := range users {
 		if user == u.UserName {
