@@ -36,8 +36,41 @@ var Commands = []cli.Command{
 	commandCreate,
 	commandGet,
 	commandDescribe,
+	commandDelete,
 }
 
+// Delete command with subcommands
+var commandDelete = cli.Command{
+	Name:	"delete",
+	Usage:  "delete specific object",
+	Subcommands: []cli.Command {
+		subCommandDeleteUser,
+	},
+}
+
+var subCommandDeleteUser = cli.Command{
+	Name: "user",
+	Usage: "delete user",
+	Description: `delete a <username>`,
+	ArgsUsage:   "[--mode | -m <deleteMode>] <username>",
+	Action: deDeleteUser,
+	Flags: []cli.Flag {
+		cli.StringFlag{Name: "mode, m", Value:"Deactivate", Usage: "deleteMode"},
+	},
+}
+
+func deDeleteUser(c * cli.Context) error {
+	argUserName := c.Args().Get(0)
+	if argUserName == "" {
+		logger.DieIf(errors.New("Email(username) has to be specified"))
+	}
+
+	client := NewLastPassClientFromContext(c)
+	err := NewService(client).DeleteUser(argUserName, Deactivate)
+	logger.DieIf(err)
+	logger.Log("Deactivate", argUserName)
+	return nil
+}
 
 // Describe command with subcommands
 var commandDescribe = cli.Command{
@@ -97,6 +130,7 @@ func doGetUser(c *cli.Context) (err error) {
 
 	switch c.String("filter") {
 	case "non2fa":
+		users, err = s.GetNon2faUsers()
 	case "inactive":
 		users, err = s.GetInactiveUsers()
 	case "disabled":
@@ -108,6 +142,7 @@ func doGetUser(c *cli.Context) (err error) {
 	}
 	logger.DieIf(err)
 	api.PrintUserNames(users)
+	fmt.Println(len(users))
 	return nil
 }
 

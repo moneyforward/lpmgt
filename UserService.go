@@ -112,6 +112,18 @@ func (s *UserService) DeleteUser(name string, mode DeactivationMode) error {
 	return err
 }
 
+func (s *UserService) GetNon2faUsers() ([]api.User, error) {
+	s.command = "getuserdata"
+	s.data = api.User{}
+	res, err := s.DoRequest()
+	var users api.Users
+	err = JSONBodyDecoder(res, &users)
+	if err != nil {
+		return nil, err
+	}
+	return users.GetNon2faUsers(), nil
+}
+
 // GetAllUsers simply retrieves all users
 func (s *UserService) GetAllUsers() ([]api.User, error) {
 	s.command = "getuserdata"
@@ -128,7 +140,7 @@ func (s *UserService) GetAllUsers() ([]api.User, error) {
 	return nonAdminUsers.GetUsers(), nil
 }
 
-// GetInactiveUsers is Deactivated user(Deleted user in mode 0)
+// GetNeverLoggedInUsers is Deactivated user(Deleted user in mode 0)
 func (s *UserService) GetInactiveUsers() ([]api.User, error) {
 	s.command = "getuserdata"
 	s.data = api.User{IsAdmin: false}
@@ -142,7 +154,7 @@ func (s *UserService) GetInactiveUsers() ([]api.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	return nonAdminUsers.GetInactiveUsers(), nil
+	return nonAdminUsers.GetNeverLoggedInUsers(), nil
 }
 
 // GetDisabledUsers gets Deactivated user(Deleted user in mode 0)

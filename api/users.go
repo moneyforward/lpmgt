@@ -51,7 +51,16 @@ func (us *Users) GetUsers() []User {
 	return users
 }
 
-func (us *Users) GetInactiveUsers() (users []User) {
+func (us *Users) GetNon2faUsers() (users []User) {
+	for _, user := range us.Users {
+		if user.Multifactor == "" {
+			users = append(users, user)
+		}
+	}
+	return users
+}
+
+func (us *Users) GetNeverLoggedInUsers() (users []User) {
 	for _, user := range us.Users{
 		if user.NeverLoggedIn {
 			users = append(users, user)
