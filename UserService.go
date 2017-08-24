@@ -84,7 +84,9 @@ func (s *UserService) GetUserData(userName string) (user api.User, err error) {
 	if err != nil {
 		return
 	}
-	user = users.GetUsers()[0]
+	if len(users.GetUsers()) != 0 {
+		user = users.GetUsers()[0]
+	}
 	return
 }
 
