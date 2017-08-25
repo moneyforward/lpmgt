@@ -1,4 +1,4 @@
-package main
+package lastpassclient
 
 import (
 	"fmt"
@@ -12,6 +12,8 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"lastpass_provisioning/util"
+	"lastpass_provisioning/lastpass_config"
 )
 
 // Client is a general client structure.
@@ -38,9 +40,9 @@ func init() {
 // This method depends on urfave/cli.
 func NewLastPassClientFromContext(c *cli.Context) *LastpassClient {
 	confFile := c.GlobalString("config")
-	apiKey := LoadAPIKeyFromEnvOrConfig(confFile)
-	companyID := LoadCompanyIDFromEnvOrConfig(confFile)
-	endPointURL := LoadEndPointURL(confFile)
+	apiKey := lastpass_config.LoadAPIKeyFromEnvOrConfig(confFile)
+	companyID := lastpass_config.LoadCompanyIDFromEnvOrConfig(confFile)
+	endPointURL := lastpass_config.LoadEndPointURL(confFile)
 
 	if apiKey == "" {
 		err := errors.New(`
@@ -55,7 +57,7 @@ func NewLastPassClientFromContext(c *cli.Context) *LastpassClient {
 		logger.DieIf(err)
 	}
 	if endPointURL == "" {
-		endPointURL = defaultBaseURL
+		endPointURL = lastpass_config.DefaultBaseURL
 	}
 
 	client, err := NewClient(apiKey, endPointURL, os.Getenv("DEBUG") != "")
@@ -77,7 +79,7 @@ func NewClient(apiKey string, endpointURL string, verbose bool) (*Client, error)
 		URL:       parsedURL,
 		APIKey:    apiKey,
 		Verbose:   verbose,
-		UserAgent: defaultUserAgent,
+		UserAgent: lastpass_config.DefaultUserAgent,
 		Headers:   http.Header{},
 		Logger:    nil,
 	}, nil
@@ -156,7 +158,7 @@ func (c *LastpassClient) GetAllEventReports() (*http.Response, error) {
 
 // requestJSON is a general http request in JSON form.
 func (c *Client) requestJSON(method string, path string, payload interface{}) (*http.Response, error) {
-	body, err := JSONReader(payload)
+	body, err := util.JSONReader(payload)
 	if err != nil {
 		return nil, err
 	}

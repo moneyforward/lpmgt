@@ -1,11 +1,67 @@
 {
     "data": [
       {
-        "username": "tanaka.shuhei@moneyforward.co.jp",
+        "username": "kan.eri@moneyforward.co.jp",
         "Groups": ["カスタマーサポート本部"]
       },
       {
-        "username": "fukasawa.masaharu@moneyforward.co.jp",
+        "username": "akiyama.megumi@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
+      },
+      {
+        "username": "takoya.emi@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
+      },
+      {
+        "username": "kanahama.yuki@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
+      },
+      {
+        "username": "kashiwazaki.takahiro@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
+      },
+      {
+        "username": "nakano.reiko@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
+      },
+      {
+        "username": "kobayashi.yoshiki@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
+      },
+      {
+        "username": "sato.ryosuke@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
+      },
+      {
+        "username": "tamura.fusashi@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
+      },
+      {
+        "username": "tarumi.waka@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
+      },
+      {
+        "username": "yamasaki.daigo@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
+      },
+      {
+        "username": "kamogawa.nagayuki@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
+      },
+      {
+        "username": "kurosawa.nanae@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
+      },
+      {
+        "username": "takahashi.nobuaki@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
+      },
+      {
+        "username": "yoshimura.takahiro@moneyforward.co.jp",
+        "Groups": ["カスタマーサポート本部"]
+      },
+      {
+        "username": "matsuda.daisuke@moneyforward.co.jp",
         "Groups": ["カスタマーサポート本部"]
       }
     ]

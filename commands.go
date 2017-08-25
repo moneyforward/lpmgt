@@ -8,7 +8,10 @@ import (
 	"io/ioutil"
 	"lastpass_provisioning/api"
 	"lastpass_provisioning/lastpass_time"
+	client "lastpass_provisioning/lastpassclient"
 	"lastpass_provisioning/logger"
+	"lastpass_provisioning/service"
+	"lastpass_provisioning/util"
 	"os"
 	"sync"
 	"time"
@@ -77,8 +80,8 @@ func doTransferUser(c *cli.Context) error {
 		logger.DieIf(errors.New("Email(username) has to be specified"))
 	}
 
-	client := NewLastPassClientFromContext(c)
-	s := NewService(client)
+	client := client.NewLastPassClientFromContext(c)
+	s := service.NewService(client)
 
 	// Fetch User if he/she exists
 	user, err := s.GetUserData(argUserName)
@@ -132,18 +135,18 @@ func doDeleteUser(c *cli.Context) error {
 		logger.DieIf(errors.New("Email(username) has to be specified"))
 	}
 
-	var mode = DeactivationMode(Deactivate)
+	var mode = service.DeactivationMode(service.Deactivate)
 	switch c.String("mode") {
 	case "deactivate":
-		mode = Deactivate
+		mode = service.Deactivate
 	case "delete":
-		mode = Delete
+		mode = service.Delete
 	default:
-		mode = Deactivate
+		mode = service.Deactivate
 	}
 
-	client := NewLastPassClientFromContext(c)
-	err := NewService(client).DeleteUser(argUserName, mode)
+	client := client.NewLastPassClientFromContext(c)
+	err := service.NewService(client).DeleteUser(argUserName, mode)
 	logger.DieIf(err)
 	logger.Log(c.String("mode"), argUserName)
 	return nil
@@ -172,11 +175,11 @@ func doDescribeUser(c *cli.Context) error {
 		logger.DieIf(errors.New("Email(username) has to be specified"))
 	}
 
-	client := NewLastPassClientFromContext(c)
-	user, err := NewService(client).GetUserData(argUserName)
+	client := client.NewLastPassClientFromContext(c)
+	user, err := service.NewService(client).GetUserData(argUserName)
 	logger.DieIf(err)
 
-	PrintIndentedJSON(user)
+	util.PrintIndentedJSON(user)
 	return nil
 }
 
@@ -186,7 +189,21 @@ var commandGet = cli.Command{
 	Usage: "Get objects",
 	Subcommands: []cli.Command{
 		subcommandGetUsers,
+		subCommandGetGroups,
 	},
+}
+
+var subCommandGetGroups = cli.Command{
+	Name:   "groups",
+	Usage:  "get groups",
+	Action: doGetGroups,
+}
+
+func doGetGroups(c *cli.Context) error {
+	client := client.NewLastPassClientFromContext(c)
+	_ = service.NewService(client)
+	return nil
+	//s.GetAllGroups()
 }
 
 var subcommandGetUsers = cli.Command{
@@ -201,8 +218,8 @@ var subcommandGetUsers = cli.Command{
 }
 
 func doGetUsers(c *cli.Context) (err error) {
-	client := NewLastPassClientFromContext(c)
-	s := NewService(client)
+	client := client.NewLastPassClientFromContext(c)
+	s := service.NewService(client)
 
 	var users []api.User
 
@@ -259,8 +276,8 @@ func doAddUser(c *cli.Context) error {
 		Groups:   c.StringSlice("dept"),
 	}
 
-	client := NewLastPassClientFromContext(c)
-	err := NewService(client).BatchAdd([]api.User{user})
+	client := client.NewLastPassClientFromContext(c)
+	err := service.NewService(client).BatchAdd([]api.User{user})
 	logger.DieIf(err)
 
 	message := user.UserName
@@ -277,8 +294,8 @@ func doAddUsersInBulk(c *cli.Context) error {
 		logger.DieIf(err)
 	}
 
-	client := NewLastPassClientFromContext(c)
-	err = NewService(client).BatchAdd(users)
+	client := client.NewLastPassClientFromContext(c)
+	err = service.NewService(client).BatchAdd(users)
 	logger.DieIf(err)
 
 	for _, user := range users {
@@ -352,8 +369,8 @@ func doDashboard(c *cli.Context) error {
 	d.From = lastpass_time.JsonLastPassTime{JsonTime: dayAgo}
 	d.To = lastpass_time.JsonLastPassTime{JsonTime: now}
 
-	client := NewLastPassClientFromContext(c)
-	s := NewService(client)
+	client := client.NewLastPassClientFromContext(c)
+	s := service.NewService(client)
 
 	AdminUsers, err := s.GetAdminUserData()
 	logger.DieIf(err)
@@ -384,7 +401,7 @@ func doDashboard(c *cli.Context) error {
 	logger.DieIf(err)
 
 	var sharedFolders map[string]api.SharedFolder
-	err = JSONBodyDecoder(res, &sharedFolders)
+	err = util.JSONBodyDecoder(res, &sharedFolders)
 	logger.DieIf(err)
 
 	for _, sf := range sharedFolders {
@@ -398,7 +415,7 @@ func doDashboard(c *cli.Context) error {
 	logger.DieIf(err)
 
 	var result api.Events
-	err = JSONBodyDecoder(res, &result)
+	err = util.JSONBodyDecoder(res, &result)
 	logger.DieIf(err)
 
 	for _, event := range result.Events {
@@ -415,7 +432,7 @@ func doDashboard(c *cli.Context) error {
 			res, err = client.GetEventReport(userName, "", d.From, d.To)
 			logger.DieIf(err)
 
-			err = JSONBodyDecoder(res, &result)
+			err = util.JSONBodyDecoder(res, &result)
 			logger.DieIf(err)
 			d.Events[userName] = result.Events
 		}

@@ -1,15 +1,23 @@
-package main
+package service
 
 import (
 	"fmt"
 	"github.com/pkg/errors"
 	"lastpass_provisioning/api"
+	client "lastpass_provisioning/lastpassclient"
 	"net/http"
+	"lastpass_provisioning/util"
 )
+
+// ToDO
+/* reinviteuser -> status.go
+disablemultifactor ->
+ */
+
 
 // UserService is a service class that sends a request to LastPass provisioning API.
 type UserService struct {
-	client  *LastpassClient
+	client  *client.LastpassClient
 	command string
 	data    interface{}
 }
@@ -86,7 +94,7 @@ func (s *UserService) GetUserData(userName string) (user api.User, err error) {
 	}
 
 	users := &api.Users{}
-	err = JSONBodyDecoder(res, users)
+	err = util.JSONBodyDecoder(res, users)
 	if err != nil {
 		return
 	}
@@ -113,7 +121,7 @@ func (s *UserService) UpdateUser(user api.User) error {
 	s.data = user
 	res, err := s.doRequest()
 	status := &api.ApiResultStatus{}
-	err = JSONBodyDecoder(res, status)
+	err = util.JSONBodyDecoder(res, status)
 	if err != nil {
 		return err
 	}
@@ -145,7 +153,7 @@ func (s *UserService) GetNon2faUsers() ([]api.User, error) {
 	s.data = api.User{}
 	res, err := s.doRequest()
 	var users api.Users
-	err = JSONBodyDecoder(res, &users)
+	err = util.JSONBodyDecoder(res, &users)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +169,7 @@ func (s *UserService) GetAllUsers() ([]api.User, error) {
 		return nil, err
 	}
 	var nonAdminUsers api.Users
-	err = JSONBodyDecoder(res, &nonAdminUsers)
+	err = util.JSONBodyDecoder(res, &nonAdminUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +186,7 @@ func (s *UserService) GetInactiveUsers() ([]api.User, error) {
 	}
 
 	var nonAdminUsers api.Users
-	err = JSONBodyDecoder(res, &nonAdminUsers)
+	err = util.JSONBodyDecoder(res, &nonAdminUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +203,7 @@ func (s *UserService) GetDisabledUsers() ([]api.User, error) {
 	}
 
 	var Users api.Users
-	err = JSONBodyDecoder(res, &Users)
+	err = util.JSONBodyDecoder(res, &Users)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +220,7 @@ func (s *UserService) GetAdminUserData() ([]api.User, error) {
 	}
 
 	var AdminUsers api.Users
-	err = JSONBodyDecoder(res, &AdminUsers)
+	err = util.JSONBodyDecoder(res, &AdminUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +269,7 @@ func (s *UserService) GetAdminUserData() ([]api.User, error) {
 //}
 
 // NewService creates a new UserService
-func NewService(client *LastpassClient) (s *UserService) {
+func NewService(client *client.LastpassClient) (s *UserService) {
 	return &UserService{client: client}
 }
 
