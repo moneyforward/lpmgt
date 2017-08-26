@@ -339,8 +339,8 @@ var commandDashboards = cli.Command{
 }
 
 type dashBoard struct {
-	From        lf.JsonLastPassTime    `json:"from"`
-	To          lf.JsonLastPassTime    `json:"to"`
+	From        lf.JsonLastPassTime        `json:"from"`
+	To          lf.JsonLastPassTime        `json:"to"`
 	Users       map[string][]service.User  `json:"users"`
 	Departments map[string][]service.User  `json:"department"`
 	Events      map[string][]service.Event `json:"events"`

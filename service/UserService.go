@@ -108,8 +108,13 @@ func (s *UserService) GetUserData(userName string) (user User, err error) {
 func (s *UserService) BatchAdd(users []User) error {
 	s.command = "batchadd"
 	s.data = users
-	_, err := s.doRequest()
-	return err
+	res, err := s.doRequest()
+	status := &ApiResultStatus{}
+	err = util.JSONBodyDecoder(res, status)
+	if err != nil {
+		return err
+	}
+	 return status.Error()
 }
 
 // UpdateUser updates user's info.
@@ -122,10 +127,7 @@ func (s *UserService) UpdateUser(user User) error {
 	if err != nil {
 		return err
 	}
-	if !status.IsOK() {
-		return errors.New(status.Status)
-	}
-	return nil
+	return status.Error()
 }
 
 // DeleteUser - delete individual users.
@@ -140,8 +142,13 @@ func (s *UserService) DeleteUser(name string, mode DeactivationMode) error {
 		UserName     string `json:"username"`
 		DeleteAction int    `json:"deleteaction"`
 	}{UserName: name, DeleteAction: int(mode)}
-	_, err := s.doRequest()
-	return err
+	res, err := s.doRequest()
+	status := &ApiResultStatus{}
+	err = util.JSONBodyDecoder(res, status)
+	if err != nil {
+		return err
+	}
+	return status.Error()
 }
 
 // GetNon2faUsers retrieves users without 2 factor authentication setting.
@@ -238,10 +245,7 @@ func (s *UserService) DisableMultifactor(username string) error {
 	if err != nil {
 		return err
 	}
-	if !status.IsOK() {
-		return errors.New(fmt.Sprintln(status))
-	}
-	return nil
+	return status.Error()
 }
 
 // ResetPassword reset password for the user
@@ -258,10 +262,7 @@ func (s *UserService) ResetPassword(username string) error {
 	if err != nil {
 		return err
 	}
-	if !status.IsOK() {
-		return errors.New(fmt.Sprintln(status))
-	}
-	return nil
+	return status.Error()
 }
 
 // ChangeGroupsMembership changes Group in batch(cmd = batchchangegrp)

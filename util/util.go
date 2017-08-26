@@ -29,10 +29,15 @@ func JSONReader(v interface{}) (io.Reader, error) {
 
 // PrintIndentedJSON output indented json via stdout.
 func PrintIndentedJSON(originalJSON interface{}) error {
-	dataRaw, err := json.MarshalIndent(originalJSON, "", "    ")
+	dataRaw, err := IndentedJSON(originalJSON)
 	if err != nil {
 		return err
 	}
 	fmt.Fprintln(os.Stdout, string(dataRaw))
 	return nil
+}
+
+// IndentedJSON returns api.
+func IndentedJSON(originalJSON interface{}) ([]byte, error) {
+	return json.MarshalIndent(originalJSON, "", "    ")
 }
