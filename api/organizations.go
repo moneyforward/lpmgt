@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"lastpass_provisioning/service"
 )
 
 type Org struct {
@@ -16,8 +17,8 @@ type OU struct {
 	Children []*OU
 }
 
-func FormUsers(ou, parentOU *OU) map[string]*User {
-	users := make(map[string]*User)
+func FormUsers(ou, parentOU *OU) map[string]*service.User {
+	users := make(map[string]*service.User)
 
 	// Construct Members within Child OU
 	if parentOU != nil {
@@ -27,7 +28,7 @@ func FormUsers(ou, parentOU *OU) map[string]*User {
 		if _, ok := users[member]; ok {
 			users[member].Groups = append(users[member].Groups, ou.Name)
 		} else {
-			users[member] = &User{UserName: member, Groups: []string{ou.Name}}
+			users[member] = &service.User{UserName: member, Groups: []string{ou.Name}}
 		}
 	}
 
