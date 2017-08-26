@@ -1,4 +1,4 @@
-package api
+package service
 
 type ApiResultStatus struct {
 Status   string   `json:"status,omitempty"`

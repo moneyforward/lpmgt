@@ -6,7 +6,6 @@ import (
 	"errors"
 	"lastpass_provisioning/logger"
 	"net/http"
-	"lastpass_provisioning/api"
 	"lastpass_provisioning/client"
 	"github.com/urfave/cli"
 	lf "lastpass_provisioning/lastpass_format"
@@ -104,16 +103,6 @@ GetSharedFolderData returns a JSON object containing information on all Shared F
 */
 func (c *LastPassClient) GetSharedFolderData() (*http.Response, error) {
 	return c.DoRequest("getsfdata", nil)
-}
-
-// DisableMultifactor disables multifactor setting of user
-func (c *LastPassClient) DisableMultifactor(user string) (*http.Response, error) {
-	return c.DoRequest("disablemultifactor", api.User{UserName: user})
-}
-
-// ResetPassword reset password for the user
-func (c *LastPassClient) ResetPassword(user string) (*http.Response, error) {
-	return c.DoRequest("resetpassword", api.User{UserName: user})
 }
 
 // GetEventReport fetches event of an user in certain period of time.
