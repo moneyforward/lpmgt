@@ -1,4 +1,4 @@
-package lastpass_time
+package main
 
 import (
 	"time"

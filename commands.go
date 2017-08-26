@@ -7,7 +7,6 @@ import (
 	"github.com/urfave/cli"
 	"io/ioutil"
 	"lastpass_provisioning/api"
-	"lastpass_provisioning/lastpass_time"
 	client "lastpass_provisioning/lastpassclient"
 	"lastpass_provisioning/logger"
 	"lastpass_provisioning/service"
@@ -339,8 +338,8 @@ var commandDashboards = cli.Command{
 }
 
 type dashBoard struct {
-	From        lastpass_time.JsonLastPassTime `json:"from"`
-	To          lastpass_time.JsonLastPassTime `json:"to"`
+	From        JsonLastPassTime `json:"from"`
+	To          JsonLastPassTime `json:"to"`
 	Users       map[string][]api.User          `json:"users"`
 	Departments map[string][]api.User          `json:"department"`
 	Events      map[string][]api.Event         `json:"events"`
@@ -366,8 +365,8 @@ func doDashboard(c *cli.Context) error {
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
 	dayAgo := now.Add(-time.Duration(durationToAuditInDay) * time.Hour * 24)
-	d.From = lastpass_time.JsonLastPassTime{JsonTime: dayAgo}
-	d.To = lastpass_time.JsonLastPassTime{JsonTime: now}
+	d.From = JsonLastPassTime{JsonTime: dayAgo}
+	d.To = JsonLastPassTime{JsonTime: now}
 
 	client := client.NewLastPassClientFromContext(c)
 	s := service.NewService(client)
