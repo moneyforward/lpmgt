@@ -51,7 +51,51 @@ var commandUpdate = cli.Command{
 	Usage: "update specific object",
 	Subcommands: []cli.Command{
 		subCommandUpdateUser,
+		subCommandDisableMFA,
+		subCommandResetPassword,
 	},
+}
+
+var subCommandDisableMFA = cli.Command{
+	Name:        "disable mfa",
+	Usage:       "disable mfa of user <email>",
+	ArgsUsage:   "<email>",
+	Action:      doDisableMFA,
+}
+
+func doDisableMFA(c *cli.Context) error {
+	argUserName := c.Args().Get(0)
+	if argUserName == "" {
+		logger.DieIf(errors.New("Email(username) has to be specified"))
+	}
+
+	client := lc.NewLastPassClientFromContext(c)
+	s := service.NewUserService(client)
+
+	err := s.DisableMultifactor(argUserName)
+	logger.DieIf(err)
+	return nil
+}
+
+var subCommandResetPassword = cli.Command{
+	Name:        "reset password",
+	Usage:       "reset password of user <email>",
+	ArgsUsage:   "<email>",
+	Action:      doResetPassword,
+}
+
+func doResetPassword(c *cli.Context) error {
+	argUserName := c.Args().Get(0)
+	if argUserName == "" {
+		logger.DieIf(errors.New("Email(username) has to be specified"))
+	}
+
+	client := lc.NewLastPassClientFromContext(c)
+	s := service.NewUserService(client)
+
+	err := s.ResetPassword(argUserName)
+	logger.DieIf(err)
+	return nil
 }
 
 var subCommandUpdateUser = cli.Command{
