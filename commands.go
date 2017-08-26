@@ -221,7 +221,7 @@ func doGetUsers(c *cli.Context) (err error) {
 	client := lc.NewLastPassClientFromContext(c)
 	s := service.NewUserService(client)
 
-	var users []api.User
+	var users []service.User
 
 	switch c.String("filter") {
 	case "non2fa":
@@ -236,7 +236,7 @@ func doGetUsers(c *cli.Context) (err error) {
 		users, err = s.GetAllUsers()
 	}
 	logger.DieIf(err)
-	api.PrintUserNames(users)
+	service.PrintUserNames(users)
 	return nil
 }
 
@@ -271,13 +271,13 @@ func doAddUser(c *cli.Context) error {
 		logger.DieIf(errors.New("Email(username) has to be specified"))
 	}
 
-	user := api.User{
+	user := service.User{
 		UserName: argUserName,
 		Groups:   c.StringSlice("dept"),
 	}
 
 	client := lc.NewLastPassClientFromContext(c)
-	err := service.NewUserService(client).BatchAdd([]api.User{user})
+	err := service.NewUserService(client).BatchAdd([]service.User{user})
 	logger.DieIf(err)
 
 	message := user.UserName
@@ -309,14 +309,14 @@ func doAddUsersInBulk(c *cli.Context) error {
 	return err
 }
 
-func loadAddingUsers(usersFile string) (config []api.User, err error) {
+func loadAddingUsers(usersFile string) (config []service.User, err error) {
 	f, err := ioutil.ReadFile(usersFile)
 	if err != nil {
 		return
 	}
 
 	data := struct {
-		Data []api.User `json:"data"`
+		Data []service.User `json:"data"`
 	}{}
 
 	if err = json.Unmarshal(f, &data); err != nil {
@@ -341,9 +341,9 @@ var commandDashboards = cli.Command{
 type dashBoard struct {
 	From        lf.JsonLastPassTime    `json:"from"`
 	To          lf.JsonLastPassTime    `json:"to"`
-	Users       map[string][]api.User  `json:"users"`
-	Departments map[string][]api.User  `json:"department"`
-	Events      map[string][]api.Event `json:"events"`
+	Users       map[string][]service.User  `json:"users"`
+	Departments map[string][]service.User  `json:"department"`
+	Events      map[string][]service.Event `json:"events"`
 }
 
 // TODO refactor,
@@ -358,9 +358,9 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	d := &dashBoard{
-		Users:       make(map[string][]api.User),
-		Departments: make(map[string][]api.User),
-		Events:      make(map[string][]api.Event),
+		Users:       make(map[string][]service.User),
+		Departments: make(map[string][]service.User),
+		Events:      make(map[string][]service.Event),
 	}
 
 	loc, _ := time.LoadLocation("Asia/Tokyo")
@@ -386,7 +386,7 @@ func doDashboard(c *cli.Context) error {
 
 	inactiveUsers, err := s.GetInactiveUsers()
 	logger.DieIf(err)
-	inactiveDep := make(map[string][]api.User)
+	inactiveDep := make(map[string][]service.User)
 	for _, u := range inactiveUsers {
 		for _, group := range u.Groups {
 			inactiveDep[group] = append(inactiveDep[group], u)
@@ -414,7 +414,7 @@ func doDashboard(c *cli.Context) error {
 	res, err = client.GetEventReport("", "", d.From, d.To)
 	logger.DieIf(err)
 
-	var result api.Events
+	var result service.Events
 	err = util.JSONBodyDecoder(res, &result)
 	logger.DieIf(err)
 
