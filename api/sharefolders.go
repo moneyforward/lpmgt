@@ -1,7 +1,9 @@
 package api
 
+import "lastpass_provisioning/service"
+
 type SharedFolder struct {
 	ShareFolderName string  `json:"sharedfoldername"`
 	Score           float32 `json:"score"`
-	Users           []User `json:"users"`
+	Users           []service.User `json:"users"`
 }

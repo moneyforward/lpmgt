@@ -1,0 +1,4 @@
+company_id: {COMPANY_ID}
+config:
+    end_point_url: https://lastpass.com/enterpriseapi.php
+    secret: {SECRET/API_KEY}
