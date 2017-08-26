@@ -1,18 +1,18 @@
 package service
 
 import (
-	"lastpass_provisioning/lastpassclient"
+	lc "lastpass_provisioning/lastpass_client"
 	"net/http"
 )
 
 type EventService struct {
-	client  *lastpassclient.LastpassClient
+	client  *lc.LastPassClient
 	command string
 	data    interface{}
 }
 
 // NewEventService creates a new EventService
-func NewEventService(client *lastpassclient.LastpassClient) (s *UserService) {
+func NewEventService(client *lc.LastPassClient) (s *UserService) {
 	return &UserService{client: client}
 }
 

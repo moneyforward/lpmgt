@@ -7,7 +7,8 @@ import (
 	"github.com/urfave/cli"
 	"io/ioutil"
 	"lastpass_provisioning/api"
-	client "lastpass_provisioning/lastpassclient"
+	lc "lastpass_provisioning/lastpass_client"
+	lf "lastpass_provisioning/lastpass_format"
 	"lastpass_provisioning/logger"
 	"lastpass_provisioning/service"
 	"lastpass_provisioning/util"
@@ -79,7 +80,7 @@ func doTransferUser(c *cli.Context) error {
 		logger.DieIf(errors.New("Email(username) has to be specified"))
 	}
 
-	client := client.NewLastPassClientFromContext(c)
+	client := lc.NewLastPassClientFromContext(c)
 	s := service.NewUserService(client)
 
 	// Fetch User if he/she exists
@@ -144,7 +145,7 @@ func doDeleteUser(c *cli.Context) error {
 		mode = service.Deactivate
 	}
 
-	client := client.NewLastPassClientFromContext(c)
+	client := lc.NewLastPassClientFromContext(c)
 	err := service.NewUserService(client).DeleteUser(argUserName, mode)
 	logger.DieIf(err)
 	logger.Log(c.String("mode"), argUserName)
@@ -174,7 +175,7 @@ func doDescribeUser(c *cli.Context) error {
 		logger.DieIf(errors.New("Email(username) has to be specified"))
 	}
 
-	client := client.NewLastPassClientFromContext(c)
+	client := lc.NewLastPassClientFromContext(c)
 	user, err := service.NewUserService(client).GetUserData(argUserName)
 	logger.DieIf(err)
 
@@ -199,7 +200,7 @@ var subCommandGetGroups = cli.Command{
 }
 
 func doGetGroups(c *cli.Context) error {
-	client := client.NewLastPassClientFromContext(c)
+	client := lc.NewLastPassClientFromContext(c)
 	_ = service.NewUserService(client)
 	return nil
 	//s.GetAllGroups()
@@ -217,7 +218,7 @@ var subcommandGetUsers = cli.Command{
 }
 
 func doGetUsers(c *cli.Context) (err error) {
-	client := client.NewLastPassClientFromContext(c)
+	client := lc.NewLastPassClientFromContext(c)
 	s := service.NewUserService(client)
 
 	var users []api.User
@@ -275,7 +276,7 @@ func doAddUser(c *cli.Context) error {
 		Groups:   c.StringSlice("dept"),
 	}
 
-	client := client.NewLastPassClientFromContext(c)
+	client := lc.NewLastPassClientFromContext(c)
 	err := service.NewUserService(client).BatchAdd([]api.User{user})
 	logger.DieIf(err)
 
@@ -293,7 +294,7 @@ func doAddUsersInBulk(c *cli.Context) error {
 		logger.DieIf(err)
 	}
 
-	client := client.NewLastPassClientFromContext(c)
+	client := lc.NewLastPassClientFromContext(c)
 	err = service.NewUserService(client).BatchAdd(users)
 	logger.DieIf(err)
 
@@ -338,11 +339,11 @@ var commandDashboards = cli.Command{
 }
 
 type dashBoard struct {
-	From        JsonLastPassTime `json:"from"`
-	To          JsonLastPassTime `json:"to"`
-	Users       map[string][]api.User          `json:"users"`
-	Departments map[string][]api.User          `json:"department"`
-	Events      map[string][]api.Event         `json:"events"`
+	From        lf.JsonLastPassTime    `json:"from"`
+	To          lf.JsonLastPassTime    `json:"to"`
+	Users       map[string][]api.User  `json:"users"`
+	Departments map[string][]api.User  `json:"department"`
+	Events      map[string][]api.Event `json:"events"`
 }
 
 // TODO refactor,
@@ -365,10 +366,10 @@ func doDashboard(c *cli.Context) error {
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
 	dayAgo := now.Add(-time.Duration(durationToAuditInDay) * time.Hour * 24)
-	d.From = JsonLastPassTime{JsonTime: dayAgo}
-	d.To = JsonLastPassTime{JsonTime: now}
+	d.From = lf.JsonLastPassTime{JsonTime: dayAgo}
+	d.To = lf.JsonLastPassTime{JsonTime: now}
 
-	client := client.NewLastPassClientFromContext(c)
+	client := lc.NewLastPassClientFromContext(c)
 	s := service.NewUserService(client)
 
 	AdminUsers, err := s.GetAdminUserData()
