@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"lastpass_provisioning/api"
-	client "lastpass_provisioning/lastpassclient"
+	"lastpass_provisioning/lastpassclient"
 	"net/http"
 	"lastpass_provisioning/util"
 )
@@ -13,11 +13,9 @@ import (
 /* reinviteuser -> status.go
 disablemultifactor ->
  */
-
-
 // UserService is a service class that sends a request to LastPass provisioning API.
 type UserService struct {
-	client  *client.LastpassClient
+	client  *lastpassclient.LastpassClient
 	command string
 	data    interface{}
 }
@@ -268,8 +266,8 @@ func (s *UserService) GetAdminUserData() ([]api.User, error) {
 //	return .DoRequest("batchchangegrp", groups)
 //}
 
-// NewService creates a new UserService
-func NewService(client *client.LastpassClient) (s *UserService) {
+// NewUserService creates a new UserService
+func NewUserService(client *lastpassclient.LastpassClient) (s *UserService) {
 	return &UserService{client: client}
 }
 

@@ -80,7 +80,7 @@ func doTransferUser(c *cli.Context) error {
 	}
 
 	client := client.NewLastPassClientFromContext(c)
-	s := service.NewService(client)
+	s := service.NewUserService(client)
 
 	// Fetch User if he/she exists
 	user, err := s.GetUserData(argUserName)
@@ -145,7 +145,7 @@ func doDeleteUser(c *cli.Context) error {
 	}
 
 	client := client.NewLastPassClientFromContext(c)
-	err := service.NewService(client).DeleteUser(argUserName, mode)
+	err := service.NewUserService(client).DeleteUser(argUserName, mode)
 	logger.DieIf(err)
 	logger.Log(c.String("mode"), argUserName)
 	return nil
@@ -175,7 +175,7 @@ func doDescribeUser(c *cli.Context) error {
 	}
 
 	client := client.NewLastPassClientFromContext(c)
-	user, err := service.NewService(client).GetUserData(argUserName)
+	user, err := service.NewUserService(client).GetUserData(argUserName)
 	logger.DieIf(err)
 
 	util.PrintIndentedJSON(user)
@@ -200,7 +200,7 @@ var subCommandGetGroups = cli.Command{
 
 func doGetGroups(c *cli.Context) error {
 	client := client.NewLastPassClientFromContext(c)
-	_ = service.NewService(client)
+	_ = service.NewUserService(client)
 	return nil
 	//s.GetAllGroups()
 }
@@ -218,7 +218,7 @@ var subcommandGetUsers = cli.Command{
 
 func doGetUsers(c *cli.Context) (err error) {
 	client := client.NewLastPassClientFromContext(c)
-	s := service.NewService(client)
+	s := service.NewUserService(client)
 
 	var users []api.User
 
@@ -276,7 +276,7 @@ func doAddUser(c *cli.Context) error {
 	}
 
 	client := client.NewLastPassClientFromContext(c)
-	err := service.NewService(client).BatchAdd([]api.User{user})
+	err := service.NewUserService(client).BatchAdd([]api.User{user})
 	logger.DieIf(err)
 
 	message := user.UserName
@@ -294,7 +294,7 @@ func doAddUsersInBulk(c *cli.Context) error {
 	}
 
 	client := client.NewLastPassClientFromContext(c)
-	err = service.NewService(client).BatchAdd(users)
+	err = service.NewUserService(client).BatchAdd(users)
 	logger.DieIf(err)
 
 	for _, user := range users {
@@ -369,7 +369,7 @@ func doDashboard(c *cli.Context) error {
 	d.To = JsonLastPassTime{JsonTime: now}
 
 	client := client.NewLastPassClientFromContext(c)
-	s := service.NewService(client)
+	s := service.NewUserService(client)
 
 	AdminUsers, err := s.GetAdminUserData()
 	logger.DieIf(err)
