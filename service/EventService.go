@@ -13,6 +13,18 @@ type Events struct {
 	Events []Event `json:"events"`
 }
 
+// GetUserEvents get events from users
+func (es *Events) GetUserEvents(username string) []Event {
+	events := make([]Event, len(es.Events))
+	for _, event := range es.Events {
+		if username == event.Username {
+			events = append(events, event)
+		}
+	}
+
+	return events
+}
+
 type Event struct {
 	Time      time.Time `json:"JsonTime"`
 	Username  string    `json:"Username,omitempty"`

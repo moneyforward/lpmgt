@@ -248,10 +248,12 @@ var commandGet = cli.Command{
 var subCommandGetEvents = cli.Command{
 	Name:   "events",
 	Usage:  "get events",
-	ArgsUsage: "[--duration, -d <days>]",
+	Description: "Get LastPass events. By default, it retrieves events of all users within that day.",
+	ArgsUsage: "[--user, -u <email> | --duration, -d <days>]",
 	Action: doGetEvents,
 	Flags: []cli.Flag{
-		cli.IntFlag{Name: "duration, d", Value: 1, Usage: "Specifies duration from today."},
+		cli.IntFlag{Name: "duration, d", Value: 1, Usage: "By specifying this, events from d-day ago to today is retrieved."},
+		cli.StringFlag{Name: "user, u", Value:"", Usage: "Specify events for interested users."},
 	},
 }
 
@@ -265,9 +267,14 @@ func doGetEvents(c *cli.Context) error {
 	to := lf.JsonLastPassTime{JsonTime: now}
 
 	client := NewLastPassClientFromContext(c)
-	events, err := service.NewEventService(client).GetAllEventReports(from, to)
+	var events []service.Event
+	var err error
+	if c.String("user") == "" {
+		events, err = service.NewEventService(client).GetAllEventReports(from, to)
+	} else {
+		events, err = service.NewEventService(client).GetEventReport(c.String("user"), "", from, to)
+	}
 	logger.DieIf(err)
-
 	util.PrintIndentedJSON(events)
 	return err
 }
