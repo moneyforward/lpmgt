@@ -491,7 +491,7 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	eventService := service.NewEventService(client)
-	events, err := eventService.GetEventReport("", "", d.From, d.To)
+	events, err := eventService.GetAllEventReports(d.From, d.To)
 	logger.DieIf(err)
 
 	for _, event := range events {
