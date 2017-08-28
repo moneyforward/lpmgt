@@ -253,6 +253,10 @@ var subCommandGetEvents = cli.Command{
 
 func doGetEvents(c *cli.Context) error {
 	client := NewLastPassClientFromContext(c)
+	events, err := service.NewEventService(client).GetAllEventReports()
+	logger.DieIf(err)
+	util.PrintIndentedJSON(events)
+	return err
 }
 
 var subCommandGetGroups = cli.Command{
@@ -473,14 +477,11 @@ func doDashboard(c *cli.Context) error {
 		d.Users["super_shared_folder_users"] = sf.Users
 	}
 
-	res, err = client.GetEventReport("", "", d.From, d.To)
+	eventService := service.NewEventService(client)
+	events, err := eventService.GetEventReport("", "", d.From, d.To)
 	logger.DieIf(err)
 
-	var result service.Events
-	err = util.JSONBodyDecoder(res, &result)
-	logger.DieIf(err)
-
-	for _, event := range result.Events {
+	for _, event := range events {
 		d.Events[event.Username] = append(d.Events[event.Username], event)
 	}
 
@@ -491,12 +492,10 @@ func doDashboard(c *cli.Context) error {
 			if !ok {
 				return
 			}
-			res, err = client.GetEventReport(userName, "", d.From, d.To)
-			logger.DieIf(err)
 
-			err = util.JSONBodyDecoder(res, &result)
+			events, err := eventService.GetEventReport(userName, "", d.From, d.To)
 			logger.DieIf(err)
-			d.Events[userName] = result.Events
+			d.Events[userName] = events
 		}
 	}
 

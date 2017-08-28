@@ -9,9 +9,8 @@ import (
 )
 
 // ToDO
-/* reinviteuser -> status.go
-disablemultifactor ->
- */
+// reinviteuser -> status.go
+
 // UserService is a service class that sends a request to LastPass provisioning API.
 type UserService struct {
 	client  *lastpass_client.LastPassClient

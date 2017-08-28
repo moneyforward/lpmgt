@@ -7,7 +7,6 @@ import (
 	"lastpass_provisioning/logger"
 	"net/http"
 	"lastpass_provisioning/client"
-	lf "lastpass_provisioning/lastpass_format"
 )
 
 // LastPassClient is a Client that
@@ -100,30 +99,4 @@ GetSharedFolderData returns a JSON object containing information on all Shared F
 */
 func (c *LastPassClient) GetSharedFolderData() (*http.Response, error) {
 	return c.DoRequest("getsfdata", nil)
-}
-
-// GetEventReport fetches event of an user in certain period of time.
-// Filtering is also available by setting search string.
-func (c *LastPassClient) GetEventReport(user, search string, from, to lf.JsonLastPassTime) (*http.Response, error) {
-	data := struct {
-		From   lf.JsonLastPassTime `json:"from"`
-		To     lf.JsonLastPassTime `json:"to"`
-		Search string                         `json:"search"`
-		User   string                         `json:"user"`
-		Format string                         `json:"format"`
-	}{User: user, From: from, To: to, Format: "siem"}
-	return c.DoRequest("reporting", data)
-}
-
-// GetAllEventReports fetches event of all users in certain period of time.
-// Filtering is also available by setting search string.
-func (c *LastPassClient) GetAllEventReports() (*http.Response, error) {
-	data := struct {
-		From   lf.JsonLastPassTime `json:"from"`
-		To     lf.JsonLastPassTime `json:"to"`
-		Search string                         `json:"search"`
-		User   string                         `json:"user"`
-		Format string                         `json:"format"`
-	}{User: "allusers", Format: "siem"}
-	return c.DoRequest("reporting", data)
 }

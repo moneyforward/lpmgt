@@ -2,10 +2,13 @@ package service
 
 import (
 	lc "lastpass_provisioning/lastpass_client"
+	format "lastpass_provisioning/lastpass_format"
 	"net/http"
 	"strings"
 	"time"
 	"encoding/json"
+	"lastpass_provisioning/util"
+	"fmt"
 )
 type Events struct {
 	Events []Event `json:"events"`
@@ -89,11 +92,63 @@ type EventService struct {
 }
 
 // NewEventService creates a new EventService
-func NewEventService(client *lc.LastPassClient) (s *UserService) {
-	return &UserService{client: client}
+func NewEventService(client *lc.LastPassClient) (s *EventService) {
+	return &EventService{client: client}
 }
 
 func (s *EventService) doRequest() (*http.Response, error) {
-
 	return s.client.DoRequest(s.command, s.data)
+}
+
+// GetEventReport fetches event of an user in certain period of time.
+// Filtering is also available by setting search string.
+func (s *EventService) GetEventReport(username, search string, from, to format.JsonLastPassTime) ([]Event, error) {
+	s.command = "reporting"
+	s.data = struct {
+		From   format.JsonLastPassTime `json:"from"`
+		To     format.JsonLastPassTime `json:"to"`
+		Search string                         `json:"search"`
+		User   string                         `json:"user"`
+		Format string                         `json:"format"`
+	}{User: username, From: from, To: to, Format: "siem"}
+
+	res, err := s.doRequest()
+	if err != nil {
+		return nil, err
+	}
+
+	var events Events
+	err = util.JSONBodyDecoder(res, &events)
+	if err != nil {
+		return nil, err
+	}
+
+	return events.Events, nil
+}
+
+// GetAllEventReports fetches event of all users in certain period of time.
+// Filtering is also available by setting search string.
+func (s *EventService) GetAllEventReports() ([]Event, error) {
+	s.command = "reporting"
+	s.data = struct {
+		From   format.JsonLastPassTime `json:"from"`
+		To     format.JsonLastPassTime `json:"to"`
+		Search string                         `json:"search"`
+		User   string                         `json:"user"`
+		Format string                         `json:"format"`
+	}{User: "allusers", Format: "siem"}
+
+	res, err := s.doRequest()
+	if err != nil {
+		return nil, err
+	}
+
+	var events Events
+	err = util.JSONBodyDecoder(res, &events)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(events)
+
+	return events.Events, nil
 }
