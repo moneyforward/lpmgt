@@ -248,18 +248,26 @@ var commandGet = cli.Command{
 var subCommandGetEvents = cli.Command{
 	Name:   "events",
 	Usage:  "get events",
+	ArgsUsage: "[--duration, -d <days>]",
 	Action: doGetEvents,
+	Flags: []cli.Flag{
+		cli.IntFlag{Name: "duration, d", Value: 1, Usage: "Specifies duration from today."},
+	},
 }
 
 func doGetEvents(c *cli.Context) error {
-	client := NewLastPassClientFromContext(c)
+	//duration := c.Int("duration")
+
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
-	dayAgo := now.Add(-time.Duration(1) * time.Hour * 24)
+	dayAgo := now.Add(-time.Duration(c.Int("duration")) * time.Hour * 24)
 	from := lf.JsonLastPassTime{JsonTime: dayAgo}
 	to := lf.JsonLastPassTime{JsonTime: now}
+
+	client := NewLastPassClientFromContext(c)
 	events, err := service.NewEventService(client).GetAllEventReports(from, to)
 	logger.DieIf(err)
+
 	util.PrintIndentedJSON(events)
 	return err
 }
