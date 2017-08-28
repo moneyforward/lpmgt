@@ -18,5 +18,9 @@ func (s *ApiResultStatus) Error() error {
 	if s.IsOK() {
 		return nil
 	}
-	return errors.New(string(util.IndentedJSON(s.Errors)))
+	b, e := util.IndentedJSON(s.Errors)
+	if e != nil {
+		return e
+	}
+	return errors.New(string(b))
 }

@@ -7,7 +7,6 @@ import (
 	"lastpass_provisioning/logger"
 	"net/http"
 	"lastpass_provisioning/client"
-	"github.com/urfave/cli"
 	lf "lastpass_provisioning/lastpass_format"
 )
 
@@ -17,13 +16,11 @@ type LastPassClient struct {
 	CompanyID string
 }
 
-// NewLastPassClientFromContext creates LastpassClient.
-// This method depends on urfave/cli.
-func NewLastPassClientFromContext(c *cli.Context) *LastPassClient {
-	confFile := c.GlobalString("config")
-	apiKey := lastpass_config.LoadAPIKeyFromEnvOrConfig(confFile)
-	companyID := lastpass_config.LoadCompanyIDFromEnvOrConfig(confFile)
-	endPointURL := lastpass_config.LoadEndPointURL(confFile)
+// NewLastPassClient returns LastPass Client from confFile
+func NewLastPassClient(configFilePath string) *LastPassClient {
+	apiKey := lastpass_config.LoadAPIKeyFromEnvOrConfig(configFilePath)
+	companyID := lastpass_config.LoadCompanyIDFromEnvOrConfig(configFilePath)
+	endPointURL := lastpass_config.LoadEndPointURL(configFilePath)
 
 	if apiKey == "" {
 		err := errors.New(`

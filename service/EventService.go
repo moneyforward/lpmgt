@@ -29,31 +29,27 @@ func (e *Event) UnmarshalJSON(b []byte) error {
 	}
 
 	for k, v := range rawStrings {
-		if strings.ToLower(k) == "time" {
+		switch strings.ToLower(k) {
+		case "time":
 			// LastPass's timestamp is in EST
 			t, err := time.Parse("2006-01-02 15:04:05", v)
 			if err != nil {
 				return err
 			}
 
-			asiaLoc, _ := time.LoadLocation("Asia/Tokyo")
-			// First add 5 hours to convert time zone from EST to UTC
+			// Add 5 hours to convert time zone from EST to UTC
 			// Then convert to asia/tokyo time zone
+			asiaLoc, _ := time.LoadLocation("Asia/Tokyo")
 			e.Time = t.Add(time.Duration(5) * time.Hour).In(asiaLoc)
-		}
-		if strings.ToLower(k) == "username" {
+		case "username":
 			e.Username = v
-		}
-		if k == "IP_Address" {
+		case "ip_address":
 			e.IPAddress = v
-		}
-		if k == "Action" {
+		case "action":
 			e.Action = v
-		}
-		if k == "Data" {
+		case "data":
 			e.Data = v
-		}
-		if k == "ID" {
+		case "id":
 			e.ID = v
 		}
 	}
