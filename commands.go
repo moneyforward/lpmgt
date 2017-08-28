@@ -528,6 +528,8 @@ func doDashboard(c *cli.Context) error {
 		}
 	}
 
+	d.Events["API"] = es.GetUserEvents("API").Events
+
 	var wg sync.WaitGroup
 	q := make(chan string, 5)
 	for i := 0; i < len(AdminUsers); i++ {
@@ -554,6 +556,12 @@ func doDashboard(c *cli.Context) error {
 			}
 		}
 	}
+
+	out = fmt.Sprintf("# API Activities\n")
+	for _, apiEvent := range d.Events["API"] {
+		out = out + fmt.Sprintf("## %v: \n", apiEvent)
+	}
+
 
 	out = out + fmt.Sprintf("\n# Audit Events\n")
 	for _, events := range d.Events {
