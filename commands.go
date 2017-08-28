@@ -258,21 +258,19 @@ var subCommandGetEvents = cli.Command{
 }
 
 func doGetEvents(c *cli.Context) error {
-	//duration := c.Int("duration")
-
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
 	dayAgo := now.Add(-time.Duration(c.Int("duration")) * time.Hour * 24)
 	from := lf.JsonLastPassTime{JsonTime: dayAgo}
 	to := lf.JsonLastPassTime{JsonTime: now}
 
-	client := NewLastPassClientFromContext(c)
 	var events []service.Event
 	var err error
+	s := service.NewEventService(NewLastPassClientFromContext(c))
 	if c.String("user") == "" {
-		events, err = service.NewEventService(client).GetAllEventReports(from, to)
+		events, err = s.GetAllEventReports(from, to)
 	} else {
-		events, err = service.NewEventService(client).GetEventReport(c.String("user"), "", from, to)
+		events, err = s.GetEventReport(c.String("user"), "", from, to)
 	}
 	logger.DieIf(err)
 	util.PrintIndentedJSON(events)
