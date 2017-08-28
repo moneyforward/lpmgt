@@ -249,22 +249,27 @@ var subCommandGetEvents = cli.Command{
 	Name:   "events",
 	Usage:  "get events",
 	Description: "Get LastPass events. By default, it retrieves events of all users within that day.",
-	ArgsUsage: "[--user, -u <email> | --duration, -d <days>]",
+	ArgsUsage: "[--user, -u <email> | --duration, -d <days> | [--verbose | -v]]",
 	Action: doGetEvents,
 	Flags: []cli.Flag{
 		cli.IntFlag{Name: "duration, d", Value: 1, Usage: "By specifying this, events from d-day ago to today is retrieved."},
 		cli.StringFlag{Name: "user, u", Value:"", Usage: "Specify events for interested users."},
+		cli.BoolFlag{Name: "verbose, v", Usage: "Verbose output mode"},
 	},
 }
 
 func doGetEvents(c *cli.Context) error {
+	if c.Bool("verbose") {
+		os.Setenv("DEBUG", "1")
+	}
+
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
 	dayAgo := now.Add(-time.Duration(c.Int("duration")) * time.Hour * 24)
 	from := lf.JsonLastPassTime{JsonTime: dayAgo}
 	to := lf.JsonLastPassTime{JsonTime: now}
 
-	var events []service.Event
+	var events *service.Events
 	var err error
 	s := service.NewEventService(NewLastPassClientFromContext(c))
 	if c.String("user") == "" {
@@ -496,10 +501,10 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	eventService := service.NewEventService(client)
-	events, err := eventService.GetAllEventReports(d.From, d.To)
+	es, err := eventService.GetAllEventReports(d.From, d.To)
 	logger.DieIf(err)
 
-	for _, event := range events {
+	for _, event := range es.Events {
 		d.Events[event.Username] = append(d.Events[event.Username], event)
 	}
 
@@ -510,10 +515,7 @@ func doDashboard(c *cli.Context) error {
 			if !ok {
 				return
 			}
-
-			events, err := eventService.GetEventReport(userName, "", d.From, d.To)
-			logger.DieIf(err)
-			d.Events[userName] = events
+			d.Events[userName] = es.GetUserEvents(userName).Events
 		}
 	}
 

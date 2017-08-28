@@ -8,13 +8,14 @@ import (
 	"time"
 	"encoding/json"
 	"lastpass_provisioning/util"
+	"github.com/pkg/errors"
 )
 type Events struct {
 	Events []Event `json:"events"`
 }
 
 // GetUserEvents get events from users
-func (es *Events) GetUserEvents(username string) []Event {
+func (es *Events) GetUserEvents(username string) *Events {
 	events := make([]Event, len(es.Events))
 	for _, event := range es.Events {
 		if username == event.Username {
@@ -22,7 +23,7 @@ func (es *Events) GetUserEvents(username string) []Event {
 		}
 	}
 
-	return events
+	return &Events{Events:events}
 }
 
 type Event struct {
@@ -113,7 +114,7 @@ func (s *EventService) doRequest() (*http.Response, error) {
 
 // GetEventReport fetches event of an user in certain period of time.
 // Filtering is also available by setting search string.
-func (s *EventService) GetEventReport(username, search string, from, to format.JsonLastPassTime) ([]Event, error) {
+func (s *EventService) GetEventReport(username, search string, from, to format.JsonLastPassTime) (*Events, error) {
 	s.command = "reporting"
 	s.data = struct {
 		From   format.JsonLastPassTime `json:"from"`
@@ -131,15 +132,16 @@ func (s *EventService) GetEventReport(username, search string, from, to format.J
 	var events Events
 	err = util.JSONBodyDecoder(res, &events)
 	if err != nil {
+		err = errors.New("Failed parsing response body.")
 		return nil, err
 	}
 
-	return events.Events, nil
+	return &events, nil
 }
 
 // GetAllEventReports fetches event of all users in certain period of time.
 // Filtering is also available by setting search string.
-func (s *EventService) GetAllEventReports(from, to format.JsonLastPassTime) ([]Event, error) {
+func (s *EventService) GetAllEventReports(from, to format.JsonLastPassTime) (*Events, error) {
 	s.GetEventReport("allusers", "", from, to)
 	res, err := s.doRequest()
 	if err != nil {
@@ -152,5 +154,16 @@ func (s *EventService) GetAllEventReports(from, to format.JsonLastPassTime) ([]E
 		return nil, err
 	}
 
-	return events.Events, nil
+	return &events, nil
+}
+
+// GetAPIEventReports retrieves events triggered by API.
+// We first call
+// s.GetEventReport("api", "", from, to) will return error "Please select a valid user."
+func (s *EventService) GetAPIEventReports(from, to format.JsonLastPassTime) (*Events, error) {
+	events, err := s.GetAllEventReports(from, to)
+	if err != nil {
+		return nil, err
+	}
+	return events.GetUserEvents("API"), nil
 }
