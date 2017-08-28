@@ -8,7 +8,6 @@ import (
 	"time"
 	"encoding/json"
 	"lastpass_provisioning/util"
-	"fmt"
 )
 type Events struct {
 	Events []Event `json:"events"`
@@ -129,20 +128,6 @@ func (s *EventService) GetEventReport(username, search string, from, to format.J
 // GetAllEventReports fetches event of all users in certain period of time.
 // Filtering is also available by setting search string.
 func (s *EventService) GetAllEventReports(from, to format.JsonLastPassTime) ([]Event, error) {
-	//loc, _ := time.LoadLocation("Asia/Tokyo")
-	//now := time.Now().In(loc)
-	//dayAgo := now.Add(-time.Duration(1) * time.Hour * 24)
-	//from := format.JsonLastPassTime{JsonTime: dayAgo}
-	//to := format.JsonLastPassTime{JsonTime: now}
-
-	//s.command = "reporting"
-	//s.data = struct {
-	//	From   format.JsonLastPassTime `json:"from"`
-	//	To     format.JsonLastPassTime `json:"to"`
-	//	Search string                         `json:"search"`
-	//	User   string                         `json:"user"`
-	//	Format string                         `json:"format"`
-	//}{User: "allusers", Format: "siem", From: from, To: to}
 	s.GetEventReport("allusers", "", from, to)
 	res, err := s.doRequest()
 	if err != nil {
@@ -154,7 +139,6 @@ func (s *EventService) GetAllEventReports(from, to format.JsonLastPassTime) ([]E
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(events)
 
 	return events.Events, nil
 }
