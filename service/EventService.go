@@ -35,6 +35,10 @@ type Event struct {
 	ID        string    `json:"ID,omitempty"`
 }
 
+func (e *Event) String() string {
+	return e.Time.String() + " " + e.Username + " " + e.IPAddress + " " + e.Action + " " + e.Data
+}
+
 func (e *Event) UnmarshalJSON(b []byte) error {
 	var rawStrings map[string]string
 

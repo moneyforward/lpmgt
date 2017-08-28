@@ -551,15 +551,15 @@ func doDashboard(c *cli.Context) error {
 		for user, events := range d.Events {
 			if admin.UserName == user {
 				for _, event := range events {
-					out = out + fmt.Sprintf("%v\n", event)
+					out = out + fmt.Sprintf("%v\n", event.String())
 				}
 			}
 		}
 	}
 
-	out = fmt.Sprintf("# API Activities\n")
+	out = out + fmt.Sprintf("# API Activities\n")
 	for _, apiEvent := range d.Events["API"] {
-		out = out + fmt.Sprintf("## %v: \n", apiEvent)
+		out = out + fmt.Sprintf("{%v} \n", apiEvent.String())
 	}
 
 
@@ -567,7 +567,7 @@ func doDashboard(c *cli.Context) error {
 	for _, events := range d.Events {
 		for _, event := range events {
 			if event.IsAuditEvent() {
-				out = out + fmt.Sprintf("%v\n", event)
+				out = out + fmt.Sprintf("%v\n", event.String())
 			}
 		}
 	}
