@@ -112,11 +112,11 @@ var subCommandUpdateUser = cli.Command{
 	ArgsUsage:   "<email>",
 	Subcommands: []cli.Command{
 		{
-			Name:        "transfer",
-			Usage:       "transfer user",
+			Name:        "department",
+			Usage:       "update user department",
 			ArgsUsage:   "[[--leave | -l <department>]...] [[--join | -j <department>]...]",
 			Description: "User can specify either --leave or --join to move department",
-			Action:      doTransferUser,
+			Action:      doUpdateBelongingDepartment,
 			Flags: []cli.Flag{
 				cli.StringSliceFlag{Name: "leave, l", Value: &cli.StringSlice{}, Usage: "leave current department"},
 				cli.StringSliceFlag{Name: "join, j", Value: &cli.StringSlice{}, Usage: "join new department"},
@@ -125,7 +125,7 @@ var subCommandUpdateUser = cli.Command{
 	},
 }
 
-func doTransferUser(c *cli.Context) error {
+func doUpdateBelongingDepartment(c *cli.Context) error {
 	argUserName := c.Args().Get(0)
 	if argUserName == "" {
 		logger.DieIf(errors.New("Email(username) has to be specified"))
