@@ -50,6 +50,8 @@ var Commands = []cli.Command{
 	commandDescribe,
 	commandDelete,
 	commandUpdate,
+	subCommandDisableMFA,
+	subCommandResetPassword,
 }
 
 // Update command with subcommands
@@ -58,8 +60,6 @@ var commandUpdate = cli.Command{
 	Usage: "update specific object",
 	Subcommands: []cli.Command{
 		subCommandUpdateUser,
-		subCommandDisableMFA,
-		subCommandResetPassword,
 	},
 }
 
