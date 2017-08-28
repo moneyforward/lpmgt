@@ -16,7 +16,7 @@ type Events struct {
 
 // GetUserEvents get events from users
 func (es *Events) GetUserEvents(username string) *Events {
-	events := make([]Event, len(es.Events))
+	events := make([]Event, 0)
 	for _, event := range es.Events {
 		if username == event.Username {
 			events = append(events, event)

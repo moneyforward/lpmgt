@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 	lc "lastpass_provisioning/lastpass_client"
+	"strings"
 )
 
 func init() {
@@ -272,10 +273,18 @@ func doGetEvents(c *cli.Context) error {
 	var events *service.Events
 	var err error
 	s := service.NewEventService(NewLastPassClientFromContext(c))
+	switch user := c.String("user"); strings.ToLower(user) {
+	case "":
+		events, err = s.GetEventReport(user, "", from, to)
+	case "api":
+		events, err = s.GetAPIEventReports(from, to)
+	default:
+		events, err = s.GetAllEventReports(from, to)
+	}
 	if c.String("user") == "" {
 		events, err = s.GetAllEventReports(from, to)
 	} else {
-		events, err = s.GetEventReport(c.String("user"), "", from, to)
+
 	}
 	logger.DieIf(err)
 	util.PrintIndentedJSON(events)
