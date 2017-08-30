@@ -248,20 +248,20 @@ func (s *UserService) DisableMultifactor(username string) error {
 }
 
 // ResetPassword reset password for the user
-func (s *UserService) ResetPassword(username string) error {
+func (s *UserService) ResetPassword(username string) (*ApiResultStatus, error) {
 	s.command = "resetpassword"
 	s.data = User{UserName:username}
 	res, err := s.doRequest()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var status ApiResultStatus
 	err = util.JSONBodyDecoder(res, &status)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return status.Error()
+	return &status, status.Error()
 }
 
 // ChangeGroupsMembership changes Group in batch(cmd = batchchangegrp)

@@ -24,3 +24,7 @@ func (s *ApiResultStatus) Error() error {
 	}
 	return errors.New(string(b))
 }
+
+func (s *ApiResultStatus) String() string {
+	return s.Status
+}

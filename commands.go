@@ -101,8 +101,9 @@ func doResetPassword(c *cli.Context) error {
 	client := NewLastPassClientFromContext(c)
 	s := service.NewUserService(client)
 
-	err := s.ResetPassword(argUserName)
+	status, err := s.ResetPassword(argUserName)
 	logger.DieIf(err)
+	logger.Log(c.Command.Name, status.String())
 	return nil
 }
 
