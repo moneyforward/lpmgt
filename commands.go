@@ -80,8 +80,9 @@ func doDisableMFA(c *cli.Context) error {
 	client := NewLastPassClientFromContext(c)
 	s := service.NewUserService(client)
 
-	err := s.DisableMultifactor(argUserName)
+	status, err := s.DisableMultifactor(argUserName)
 	logger.DieIf(err)
+	logger.Log(c.Command.Name, status.String())
 	return nil
 }
 

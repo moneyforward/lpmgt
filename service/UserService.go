@@ -231,20 +231,20 @@ func (s *UserService) GetAdminUserData() ([]User, error) {
 }
 
 // DisableMultifactor disables multifactor setting of user
-func (s *UserService) DisableMultifactor(username string) error {
+func (s *UserService) DisableMultifactor(username string) (*ApiResultStatus, error) {
 	s.command = "disablemultifactor"
 	s.data = User{UserName:username}
 	res, err := s.doRequest()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var status ApiResultStatus
 	err = util.JSONBodyDecoder(res, &status)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return status.Error()
+	return &status, status.Error()
 }
 
 // ResetPassword reset password for the user
