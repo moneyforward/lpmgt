@@ -18,6 +18,10 @@ import (
 	"strings"
 )
 
+// TODO
+// department情報の取得
+// 名前だけで検索とか
+
 func init() {
 	// Requirements:
 	// - .Description: First and last line is blank.
