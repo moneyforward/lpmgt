@@ -19,9 +19,7 @@ import (
 )
 
 // TODO
-// department情報の取得
 // 名前だけで検索とか
-
 func init() {
 	// Requirements:
 	// - .Description: First and last line is blank.
@@ -46,7 +44,6 @@ func NewLastPassClientFromContext(c *cli.Context) *lc.LastPassClient {
 }
 
 // Commands cli.Command object list
-// TODO List Groups
 var Commands = []cli.Command{
 	commandDashboards,
 	commandCreate,
