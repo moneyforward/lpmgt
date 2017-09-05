@@ -47,7 +47,6 @@ func NewLastPassClientFromContext(c *cli.Context) *lc.LastPassClient {
 
 // Commands cli.Command object list
 // TODO List Groups
-// TODO List API Activities
 var Commands = []cli.Command{
 	commandDashboards,
 	commandCreate,
@@ -303,11 +302,26 @@ var subCommandGetGroups = cli.Command{
 	Action: doGetGroups,
 }
 
+// There are no API that fetches group info
 func doGetGroups(c *cli.Context) error {
 	client := NewLastPassClientFromContext(c)
-	_ = service.NewUserService(client)
+	s := service.NewUserService(client)
+	users, err := s.GetAllUsers()
+	logger.DieIf(err)
+
+	deps := make(map[string]bool)
+	for _, u := range users {
+		for _, group := range u.Groups {
+			if _, ok := deps[group]; !ok {
+				deps[group] = true
+			}
+		}
+	}
+
+	for dep := range deps {
+		fmt.Println(dep)
+	}
 	return nil
-	//s.GetAllGroups()
 }
 
 var subCommandGetUsers = cli.Command{
