@@ -461,7 +461,6 @@ type dashBoard struct {
 	Events      map[string][]service.Event `json:"events"`
 }
 
-// TODO refactor,
 func doDashboard(c *cli.Context) error {
 	if c.Bool("verbose") {
 		os.Setenv("DEBUG", "1")
@@ -489,6 +488,7 @@ func doDashboard(c *cli.Context) error {
 
 	AdminUsers, err := s.GetAdminUserData()
 	logger.DieIf(err)
+	AdminUsers = append(AdminUsers, service.User{UserName:"API"})
 	d.Users["admin_users"] = AdminUsers
 
 	disabledUsers, err := s.GetDisabledUsers()
@@ -534,7 +534,7 @@ func doDashboard(c *cli.Context) error {
 		d.Events[event.Username] = append(d.Events[event.Username], event)
 	}
 
-	GetLoginEvent := func(wg *sync.WaitGroup, q chan string) {
+	GetUserEvents := func(wg *sync.WaitGroup, q chan string) {
 		defer wg.Done()
 		for {
 			userName, ok := <-q
@@ -545,13 +545,11 @@ func doDashboard(c *cli.Context) error {
 		}
 	}
 
-	d.Events["API"] = es.GetUserEvents("API").Events
-
 	var wg sync.WaitGroup
 	q := make(chan string, 5)
 	for i := 0; i < len(AdminUsers); i++ {
 		wg.Add(1)
-		go GetLoginEvent(&wg, q)
+		go GetUserEvents(&wg, q)
 	}
 
 	for _, admin := range AdminUsers {
@@ -574,12 +572,6 @@ func doDashboard(c *cli.Context) error {
 		}
 	}
 
-	out = out + fmt.Sprintf("# API Activities\n")
-	for _, apiEvent := range d.Events["API"] {
-		out = out + fmt.Sprintf("{%v} \n", apiEvent.String())
-	}
-
-
 	out = out + fmt.Sprintf("\n# Audit Events\n")
 	for _, events := range d.Events {
 		for _, event := range events {
@@ -593,6 +585,7 @@ func doDashboard(c *cli.Context) error {
 	for _, u := range d.Users["disabled_users"] {
 		out = out + fmt.Sprintf("## %v: \n", u.UserName)
 	}
+
 	out = out + fmt.Sprintf("\n# Inactive Users")
 	for dep, us := range d.Departments {
 		out = out + fmt.Sprintf("\n## %v: %v\n", dep, len(us))
