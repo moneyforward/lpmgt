@@ -505,6 +505,11 @@ func doDashboard(c *cli.Context) error {
 			inactiveDep[group] = append(inactiveDep[group], u)
 		}
 	}
+	for _, u := range non2faUsers {
+		for _, group := range u.Groups {
+			inactiveDep[group] = append(inactiveDep[group], u)
+		}
+	}
 	for dep, users := range inactiveDep {
 		d.Departments[dep] = users
 	}
