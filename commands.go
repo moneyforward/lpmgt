@@ -455,7 +455,7 @@ type dashBoard struct {
 	From        lf.JsonLastPassTime        `json:"from"`
 	To          lf.JsonLastPassTime        `json:"to"`
 	Users       map[string][]service.User  `json:"users"`
-	Departments map[string][]service.User  `json:"department"`
+	//Departments map[string][]service.User  `json:"department"`
 	Events      map[string][]service.Event `json:"events"`
 }
 
@@ -471,7 +471,6 @@ func doDashboard(c *cli.Context) error {
 
 	d := &dashBoard{
 		Users:       make(map[string][]service.User),
-		Departments: make(map[string][]service.User),
 		Events:      make(map[string][]service.Event),
 	}
 
@@ -493,10 +492,6 @@ func doDashboard(c *cli.Context) error {
 	logger.DieIf(err)
 	d.Users["disabled_users"] = disabledUsers
 
-	non2faUsers, err := s.GetNon2faUsers()
-	logger.DieIf(err)
-	d.Users["non2fa_users"] = non2faUsers
-
 	inactiveUsers, err := s.GetInactiveUsers()
 	logger.DieIf(err)
 	inactiveDep := make(map[string][]service.User)
@@ -505,13 +500,14 @@ func doDashboard(c *cli.Context) error {
 			inactiveDep[group] = append(inactiveDep[group], u)
 		}
 	}
+
+	non2faUsers, err := s.GetNon2faUsers()
+	logger.DieIf(err)
+	non2faDep := make(map[string][]service.User)
 	for _, u := range non2faUsers {
 		for _, group := range u.Groups {
-			inactiveDep[group] = append(inactiveDep[group], u)
+			non2faDep[group] = append(non2faDep[group], u)
 		}
-	}
-	for dep, users := range inactiveDep {
-		d.Departments[dep] = users
 	}
 
 	// Get Shared Folder Data
@@ -590,7 +586,16 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	out = out + fmt.Sprintf("\n# Inactive Users")
-	for dep, us := range d.Departments {
+	for dep, us := range inactiveDep {
+		out = out + fmt.Sprintf("\n## %v: %v\n", dep, len(us))
+		for _, u := range us {
+			out = out + fmt.Sprintf(u.UserName+", ")
+		}
+	}
+
+	out = out + fmt.Sprintf("\n# Non2FA Users")
+	//for dep, us := range d.Departments {
+	for dep, us := range non2faDep {
 		out = out + fmt.Sprintf("\n## %v: %v\n", dep, len(us))
 		for _, u := range us {
 			out = out + fmt.Sprintf(u.UserName+", ")
