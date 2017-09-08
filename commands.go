@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 	"io/ioutil"
-	"lastpass_provisioning/api"
 	lc "lastpass_provisioning/lastpass_client"
 	lf "lastpass_provisioning/lastpass_format"
 	"lastpass_provisioning/logger"
@@ -14,6 +13,7 @@ import (
 	"lastpass_provisioning/util"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -451,14 +451,21 @@ var commandDashboards = cli.Command{
 }
 
 type dashBoard struct {
-	From   lf.JsonLastPassTime        `json:"from"`
-	To     lf.JsonLastPassTime        `json:"to"`
-	Users  map[string][]service.User  `json:"users"`
-	Events map[string][]service.Event `json:"events"`
+	From            lf.JsonLastPassTime        `json:"from"`
+	To              lf.JsonLastPassTime        `json:"to"`
+	Users           []service.User             `json:"users"`
+	Events          map[string][]service.Event `json:"events"`
 	OrganizationMap map[string][]service.User  `json:"users,omitempty"`
 }
 
-func getAllUsers( s *service.UserService, q chan []service.User) {
+func getAllUsers(s *service.UserService, q chan []service.User) {
+	//defer wg.Done()
+	users, err := s.GetAllUsers()
+	logger.DieIf(err)
+	q <- users
+}
+
+func getSharedFolders(s *service.UserService, q chan []service.User) {
 	//defer wg.Done()
 	users, err := s.GetAllUsers()
 	logger.DieIf(err)
@@ -476,8 +483,8 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	d := &dashBoard{
-		Users:  make(map[string][]service.User),
-		Events: make(map[string][]service.Event),
+		Users:           make([]service.User, 0),
+		Events:          make(map[string][]service.Event),
 		OrganizationMap: make(map[string][]service.User),
 	}
 
@@ -493,11 +500,13 @@ func doDashboard(c *cli.Context) error {
 	c3 := make(chan []service.User)
 
 	//Add -> if multiple go functions are used: `var wg sync.WaitGroup ;wg.Add(1)`
+	var wg sync.WaitGroup
 	go getAllUsers(s, c3)
 	go func() {
 		for {
 			select {
 			case users := <-c3:
+				d.Users = users
 				for _, u := range users {
 					for _, group := range u.Groups {
 						d.OrganizationMap[group] = append(d.OrganizationMap[group], u)
@@ -506,21 +515,17 @@ func doDashboard(c *cli.Context) error {
 			}
 		}
 	}()
-	//wg.Wait()
+	wg.Wait()
 
 	// Get Shared Folder Data
-	res, err := client.GetSharedFolderData()
+	sf, err := service.NewFolderService(client).GetSharedFolders()
 	logger.DieIf(err)
 
-	var sharedFolders map[string]api.SharedFolder
-	err = util.JSONBodyDecoder(res, &sharedFolders)
-	logger.DieIf(err)
-
-	for _, sf := range sharedFolders {
+	for _, sf := range sf {
 		if sf.ShareFolderName != "Super-Admins" {
 			break
 		}
-		d.Users["super_shared_folder_users"] = sf.Users
+		//d.Users["super_shared_folder_users"] = sf.Users
 	}
 
 	eventService := service.NewEventService(client)
@@ -531,20 +536,33 @@ func doDashboard(c *cli.Context) error {
 		d.Events[event.Username] = append(d.Events[event.Username], event)
 	}
 
-	admins := []string{}
+	//admins := []string{}
 	out := fmt.Sprintf("# Admin Users And Activities\n")
-	for _, us := range d.OrganizationMap {
-		for _, admin := range us {
-			out = out + fmt.Sprintf("## %v: \n", admin.UserName)
-			admins = append(admins, admin.UserName)
-			for user, events := range d.Events {
-				if admin.UserName == user {
+	for _, u := range d.Users {
+		//for user, events := range d.Events {
+		//	if u.IsAdmin || user == "API" {
+		//		out = out + fmt.Sprintf("## %v: \n", u.UserName)
+		//		for _, event := range events {
+		//			out = out + fmt.Sprintf("%v\n", event.String())
+		//		}
+		//	}
+		//}
+		if u.IsAdmin {
+			out = out + fmt.Sprintf("## %v: \n", u.UserName)
+			if events, ok := d.Events[u.UserName]; ok {
 					for _, event := range events {
 						out = out + fmt.Sprintf("%v\n", event.String())
 					}
-				}
 			}
 		}
+	}
+
+	out = out + fmt.Sprintf("\n# Super-Shared Folders\n")
+	for _, folder := range sf {
+		fmt.Println(folder.ShareFolderName)
+		//for _, u := range folder.Users {
+		//	out = out + fmt.Sprintf("- " + u.UserName+"\n")
+		//}
 	}
 
 	out = out + fmt.Sprintf("\n# Audit Events\n")
@@ -556,34 +574,34 @@ func doDashboard(c *cli.Context) error {
 		}
 	}
 
-	out = out + fmt.Sprintf("\n# Disabled Users\n")
-	for _, us := range d.OrganizationMap {
-		for _, u := range us {
-			if u.Disabled {
-				out = out + fmt.Sprintf("- " + u.UserName+"\n")
-			}
-		}
-	}
-
-	out = out + fmt.Sprintf("\n# Inactive Users")
-	for dep, us := range d.OrganizationMap {
-		out = out + fmt.Sprintf("\n## %v\n", dep)
-		for _, u := range us {
-			if u.NeverLoggedIn {
-				out = out + fmt.Sprintf("- " + u.UserName+"\n")
-			}
-		}
-	}
-
-	out = out + fmt.Sprintf("\n# Non2FA Users")
-	for dep, us := range d.OrganizationMap {
-		out = out + fmt.Sprintf("\n## %v\n", dep)
-		for _, u := range us {
-			if !u.Is2FA() {
-				out = out + fmt.Sprintf("- "+u.UserName+"\n")
-			}
-		}
-	}
+	//out = out + fmt.Sprintf("\n# Disabled Users\n")
+	//for _, us := range d.OrganizationMap {
+	//	for _, u := range us {
+	//		if u.Disabled {
+	//			out = out + fmt.Sprintf("- " + u.UserName+"\n")
+	//		}
+	//	}
+	//}
+	//
+	//out = out + fmt.Sprintf("\n# Inactive Users")
+	//for dep, us := range d.OrganizationMap {
+	//	out = out + fmt.Sprintf("\n## %v\n", dep)
+	//	for _, u := range us {
+	//		if u.NeverLoggedIn {
+	//			out = out + fmt.Sprintf("- " + u.UserName+"\n")
+	//		}
+	//	}
+	//}
+	//
+	//out = out + fmt.Sprintf("\n# Non2FA Users")
+	//for dep, us := range d.OrganizationMap {
+	//	out = out + fmt.Sprintf("\n## %v\n", dep)
+	//	for _, u := range us {
+	//		if !u.Is2FA() {
+	//			out = out + fmt.Sprintf("- "+u.UserName+"\n")
+	//		}
+	//	}
+	//}
 
 	fmt.Println(out)
 	return nil

@@ -65,38 +65,3 @@ func (c *LastPassClient) DoRequest(command string, data interface{}) (*http.Resp
 
 	return c.Client.RequestJSON(http.MethodPost, "", body)
 }
-
-/*
-GetSharedFolderData returns a JSON object containing information on all Shared Folders in the enterprise and the permissions granted to them.
-# Request
-{
-	"cid": "8771312",
-	"provhash": "<Your API secret>",
-    "cmd": "getsfdata"
-}
-
-# Response
-{
-    "101": {
-        "sharedfoldername": "ThisSFName",
-        "score": 99,
-        "users": [
-            {
-                "username": "joe.user@lastpass.com",
-                "readonly": 0,
-                "give": 1,
-                "can_administer": 1
-            },
-            {
-                "username": "jane.user@lastpass.com",
-                "readonly": 1,
-                "give": 0,
-                "can_administer": 0
-            }
-        ]
-    }
-}
-*/
-func (c *LastPassClient) GetSharedFolderData() (*http.Response, error) {
-	return c.DoRequest("getsfdata", nil)
-}

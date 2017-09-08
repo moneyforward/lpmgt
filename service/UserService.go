@@ -79,7 +79,6 @@ const (
     }
 }
 */
-// GetUserData
 func (s *UserService) GetUserData(userName string) (user User, err error) {
 	s.command = "getuserdata"
 	s.data = User{UserName: userName}
