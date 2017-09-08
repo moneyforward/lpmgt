@@ -503,6 +503,8 @@ func doDashboard(c *cli.Context) error {
 		Users:  make(map[string][]service.User),
 		Events: make(map[string][]service.Event),
 	}
+	inactiveDep := make(map[string][]service.User)
+	non2faDep := make(map[string][]service.User)
 
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
@@ -512,6 +514,8 @@ func doDashboard(c *cli.Context) error {
 
 	client := NewLastPassClientFromContext(c)
 	s := service.NewUserService(client)
+
+
 
 	c1 := make(chan []service.User)
 	c2 := make(chan []service.User)
@@ -533,28 +537,21 @@ func doDashboard(c *cli.Context) error {
 			case disabled := <-c2:
 				d.Users["disabled_users"] = disabled
 			case inactive := <-c3:
-				fmt.Println(inactive)
-				d.Users["inactive_users"] = inactive
+				for _, u := range inactive {
+					for _, group := range u.Groups {
+						inactiveDep[group] = append(inactiveDep[group], u)
+					}
+				}
 			case non2fa := <-c4:
-				d.Users["non_2fa_users"] = non2fa
+				for _, u := range non2fa {
+					for _, group := range u.Groups {
+						non2faDep[group] = append(non2faDep[group], u)
+					}
+				}
 			}
 		}
 	}()
 	wg.Wait()
-
-	inactiveDep := make(map[string][]service.User)
-	for _, u := range d.Users["inactive_users"] {
-		for _, group := range u.Groups {
-			inactiveDep[group] = append(inactiveDep[group], u)
-		}
-	}
-
-	non2faDep := make(map[string][]service.User)
-	for _, u := range d.Users["non_2fa_users"] {
-		for _, group := range u.Groups {
-			non2faDep[group] = append(non2faDep[group], u)
-		}
-	}
 
 	// Get Shared Folder Data
 	res, err := client.GetSharedFolderData()
@@ -578,30 +575,6 @@ func doDashboard(c *cli.Context) error {
 	for _, event := range es.Events {
 		d.Events[event.Username] = append(d.Events[event.Username], event)
 	}
-
-	//GetUserEvents := func(wg *sync.WaitGroup, q chan string) {
-	//	defer wg.Done()
-	//	for {
-	//		userName, ok := <-q
-	//		if !ok {
-	//			return
-	//		}
-	//		d.Events[userName] = es.GetUserEvents(userName).Events
-	//	}
-	//}
-
-	//var wg sync.WaitGroup
-	//q = make(chan string, 5)
-	//for i := 0; i < len(AdminUsers); i++ {
-	//	wg.Add(1)
-	//	go GetUserEvents(&wg, q)
-	//}
-	//
-	//for _, admin := range AdminUsers {
-	//	q <- admin.UserName
-	//}
-	//close(q)
-	//wg.Wait()
 
 	admins := []string{}
 	out := fmt.Sprintf("# Admin Users And Activities\n")
