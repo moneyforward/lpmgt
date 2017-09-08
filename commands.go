@@ -7,15 +7,15 @@ import (
 	"github.com/urfave/cli"
 	"io/ioutil"
 	"lastpass_provisioning/api"
+	lc "lastpass_provisioning/lastpass_client"
 	lf "lastpass_provisioning/lastpass_format"
 	"lastpass_provisioning/logger"
 	"lastpass_provisioning/service"
 	"lastpass_provisioning/util"
 	"os"
+	"strings"
 	"sync"
 	"time"
-	lc "lastpass_provisioning/lastpass_client"
-	"strings"
 )
 
 func init() {
@@ -63,10 +63,10 @@ var commandUpdate = cli.Command{
 }
 
 var subCommandDisableMFA = cli.Command{
-	Name:        "disable-mfa",
-	Usage:       "disable mfa of user <email>",
-	ArgsUsage:   "<email>",
-	Action:      doDisableMFA,
+	Name:      "disable-mfa",
+	Usage:     "disable mfa of user <email>",
+	ArgsUsage: "<email>",
+	Action:    doDisableMFA,
 }
 
 func doDisableMFA(c *cli.Context) error {
@@ -85,10 +85,10 @@ func doDisableMFA(c *cli.Context) error {
 }
 
 var subCommandResetPassword = cli.Command{
-	Name:        "reset-password",
-	Usage:       "reset password of user <email>",
-	ArgsUsage:   "<email>",
-	Action:      doResetPassword,
+	Name:      "reset-password",
+	Usage:     "reset password of user <email>",
+	ArgsUsage: "<email>",
+	Action:    doResetPassword,
 }
 
 func doResetPassword(c *cli.Context) error {
@@ -247,14 +247,14 @@ var commandGet = cli.Command{
 }
 
 var subCommandGetEvents = cli.Command{
-	Name:   "events",
-	Usage:  "get events",
+	Name:        "events",
+	Usage:       "get events",
 	Description: "Get LastPass events. By default, it retrieves events of all users within that day.",
-	ArgsUsage: "[--user, -u <email> | --duration, -d <days> | [--verbose | -v]]",
-	Action: doGetEvents,
+	ArgsUsage:   "[--user, -u <email> | --duration, -d <days> | [--verbose | -v]]",
+	Action:      doGetEvents,
 	Flags: []cli.Flag{
 		cli.IntFlag{Name: "duration, d", Value: 1, Usage: "By specifying this, events from d-day ago to today is retrieved."},
-		cli.StringFlag{Name: "user, u", Value:"", Usage: "Specify events for interested users."},
+		cli.StringFlag{Name: "user, u", Value: "", Usage: "Specify events for interested users."},
 		cli.BoolFlag{Name: "verbose, v", Usage: "Verbose output mode"},
 	},
 }
@@ -452,18 +452,39 @@ var commandDashboards = cli.Command{
 }
 
 type dashBoard struct {
-	From        lf.JsonLastPassTime        `json:"from"`
-	To          lf.JsonLastPassTime        `json:"to"`
-	Users       map[string][]service.User  `json:"users"`
-	Events      map[string][]service.Event `json:"events"`
+	From   lf.JsonLastPassTime        `json:"from"`
+	To     lf.JsonLastPassTime        `json:"to"`
+	Users  map[string][]service.User  `json:"users"`
+	Events map[string][]service.Event `json:"events"`
 }
 
 func getAdmin(wg *sync.WaitGroup, s *service.UserService, q chan []service.User) {
 	defer wg.Done()
 	AdminUsers, err := s.GetAdminUserData()
 	logger.DieIf(err)
-	AdminUsers = append(AdminUsers, service.User{UserName:"API"})
+	AdminUsers = append(AdminUsers, service.User{UserName: "API"})
 	q <- AdminUsers
+}
+
+func getDisabledUsers(wg *sync.WaitGroup, s *service.UserService, q chan []service.User) {
+	defer wg.Done()
+	disabledUsers, err := s.GetDisabledUsers()
+	logger.DieIf(err)
+	q <- disabledUsers
+}
+
+func getInactiveUsers(wg *sync.WaitGroup, s *service.UserService, q chan []service.User) {
+	defer wg.Done()
+	inactiveUsers, err := s.GetInactiveUsers()
+	logger.DieIf(err)
+	q <- inactiveUsers
+}
+
+func getNon2FAUsers(wg *sync.WaitGroup, s *service.UserService, q chan []service.User) {
+	defer wg.Done()
+	users, err := s.GetNon2faUsers()
+	logger.DieIf(err)
+	q <- users
 }
 
 func doDashboard(c *cli.Context) error {
@@ -479,8 +500,8 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	d := &dashBoard{
-		Users:       make(map[string][]service.User),
-		Events:      make(map[string][]service.Event),
+		Users:  make(map[string][]service.User),
+		Events: make(map[string][]service.Event),
 	}
 
 	loc, _ := time.LoadLocation("Asia/Tokyo")
@@ -492,55 +513,47 @@ func doDashboard(c *cli.Context) error {
 	client := NewLastPassClientFromContext(c)
 	s := service.NewUserService(client)
 
-	// Get Disabled Users
-	GetDisabledUsers := func(wg *sync.WaitGroup) {
-		defer wg.Done()
-		disabledUsers, err := s.GetDisabledUsers()
-		logger.DieIf(err)
-		d.Users["disabled_users"] = disabledUsers
-	}
-
-	// Get Inactive Users (Ones never logged in)
-	inactiveDep := make(map[string][]service.User)
-	GetInactiveUsers := func(wg *sync.WaitGroup) {
-		defer wg.Done()
-		inactiveUsers, err := s.GetInactiveUsers()
-		logger.DieIf(err)
-		for _, u := range inactiveUsers {
-			for _, group := range u.Groups {
-				inactiveDep[group] = append(inactiveDep[group], u)
-			}
-		}
-	}
-
-	// Get Inactive Users (Ones never set up 2fa = never used)
-	non2faDep := make(map[string][]service.User)
-	GetNon2FAUsers := func(wg *sync.WaitGroup) {
-		defer wg.Done()
-		non2faUsers, err := s.GetNon2faUsers()
-		logger.DieIf(err)
-		for _, u := range non2faUsers {
-			for _, group := range u.Groups {
-				non2faDep[group] = append(non2faDep[group], u)
-			}
-		}
-	}
+	cAdmin := make(chan []service.User)
+	cDisabled := make(chan []service.User)
+	cInactive := make(chan []service.User)
+	cNon2FA := make(chan []service.User)
 
 	var wg sync.WaitGroup
-	q := make(chan []service.User)
-	//for i := 0; i < len(AdminUsers); i++ {
-		wg.Add(4)
-		go getAdmin(&wg, s, q)
-		go GetDisabledUsers(&wg)
-		go GetInactiveUsers(&wg)
-		go GetNon2FAUsers(&wg)
-	//}
-	//for _, admin := range AdminUsers {
-	//	q <- admin.UserName
-	//}
-	d.Users["admin_users"] = <- q
-	close(q)
+	wg.Add(4)
+
+	go getAdmin(&wg, s, cAdmin)
+	go getDisabledUsers(&wg, s, cDisabled)
+	go getInactiveUsers(&wg, s, cInactive)
+	go getNon2FAUsers(&wg, s, cNon2FA)
+	go func() {
+		for {
+			select {
+			case admin := <-cAdmin:
+				d.Users["admin_users"] = admin
+			case disabled := <-cDisabled:
+				d.Users["disabled_users"] = disabled
+			case inactive := <-cInactive:
+				d.Users["inactive_users"] = inactive
+			case non2fa := <-cNon2FA:
+				d.Users["non_2fa_users"] = non2fa
+			}
+		}
+	}()
 	wg.Wait()
+
+	inactiveDep := make(map[string][]service.User)
+	for _, u := range d.Users["inactive_users"] {
+		for _, group := range u.Groups {
+			inactiveDep[group] = append(inactiveDep[group], u)
+		}
+	}
+
+	non2faDep := make(map[string][]service.User)
+	for _, u := range d.Users["non_2fa_users"] {
+		for _, group := range u.Groups {
+			non2faDep[group] = append(non2faDep[group], u)
+		}
+	}
 
 	// Get Shared Folder Data
 	res, err := client.GetSharedFolderData()
@@ -626,7 +639,6 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	out = out + fmt.Sprintf("\n# Non2FA Users")
-	//for dep, us := range d.Departments {
 	for dep, us := range non2faDep {
 		out = out + fmt.Sprintf("\n## %v: %v\n", dep, len(us))
 		for _, u := range us {
