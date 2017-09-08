@@ -458,6 +458,14 @@ type dashBoard struct {
 	Events      map[string][]service.Event `json:"events"`
 }
 
+func getAdmin(wg *sync.WaitGroup, s *service.UserService, q chan []service.User) {
+	defer wg.Done()
+	AdminUsers, err := s.GetAdminUserData()
+	logger.DieIf(err)
+	AdminUsers = append(AdminUsers, service.User{UserName:"API"})
+	q <- AdminUsers
+}
+
 func doDashboard(c *cli.Context) error {
 	start := time.Now()
 
@@ -483,15 +491,6 @@ func doDashboard(c *cli.Context) error {
 
 	client := NewLastPassClientFromContext(c)
 	s := service.NewUserService(client)
-
-	// Get Admin Users
-	GetAdmin := func(wg *sync.WaitGroup) {
-		defer wg.Done()
-		AdminUsers, err := s.GetAdminUserData()
-		logger.DieIf(err)
-		AdminUsers = append(AdminUsers, service.User{UserName:"API"})
-		d.Users["admin_users"] = AdminUsers
-	}
 
 	// Get Disabled Users
 	GetDisabledUsers := func(wg *sync.WaitGroup) {
@@ -528,10 +527,10 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	var wg sync.WaitGroup
-	//q := make(chan string, 5)
+	q := make(chan []service.User)
 	//for i := 0; i < len(AdminUsers); i++ {
 		wg.Add(4)
-		go GetAdmin(&wg)
+		go getAdmin(&wg, s, q)
 		go GetDisabledUsers(&wg)
 		go GetInactiveUsers(&wg)
 		go GetNon2FAUsers(&wg)
@@ -539,7 +538,8 @@ func doDashboard(c *cli.Context) error {
 	//for _, admin := range AdminUsers {
 	//	q <- admin.UserName
 	//}
-	//close(q)
+	d.Users["admin_users"] = <- q
+	close(q)
 	wg.Wait()
 
 	// Get Shared Folder Data
