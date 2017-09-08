@@ -454,22 +454,35 @@ type dashBoard struct {
 	From            lf.JsonLastPassTime        `json:"from"`
 	To              lf.JsonLastPassTime        `json:"to"`
 	Users           []service.User             `json:"users"`
+	Folders         []service.SharedFolder     `json:"folders"`
 	Events          map[string][]service.Event `json:"events"`
 	OrganizationMap map[string][]service.User  `json:"users,omitempty"`
 }
 
-func getAllUsers(wg *sync.WaitGroup,s *service.UserService, q chan []service.User) {
+func getAllUsers(wg *sync.WaitGroup, s *service.UserService, q chan []service.User) {
 	defer wg.Done()
 	users, err := s.GetAllUsers()
 	logger.DieIf(err)
 	q <- users
 }
 
-func getSharedFolders(s *service.UserService, q chan []service.User) {
-	//defer wg.Done()
-	users, err := s.GetAllUsers()
+func getEvents(wg *sync.WaitGroup, s *service.EventService, q chan *service.Events, d time.Duration) {
+	defer wg.Done()
+	loc, _ := time.LoadLocation("Asia/Tokyo")
+	now := time.Now().In(loc)
+	dayAgo := now.Add(-d * time.Hour * 24)
+	from := lf.JsonLastPassTime{JsonTime: dayAgo}
+	to := lf.JsonLastPassTime{JsonTime: now}
+	events, err := s.GetAllEventReports(from, to)
 	logger.DieIf(err)
-	q <- users
+	q <- events
+}
+
+func getSharedFolders(wg *sync.WaitGroup, s *service.FolderService, q chan []service.SharedFolder) {
+	defer wg.Done()
+	folders, err := s.GetSharedFolders()
+	logger.DieIf(err)
+	q <- folders
 }
 
 func doDashboard(c *cli.Context) error {
@@ -488,21 +501,18 @@ func doDashboard(c *cli.Context) error {
 		OrganizationMap: make(map[string][]service.User),
 	}
 
-	loc, _ := time.LoadLocation("Asia/Tokyo")
-	now := time.Now().In(loc)
-	dayAgo := now.Add(-time.Duration(durationToAuditInDay) * time.Hour * 24)
-	d.From = lf.JsonLastPassTime{JsonTime: dayAgo}
-	d.To = lf.JsonLastPassTime{JsonTime: now}
-
 	client := NewLastPassClientFromContext(c)
-	s := service.NewUserService(client)
 
 	c3 := make(chan []service.User)
+	c4 := make(chan []service.SharedFolder)
+	c5 := make(chan *service.Events)
 
 	//Add -> if multiple go functions are used: `var wg sync.WaitGroup ;wg.Add(1)`
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go getAllUsers(&wg, s, c3)
+	wg.Add(3)
+	go getAllUsers(&wg, service.NewUserService(client), c3)
+	go getSharedFolders(&wg, service.NewFolderService(client), c4)
+	go getEvents(&wg, service.NewEventService(client), c5, time.Duration(durationToAuditInDay))
 	go func() {
 		for {
 			select {
@@ -513,6 +523,12 @@ func doDashboard(c *cli.Context) error {
 						d.OrganizationMap[group] = append(d.OrganizationMap[group], u)
 					}
 				}
+			case folders := <-c4:
+				d.Folders = folders
+			case events := <-c5:
+				for _, event := range events.Events {
+					d.Events[event.Username] = append(d.Events[event.Username], event)
+				}
 			}
 		}
 	}()
@@ -521,21 +537,6 @@ func doDashboard(c *cli.Context) error {
 	// Get Shared Folder Data
 	sf, err := service.NewFolderService(client).GetSharedFolders()
 	logger.DieIf(err)
-
-	for _, sf := range sf {
-		if sf.ShareFolderName != "Super-Admins" {
-			break
-		}
-		//d.Users["super_shared_folder_users"] = sf.Users
-	}
-
-	eventService := service.NewEventService(client)
-	es, err := eventService.GetAllEventReports(d.From, d.To)
-	logger.DieIf(err)
-
-	for _, event := range es.Events {
-		d.Events[event.Username] = append(d.Events[event.Username], event)
-	}
 
 	out := fmt.Sprintf("# Admin Users And Activities\n")
 	for _, u := range d.Users {
@@ -565,7 +566,6 @@ func doDashboard(c *cli.Context) error {
 		}
 	}
 
-	//out = out + fmt.Sprintf("\n# Disabled Users\n")
 	out = out + fmt.Sprintf("\n# Super-Shared Folders\n")
 	for _, folder := range sf {
 		fmt.Println(folder.ShareFolderName)
@@ -573,6 +573,8 @@ func doDashboard(c *cli.Context) error {
 		//	out = out + fmt.Sprintf("- " + u.UserName+"\n")
 		//}
 	}
+
+	//out = out + fmt.Sprintf("\n# Disabled Users\n")
 	//for _, us := range d.OrganizationMap {
 	//	for _, u := range us {
 	//		if u.Disabled {
