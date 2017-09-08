@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"lastpass_provisioning/util"
 	"fmt"
+	"net/http/httputil"
 )
 
 // SharedFolder is a LastPass Object in which users share accounts.
@@ -63,7 +64,7 @@ GetSharedFolderData returns a JSON object containing information on all Shared F
 */
 func (s *FolderService) GetSharedFolders() (sf []SharedFolder, err error) {
 	s.command = "getsfdata"
-	s.data = SharedFolder{}
+	s.data = nil
 	res, err := s.doRequest()
 	if err != nil {
 		return nil, err

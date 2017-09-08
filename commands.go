@@ -538,7 +538,7 @@ func doDashboard(c *cli.Context) error {
 	sf, err := service.NewFolderService(client).GetSharedFolders()
 	logger.DieIf(err)
 
-	out := fmt.Sprintf("# Admin Users And Activities\n")
+	out := fmt.Sprintf("# Admin Users\n")
 	for _, u := range d.Users {
 		if u.IsAdmin {
 			out = out + fmt.Sprintf("## %v\n", u.UserName)
