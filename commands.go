@@ -513,28 +513,29 @@ func doDashboard(c *cli.Context) error {
 	client := NewLastPassClientFromContext(c)
 	s := service.NewUserService(client)
 
-	cAdmin := make(chan []service.User)
-	cDisabled := make(chan []service.User)
-	cInactive := make(chan []service.User)
-	cNon2FA := make(chan []service.User)
+	c1 := make(chan []service.User)
+	c2 := make(chan []service.User)
+	c3 := make(chan []service.User)
+	c4 := make(chan []service.User)
 
 	var wg sync.WaitGroup
 	wg.Add(4)
 
-	go getAdmin(&wg, s, cAdmin)
-	go getDisabledUsers(&wg, s, cDisabled)
-	go getInactiveUsers(&wg, s, cInactive)
-	go getNon2FAUsers(&wg, s, cNon2FA)
+	go getAdmin(&wg, s, c1)
+	go getDisabledUsers(&wg, s, c2)
+	go getInactiveUsers(&wg, s, c3)
+	go getNon2FAUsers(&wg, s, c4)
 	go func() {
 		for {
 			select {
-			case admin := <-cAdmin:
+			case admin := <-c1:
 				d.Users["admin_users"] = admin
-			case disabled := <-cDisabled:
+			case disabled := <-c2:
 				d.Users["disabled_users"] = disabled
-			case inactive := <-cInactive:
+			case inactive := <-c3:
+				fmt.Println(inactive)
 				d.Users["inactive_users"] = inactive
-			case non2fa := <-cNon2FA:
+			case non2fa := <-c4:
 				d.Users["non_2fa_users"] = non2fa
 			}
 		}
