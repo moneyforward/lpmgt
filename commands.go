@@ -458,8 +458,8 @@ type dashBoard struct {
 	OrganizationMap map[string][]service.User  `json:"users,omitempty"`
 }
 
-func getAllUsers(s *service.UserService, q chan []service.User) {
-	//defer wg.Done()
+func getAllUsers(wg *sync.WaitGroup,s *service.UserService, q chan []service.User) {
+	defer wg.Done()
 	users, err := s.GetAllUsers()
 	logger.DieIf(err)
 	q <- users
@@ -501,7 +501,8 @@ func doDashboard(c *cli.Context) error {
 
 	//Add -> if multiple go functions are used: `var wg sync.WaitGroup ;wg.Add(1)`
 	var wg sync.WaitGroup
-	go getAllUsers(s, c3)
+	wg.Add(1)
+	go getAllUsers(&wg, s, c3)
 	go func() {
 		for {
 			select {
@@ -536,34 +537,25 @@ func doDashboard(c *cli.Context) error {
 		d.Events[event.Username] = append(d.Events[event.Username], event)
 	}
 
-	//admins := []string{}
 	out := fmt.Sprintf("# Admin Users And Activities\n")
 	for _, u := range d.Users {
-		//for user, events := range d.Events {
-		//	if u.IsAdmin || user == "API" {
-		//		out = out + fmt.Sprintf("## %v: \n", u.UserName)
-		//		for _, event := range events {
-		//			out = out + fmt.Sprintf("%v\n", event.String())
-		//		}
-		//	}
-		//}
 		if u.IsAdmin {
-			out = out + fmt.Sprintf("## %v: \n", u.UserName)
+			out = out + fmt.Sprintf("## %v\n", u.UserName)
 			if events, ok := d.Events[u.UserName]; ok {
-					for _, event := range events {
-						out = out + fmt.Sprintf("%v\n", event.String())
-					}
+				for _, event := range events {
+					out = out + fmt.Sprintf("%v\n", event.String())
+				}
 			}
 		}
 	}
 
-	out = out + fmt.Sprintf("\n# Super-Shared Folders\n")
-	for _, folder := range sf {
-		fmt.Println(folder.ShareFolderName)
-		//for _, u := range folder.Users {
-		//	out = out + fmt.Sprintf("- " + u.UserName+"\n")
-		//}
+	out = out + fmt.Sprintf("# API Activities\n")
+	if events, ok := d.Events["API"]; ok {
+		for _, event := range events {
+			out = out + fmt.Sprintf("%v\n", event.String())
+		}
 	}
+
 
 	out = out + fmt.Sprintf("\n# Audit Events\n")
 	for _, events := range d.Events {
@@ -575,6 +567,13 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	//out = out + fmt.Sprintf("\n# Disabled Users\n")
+	out = out + fmt.Sprintf("\n# Super-Shared Folders\n")
+	for _, folder := range sf {
+		fmt.Println(folder.ShareFolderName)
+		//for _, u := range folder.Users {
+		//	out = out + fmt.Sprintf("- " + u.UserName+"\n")
+		//}
+	}
 	//for _, us := range d.OrganizationMap {
 	//	for _, u := range us {
 	//		if u.Disabled {
