@@ -556,7 +556,6 @@ func doDashboard(c *cli.Context) error {
 		}
 	}
 
-
 	out = out + fmt.Sprintf("\n# Audit Events\n")
 	for _, events := range d.Events {
 		for _, event := range events {
