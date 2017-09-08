@@ -515,8 +515,6 @@ func doDashboard(c *cli.Context) error {
 	client := NewLastPassClientFromContext(c)
 	s := service.NewUserService(client)
 
-
-
 	c1 := make(chan []service.User)
 	c2 := make(chan []service.User)
 	c3 := make(chan []service.User)
