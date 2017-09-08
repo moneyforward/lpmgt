@@ -4,8 +4,6 @@ import (
 	lc "lastpass_provisioning/lastpass_client"
 	"net/http"
 	"lastpass_provisioning/util"
-	"fmt"
-	"net/http/httputil"
 )
 
 // SharedFolder is a LastPass Object in which users share accounts.
@@ -13,10 +11,6 @@ type SharedFolder struct {
 	ShareFolderName string  `json:"sharedfoldername"`
 	Score           float32 `json:"score"`
 	Users           []User `json:"users"`
-}
-
-type folders struct {
-	folders map[string]SharedFolder `json:"folders,omitempty"`
 }
 
 // FolderService is a service class that handles folder objects in LastPass.
@@ -62,31 +56,28 @@ GetSharedFolderData returns a JSON object containing information on all Shared F
     }
 }
 */
-func (s *FolderService) GetSharedFolders() (sf []SharedFolder, err error) {
+func (s *FolderService) GetSharedFolders() ([]SharedFolder, error) {
 	s.command = "getsfdata"
 	s.data = nil
+
 	res, err := s.doRequest()
 	if err != nil {
 		return nil, err
 	}
 
-	var sharedFolders folders
+	var sharedFolders map[string]SharedFolder
 	err = util.JSONBodyDecoder(res, &sharedFolders)
-	fmt.Println(sharedFolders)
 	if err != nil {
 		return nil, err
 	}
-	return sharedFolders.GetFolders(), nil
+
+	sf := []SharedFolder{}
+	for _, folder := range sharedFolders {
+		sf = append(sf, folder)
+	}
+	return sf, nil
 }
 
 func (s *FolderService) doRequest() (*http.Response, error) {
 	return s.client.DoRequest(s.command, s.data)
-}
-
-func (fs *folders) GetFolders() []SharedFolder {
-	folders := []SharedFolder{}
-	for _, folder := range fs.folders {
-		folders = append(folders, folder)
-	}
-	return folders
 }
