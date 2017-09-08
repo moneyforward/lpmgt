@@ -14,7 +14,6 @@ import (
 	"lastpass_provisioning/util"
 	"os"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -456,40 +455,17 @@ type dashBoard struct {
 	To     lf.JsonLastPassTime        `json:"to"`
 	Users  map[string][]service.User  `json:"users"`
 	Events map[string][]service.Event `json:"events"`
+	OrganizationMap map[string][]service.User  `json:"users,omitempty"`
 }
 
-func getAdmin(wg *sync.WaitGroup, s *service.UserService, q chan []service.User) {
-	defer wg.Done()
-	AdminUsers, err := s.GetAdminUserData()
-	logger.DieIf(err)
-	AdminUsers = append(AdminUsers, service.User{UserName: "API"})
-	q <- AdminUsers
-}
-
-func getDisabledUsers(wg *sync.WaitGroup, s *service.UserService, q chan []service.User) {
-	defer wg.Done()
-	disabledUsers, err := s.GetDisabledUsers()
-	logger.DieIf(err)
-	q <- disabledUsers
-}
-
-func getInactiveUsers(wg *sync.WaitGroup, s *service.UserService, q chan []service.User) {
-	defer wg.Done()
-	inactiveUsers, err := s.GetInactiveUsers()
-	logger.DieIf(err)
-	q <- inactiveUsers
-}
-
-func getNon2FAUsers(wg *sync.WaitGroup, s *service.UserService, q chan []service.User) {
-	defer wg.Done()
-	users, err := s.GetNon2faUsers()
+func getAllUsers( s *service.UserService, q chan []service.User) {
+	//defer wg.Done()
+	users, err := s.GetAllUsers()
 	logger.DieIf(err)
 	q <- users
 }
 
 func doDashboard(c *cli.Context) error {
-	start := time.Now()
-
 	if c.Bool("verbose") {
 		os.Setenv("DEBUG", "1")
 	}
@@ -502,9 +478,8 @@ func doDashboard(c *cli.Context) error {
 	d := &dashBoard{
 		Users:  make(map[string][]service.User),
 		Events: make(map[string][]service.Event),
+		OrganizationMap: make(map[string][]service.User),
 	}
-	inactiveDep := make(map[string][]service.User)
-	non2faDep := make(map[string][]service.User)
 
 	loc, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now().In(loc)
@@ -515,41 +490,23 @@ func doDashboard(c *cli.Context) error {
 	client := NewLastPassClientFromContext(c)
 	s := service.NewUserService(client)
 
-	c1 := make(chan []service.User)
-	c2 := make(chan []service.User)
 	c3 := make(chan []service.User)
-	c4 := make(chan []service.User)
 
-	var wg sync.WaitGroup
-	wg.Add(4)
-
-	go getAdmin(&wg, s, c1)
-	go getDisabledUsers(&wg, s, c2)
-	go getInactiveUsers(&wg, s, c3)
-	go getNon2FAUsers(&wg, s, c4)
+	//Add -> if multiple go functions are used: `var wg sync.WaitGroup ;wg.Add(1)`
+	go getAllUsers(s, c3)
 	go func() {
 		for {
 			select {
-			case admin := <-c1:
-				d.Users["admin_users"] = admin
-			case disabled := <-c2:
-				d.Users["disabled_users"] = disabled
-			case inactive := <-c3:
-				for _, u := range inactive {
+			case users := <-c3:
+				for _, u := range users {
 					for _, group := range u.Groups {
-						inactiveDep[group] = append(inactiveDep[group], u)
-					}
-				}
-			case non2fa := <-c4:
-				for _, u := range non2fa {
-					for _, group := range u.Groups {
-						non2faDep[group] = append(non2faDep[group], u)
+						d.OrganizationMap[group] = append(d.OrganizationMap[group], u)
 					}
 				}
 			}
 		}
 	}()
-	wg.Wait()
+	//wg.Wait()
 
 	// Get Shared Folder Data
 	res, err := client.GetSharedFolderData()
@@ -576,13 +533,15 @@ func doDashboard(c *cli.Context) error {
 
 	admins := []string{}
 	out := fmt.Sprintf("# Admin Users And Activities\n")
-	for _, admin := range d.Users["admin_users"] {
-		out = out + fmt.Sprintf("## %v: \n", admin.UserName)
-		admins = append(admins, admin.UserName)
-		for user, events := range d.Events {
-			if admin.UserName == user {
-				for _, event := range events {
-					out = out + fmt.Sprintf("%v\n", event.String())
+	for _, us := range d.OrganizationMap {
+		for _, admin := range us {
+			out = out + fmt.Sprintf("## %v: \n", admin.UserName)
+			admins = append(admins, admin.UserName)
+			for user, events := range d.Events {
+				if admin.UserName == user {
+					for _, event := range events {
+						out = out + fmt.Sprintf("%v\n", event.String())
+					}
 				}
 			}
 		}
@@ -598,29 +557,34 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	out = out + fmt.Sprintf("\n# Disabled Users\n")
-	for _, u := range d.Users["disabled_users"] {
-		out = out + fmt.Sprintf("## %v: \n", u.UserName)
+	for _, us := range d.OrganizationMap {
+		for _, u := range us {
+			if u.Disabled {
+				out = out + fmt.Sprintf("- " + u.UserName+"\n")
+			}
+		}
 	}
 
 	out = out + fmt.Sprintf("\n# Inactive Users")
-	for dep, us := range inactiveDep {
-		out = out + fmt.Sprintf("\n## %v: %v\n", dep, len(us))
+	for dep, us := range d.OrganizationMap {
+		out = out + fmt.Sprintf("\n## %v\n", dep)
 		for _, u := range us {
-			out = out + fmt.Sprintf(u.UserName+", ")
+			if u.NeverLoggedIn {
+				out = out + fmt.Sprintf("- " + u.UserName+"\n")
+			}
 		}
 	}
 
 	out = out + fmt.Sprintf("\n# Non2FA Users")
-	for dep, us := range non2faDep {
-		out = out + fmt.Sprintf("\n## %v: %v\n", dep, len(us))
+	for dep, us := range d.OrganizationMap {
+		out = out + fmt.Sprintf("\n## %v\n", dep)
 		for _, u := range us {
-			out = out + fmt.Sprintf(u.UserName+", ")
+			if !u.Is2FA() {
+				out = out + fmt.Sprintf("- "+u.UserName+"\n")
+			}
 		}
 	}
 
 	fmt.Println(out)
-	t := time.Now()
-	elapsed := t.Sub(start)
-	fmt.Println(elapsed)
 	return nil
 }

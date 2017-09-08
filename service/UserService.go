@@ -362,6 +362,10 @@ func (u *User) Contains(users []string) bool {
 	return false
 }
 
+func (u *User) Is2FA() bool {
+	return u.Multifactor!=""
+}
+
 func (us *Users) GetUsers() []User {
 	users := []User{}
 	for _, user := range us.Users {
