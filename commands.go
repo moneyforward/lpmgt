@@ -450,15 +450,6 @@ var commandDashboards = cli.Command{
 	},
 }
 
-type dashBoard struct {
-	From            lf.JsonLastPassTime       `json:"from"`
-	To              lf.JsonLastPassTime       `json:"to"`
-	Users           []service.User            `json:"users"`
-	Folders         []service.SharedFolder    `json:"folders"`
-	Events          []service.Event           `json:"events"`
-	OrganizationMap map[string][]service.User `json:"users,omitempty"`
-}
-
 func getAllUsers(wg *sync.WaitGroup, s *service.UserService, q chan []service.User) {
 	defer wg.Done()
 	users, err := s.GetAllUsers()
@@ -486,6 +477,7 @@ func getSharedFolders(wg *sync.WaitGroup, s *service.FolderService, q chan []ser
 }
 
 func doDashboard(c *cli.Context) error {
+	start := time.Now()
 	if c.Bool("verbose") {
 		os.Setenv("DEBUG", "1")
 	}
@@ -495,11 +487,9 @@ func doDashboard(c *cli.Context) error {
 		durationToAuditInDay = c.Int("duration")
 	}
 
-	d := &dashBoard{
-		Users:           make([]service.User, 0),
-		Events:          make([]service.Event, 0),
-		OrganizationMap: make(map[string][]service.User),
-	}
+	folders := []service.SharedFolder{}
+	events := []service.Event{}
+	organizationMap := make(map[string][]service.User)
 
 	client := NewLastPassClientFromContext(c)
 
@@ -507,7 +497,6 @@ func doDashboard(c *cli.Context) error {
 	c4 := make(chan []service.SharedFolder)
 	c5 := make(chan *service.Events)
 
-	//Add -> if multiple go functions are used: `var wg sync.WaitGroup ;wg.Add(1)`
 	var wg sync.WaitGroup
 	wg.Add(3)
 	go getAllUsers(&wg, service.NewUserService(client), c3)
@@ -516,26 +505,25 @@ func doDashboard(c *cli.Context) error {
 	for i := 0; i < 3; i++ {
 		select {
 		case users := <-c3:
-			d.Users = users
 			for _, u := range users {
 				for _, group := range u.Groups {
-					d.OrganizationMap[group] = append(d.OrganizationMap[group], u)
+					organizationMap[group] = append(organizationMap[group], u)
 				}
 				if u.IsAdmin {
-					d.OrganizationMap["admin"] = append(d.OrganizationMap["admin"], u)
+					organizationMap["admin"] = append(organizationMap["admin"], u)
 				}
 			}
-		case d.Folders = <-c4:
-		case events := <-c5:
-			d.Events = events.Events
+		case folders = <-c4:
+		case es := <-c5:
+			events = es.Events
 		}
 	}
 	wg.Wait()
 
 	out := fmt.Sprintf("# Admin Users\n")
-	for _, u := range d.OrganizationMap["admin"] {
+	for _, u := range organizationMap["admin"] {
 		out = out + fmt.Sprintf("- %v\n", u.UserName)
-		for _, event := range d.Events {
+		for _, event := range events {
 			if u.UserName == event.Username {
 				out = out + fmt.Sprintf("	- %v\n", event.String())
 			}
@@ -543,21 +531,21 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	out = out + fmt.Sprintf("# API Activities\n")
-	for _, event := range d.Events {
+	for _, event := range events {
 		if event.Username == "API" {
 			out = out + fmt.Sprintf("%v\n", event.String())
 		}
 	}
 
 	out = out + fmt.Sprintf("\n# Audit Events\n")
-	for _, event := range d.Events {
+	for _, event := range events {
 		if event.IsAuditEvent() {
 			out = out + fmt.Sprintf("%v\n", event.String())
 		}
 	}
 
 	out = out + fmt.Sprintf("\n# Super-Shared Folders\n")
-	for _, folder := range d.Folders {
+	for _, folder := range folders {
 		if folder.ShareFolderName == "Super-Admins" {
 			for _, u := range folder.Users {
 				out = out + fmt.Sprintf("- "+u.UserName+"\n")
@@ -566,7 +554,7 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	out = out + fmt.Sprintf("\n# Disabled Users\n")
-	for _, us := range d.OrganizationMap {
+	for _, us := range organizationMap {
 		for _, u := range us {
 			if u.Disabled {
 				out = out + fmt.Sprintf("- "+u.UserName+"\n")
@@ -575,7 +563,7 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	out = out + fmt.Sprintf("\n# Inactive Users")
-	for dep, us := range d.OrganizationMap {
+	for dep, us := range organizationMap {
 		count := 0
 		for _, u := range us {
 			if u.NeverLoggedIn {
@@ -589,7 +577,7 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	out = out + fmt.Sprintf("\n\n# Non2FA Users")
-	for dep, us := range d.OrganizationMap {
+	for dep, us := range organizationMap {
 		count := 0
 		for _, u := range us {
 			if !u.Is2FA() {
@@ -603,5 +591,7 @@ func doDashboard(c *cli.Context) error {
 	}
 
 	fmt.Println(out)
+
+	fmt.Println(time.Since(start))
 	return nil
 }
