@@ -11,10 +11,10 @@ import (
 	"lastpass_provisioning/logger"
 	"lastpass_provisioning/service"
 	"lastpass_provisioning/util"
-	"os"
 	"strings"
 	"sync"
 	"time"
+	"os"
 )
 
 func init() {
@@ -248,14 +248,13 @@ var commandGet = cli.Command{
 }
 
 func updateLocation(context *cli.Context) (err error) {
-	var newLoc *time.Location
 	if context.GlobalString("timezone") != "" {
-		newLoc, err = time.LoadLocation(context.GlobalString("timezone"))
+		newLoc, err := time.LoadLocation(context.GlobalString("timezone"))
 		if err != nil {
 			return err
 		}
+		location = newLoc
 	}
-	location = newLoc
 	return nil
 }
 
@@ -469,7 +468,6 @@ var subCommandDashboards = cli.Command{
 }
 
 func doDashboard(c *cli.Context) error {
-	start := time.Now()
 	if c.Bool("verbose") {
 		os.Setenv("DEBUG", "1")
 	}
@@ -515,8 +513,9 @@ func doDashboard(c *cli.Context) error {
 	}
 	wg.Wait()
 
+	var out string
 	// Pull Admin Users from fetched data. Output string is also constructed
-	out := fmt.Sprintf("# Admin Users\n")
+	out = out +  fmt.Sprintf("# Admin Users\n")
 	for _, u := range organizationMap["admin"] {
 		out = out + fmt.Sprintf("- %v\n", u.UserName)
 		for _, event := range events {
@@ -591,10 +590,7 @@ func doDashboard(c *cli.Context) error {
 			}
 		}
 	}
-
 	fmt.Println(out)
-
-	fmt.Println(time.Since(start))
 	return nil
 }
 

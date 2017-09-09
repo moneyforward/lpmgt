@@ -20,7 +20,17 @@ func main() {
 			Name:  "timezone, t",
 			Usage: "set timezone `TIMEZONE` in IANA timezone database format (Default UTC).",
 		},
+		cli.BoolFlag{
+			Name:  "verbose",
+			Usage: "Verbose output mode",
+		},
 	}
 	app.Commands = Commands
+	app.Before = func(context *cli.Context) error {
+		if context.GlobalBool("verbose") {
+			os.Setenv("DEBUG", "1")
+		}
+		return nil
+	}
 	app.Run(os.Args)
 }
