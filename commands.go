@@ -450,6 +450,136 @@ var commandDashboards = cli.Command{
 	},
 }
 
+func doDashboard(c *cli.Context) error {
+	start := time.Now()
+	if c.Bool("verbose") {
+		os.Setenv("DEBUG", "1")
+	}
+
+	durationToAuditInDay := 1
+	if c.Int("duration") >= 1 {
+		durationToAuditInDay = c.Int("duration")
+	}
+
+	client := NewLastPassClientFromContext(c)
+
+	folders := []service.SharedFolder{}
+	events := []service.Event{}
+	organizationMap := make(map[string][]service.User)
+
+	c1 := make(chan []service.User)
+	c2 := make(chan []service.SharedFolder)
+	c3 := make(chan *service.Events)
+
+	// Fetch Data
+	numOfGoRoutines := 3	// Change this number based on goroutine to fetch data from LastPass.
+	var wg sync.WaitGroup
+	wg.Add(numOfGoRoutines)
+	go getAllUsers(&wg, service.NewUserService(client), c1)
+	go getSharedFolders(&wg, service.NewFolderService(client), c2)
+	go getEvents(&wg, service.NewEventService(client), c3, time.Duration(durationToAuditInDay))
+	for i := 0; i < numOfGoRoutines; i++ {
+		select {
+		case users := <-c1:
+			for _, u := range users {
+				if u.IsAdmin {
+					organizationMap["admin"] = append(organizationMap["admin"], u)
+					continue
+				}
+				for _, group := range u.Groups {
+					organizationMap[group] = append(organizationMap[group], u)
+				}
+			}
+		case folders = <-c2:
+		case es := <-c3:
+			events = es.Events
+		}
+	}
+	wg.Wait()
+
+	// Pull Admin Users from fetched data. Output string is also constructed
+	out := fmt.Sprintf("# Admin Users\n")
+	for _, u := range organizationMap["admin"] {
+		out = out + fmt.Sprintf("- %v\n", u.UserName)
+		for _, event := range events {
+			if u.UserName == event.Username {
+				out = out + fmt.Sprintf("	- %v\n", event.String())
+			}
+		}
+	}
+
+	// Pull Activities done through LastPassAPI
+	out = out + fmt.Sprintf("# API Activities\n")
+	for _, event := range events {
+		if event.Username == "API" {
+			out = out + fmt.Sprintf("%v\n", event.String())
+		}
+	}
+
+	// Pull activities to be audited such as re-uses of LastPassword master-password.
+	out = out + fmt.Sprintf("\n# Audit Events\n")
+	for _, event := range events {
+		if event.IsAuditEvent() {
+			out = out + fmt.Sprintf("%v\n", event.String())
+		}
+	}
+
+	// Check anyone who can access super-admin credentials on critical infrastructure.
+	out = out + fmt.Sprintf("\n# Super-Shared Folders\n")
+	for _, folder := range folders {
+		if folder.ShareFolderName == "Super-Admins" {
+			for _, u := range folder.Users {
+				out = out + fmt.Sprintf("- "+u.UserName+"\n")
+			}
+		}
+	}
+
+	// Check disabled users. They may be required to be deleted.
+	out = out + fmt.Sprintf("\n# Disabled Users\n")
+	for _, us := range organizationMap {
+		for _, u := range us {
+			if u.Disabled {
+				out = out + fmt.Sprintf("- "+u.UserName+"\n")
+			}
+		}
+	}
+
+	// Check inactive users who never logged in.
+	out = out + fmt.Sprintf("\n# Inactive Users")
+	for dep, us := range organizationMap {
+		count := 0
+		for _, u := range us {
+			if u.NeverLoggedIn {
+				if count == 0 {
+					out = out + fmt.Sprintf("\n## %v", dep)
+				}
+				out = out + fmt.Sprintf("\n- "+u.UserName)
+				count += 1
+			}
+		}
+	}
+
+	// Check users who haven't set 2FA.
+	out = out + fmt.Sprintf("\n\n# Non2FA Users")
+	for dep, us := range organizationMap {
+		count := 0
+		for _, u := range us {
+			if !u.Is2FA() {
+				if count == 0 {
+					out = out + fmt.Sprintf("\n## %v", dep)
+				}
+				out = out + fmt.Sprintf("\n- "+u.UserName)
+				count += 1
+			}
+		}
+	}
+
+	fmt.Println(out)
+
+	fmt.Println(time.Since(start))
+	return nil
+}
+
 func getAllUsers(wg *sync.WaitGroup, s *service.UserService, q chan []service.User) {
 	defer wg.Done()
 	users, err := s.GetAllUsers()
@@ -474,124 +604,4 @@ func getSharedFolders(wg *sync.WaitGroup, s *service.FolderService, q chan []ser
 	folders, err := s.GetSharedFolders()
 	logger.DieIf(err)
 	q <- folders
-}
-
-func doDashboard(c *cli.Context) error {
-	start := time.Now()
-	if c.Bool("verbose") {
-		os.Setenv("DEBUG", "1")
-	}
-
-	durationToAuditInDay := 1
-	if c.Int("duration") >= 1 {
-		durationToAuditInDay = c.Int("duration")
-	}
-
-	folders := []service.SharedFolder{}
-	events := []service.Event{}
-	organizationMap := make(map[string][]service.User)
-
-	client := NewLastPassClientFromContext(c)
-
-	c3 := make(chan []service.User)
-	c4 := make(chan []service.SharedFolder)
-	c5 := make(chan *service.Events)
-
-	var wg sync.WaitGroup
-	wg.Add(3)
-	go getAllUsers(&wg, service.NewUserService(client), c3)
-	go getSharedFolders(&wg, service.NewFolderService(client), c4)
-	go getEvents(&wg, service.NewEventService(client), c5, time.Duration(durationToAuditInDay))
-	for i := 0; i < 3; i++ {
-		select {
-		case users := <-c3:
-			for _, u := range users {
-				for _, group := range u.Groups {
-					organizationMap[group] = append(organizationMap[group], u)
-				}
-				if u.IsAdmin {
-					organizationMap["admin"] = append(organizationMap["admin"], u)
-				}
-			}
-		case folders = <-c4:
-		case es := <-c5:
-			events = es.Events
-		}
-	}
-	wg.Wait()
-
-	out := fmt.Sprintf("# Admin Users\n")
-	for _, u := range organizationMap["admin"] {
-		out = out + fmt.Sprintf("- %v\n", u.UserName)
-		for _, event := range events {
-			if u.UserName == event.Username {
-				out = out + fmt.Sprintf("	- %v\n", event.String())
-			}
-		}
-	}
-
-	out = out + fmt.Sprintf("# API Activities\n")
-	for _, event := range events {
-		if event.Username == "API" {
-			out = out + fmt.Sprintf("%v\n", event.String())
-		}
-	}
-
-	out = out + fmt.Sprintf("\n# Audit Events\n")
-	for _, event := range events {
-		if event.IsAuditEvent() {
-			out = out + fmt.Sprintf("%v\n", event.String())
-		}
-	}
-
-	out = out + fmt.Sprintf("\n# Super-Shared Folders\n")
-	for _, folder := range folders {
-		if folder.ShareFolderName == "Super-Admins" {
-			for _, u := range folder.Users {
-				out = out + fmt.Sprintf("- "+u.UserName+"\n")
-			}
-		}
-	}
-
-	out = out + fmt.Sprintf("\n# Disabled Users\n")
-	for _, us := range organizationMap {
-		for _, u := range us {
-			if u.Disabled {
-				out = out + fmt.Sprintf("- "+u.UserName+"\n")
-			}
-		}
-	}
-
-	out = out + fmt.Sprintf("\n# Inactive Users")
-	for dep, us := range organizationMap {
-		count := 0
-		for _, u := range us {
-			if u.NeverLoggedIn {
-				if count == 0 {
-					out = out + fmt.Sprintf("\n## %v", dep)
-				}
-				out = out + fmt.Sprintf("\n- "+u.UserName)
-				count += 1
-			}
-		}
-	}
-
-	out = out + fmt.Sprintf("\n\n# Non2FA Users")
-	for dep, us := range organizationMap {
-		count := 0
-		for _, u := range us {
-			if !u.Is2FA() {
-				if count == 0 {
-					out = out + fmt.Sprintf("\n## %v", dep)
-				}
-				out = out + fmt.Sprintf("\n- "+u.UserName)
-				count += 1
-			}
-		}
-	}
-
-	fmt.Println(out)
-
-	fmt.Println(time.Since(start))
-	return nil
 }
