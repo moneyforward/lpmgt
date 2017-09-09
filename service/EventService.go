@@ -50,16 +50,19 @@ func (e *Event) UnmarshalJSON(b []byte) error {
 	for k, v := range rawStrings {
 		switch strings.ToLower(k) {
 		case "time":
-			// LastPass's timestamp is in EST
-			t, err := time.Parse(format.LastPassFormat, v)
+			eastLoc, err := time.LoadLocation(format.LastPassTimeZone)
 			if err != nil {
 				return err
 			}
-
-			// Add 5 hours to convert time zone from EST to UTC
-			// Then convert to asia/tokyo time zone
-			asiaLoc, _ := time.LoadLocation("Asia/Tokyo")
-			e.Time = t.Add(time.Duration(5) * time.Hour).In(asiaLoc)
+			asiaLoc, err := time.LoadLocation("Asia/Tokyo")
+			if err != nil {
+				return err
+			}
+			t, err := time.ParseInLocation(format.LastPassFormat, v, eastLoc)
+			if err != nil {
+				return err
+			}
+			e.Time = t.UTC().In(asiaLoc)
 		case "username":
 			e.Username = v
 		case "ip_address":
