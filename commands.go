@@ -42,7 +42,6 @@ func NewLastPassClientFromContext(c *cli.Context) *lc.LastPassClient {
 
 // Commands cli.Command object list
 var Commands = []cli.Command{
-	commandDashboards,
 	commandCreate,
 	commandGet,
 	commandDescribe,
@@ -241,6 +240,7 @@ var commandGet = cli.Command{
 	Name:  "get",
 	Usage: "Get objects",
 	Subcommands: []cli.Command{
+		subCommandDashboards,
 		subCommandGetUsers,
 		subCommandGetGroups,
 		subCommandGetEvents,
@@ -455,7 +455,7 @@ func loadAddingUsers(usersFile string) (config []service.User, err error) {
 	return
 }
 
-var commandDashboards = cli.Command{
+var subCommandDashboards = cli.Command{
 	Name:        "dashboard",
 	Usage:       "Report summary",
 	ArgsUsage:   "[--verbose | -v] [--period | -d <duration>]",
