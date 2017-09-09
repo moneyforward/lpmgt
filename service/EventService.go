@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"lastpass_provisioning/util"
 	"github.com/pkg/errors"
+	"fmt"
 )
 type Events struct {
 	Events []Event `json:"events"`
@@ -24,6 +25,12 @@ func (es *Events) GetUserEvents(username string) *Events {
 	}
 
 	return &Events{Events:events}
+}
+
+func (es *Events) ConvertTimezone(timezone *time.Location) {
+	for index, event := range es.Events {
+		es.Events[index].Time = event.Time.UTC().In(timezone)
+	}
 }
 
 type Event struct {
@@ -54,15 +61,10 @@ func (e *Event) UnmarshalJSON(b []byte) error {
 			if err != nil {
 				return err
 			}
-			//asiaLoc, err := time.LoadLocation("Asia/Tokyo")
-			//if err != nil {
-			//	return err
-			//}
 			t, err := time.ParseInLocation(format.LastPassFormat, v, eastLoc)
 			if err != nil {
 				return err
 			}
-			//e.Time = t.UTC().In(asiaLoc)
 			e.Time = t.UTC()
 		case "username":
 			e.Username = v
