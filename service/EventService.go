@@ -51,7 +51,7 @@ func (e *Event) UnmarshalJSON(b []byte) error {
 		switch strings.ToLower(k) {
 		case "time":
 			// LastPass's timestamp is in EST
-			t, err := time.Parse("2006-01-02 15:04:05", v)
+			t, err := time.Parse(format.LastPassFormat, v)
 			if err != nil {
 				return err
 			}

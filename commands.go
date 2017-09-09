@@ -263,7 +263,7 @@ func doGetEvents(c *cli.Context) error {
 		os.Setenv("DEBUG", "1")
 	}
 
-	loc, _ := time.LoadLocation("Asia/Tokyo")
+	loc, _ := time.LoadLocation(lf.LastPassTimeZone)
 	now := time.Now().In(loc)
 	dayAgo := now.Add(-time.Duration(c.Int("duration")) * time.Hour * 24)
 	from := lf.JsonLastPassTime{JsonTime: dayAgo}
@@ -589,9 +589,10 @@ func getAllUsers(wg *sync.WaitGroup, s *service.UserService, q chan []service.Us
 
 func getEvents(wg *sync.WaitGroup, s *service.EventService, q chan *service.Events, d time.Duration) {
 	defer wg.Done()
-	loc, _ := time.LoadLocation("Asia/Tokyo")
+	loc, _ := time.LoadLocation(lf.LastPassTimeZone)
 	now := time.Now().In(loc)
 	dayAgo := now.Add(-d * time.Hour * 24)
+
 	from := lf.JsonLastPassTime{JsonTime: dayAgo}
 	to := lf.JsonLastPassTime{JsonTime: now}
 	events, err := s.GetAllEventReports(from, to)

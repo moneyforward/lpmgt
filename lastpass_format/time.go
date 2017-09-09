@@ -4,14 +4,15 @@ import (
 	"time"
 )
 
-const LastpassFormat = "2006-01-02 15:04:05"
+const LastPassFormat = "2006-01-02 15:04:05"
+const LastPassTimeZone = "US/Eastern"
 
 type JsonLastPassTime struct {
 	JsonTime time.Time
 }
 
 func (j JsonLastPassTime) Format() string {
-	return j.JsonTime.Format(LastpassFormat)
+	return j.JsonTime.Format(LastPassFormat)
 }
 
 func (j JsonLastPassTime) MarshalJSON() ([]byte, error) {

@@ -12,6 +12,7 @@ import (
 type LastPassConfig struct {
 	CompanyID string `yaml:"company_id"`
 	Config config.Config `yaml:"config"`
+	TimeZone string  `yaml:"timezone,omitempty"`
 }
 
 const (
@@ -35,6 +36,10 @@ func LoadConfig(configFile string) (*LastPassConfig, error) {
 
 	if config.Config.EndPoint == "" {
 		config.Config.EndPoint = DefaultBaseURL
+	}
+
+	if config.TimeZone == "" {
+		config.TimeZone = "UTC"
 	}
 
 	return config, nil
