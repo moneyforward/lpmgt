@@ -9,8 +9,8 @@ import (
 	"encoding/json"
 	"lastpass_provisioning/util"
 	"github.com/pkg/errors"
-	"fmt"
 )
+
 type Events struct {
 	Events []Event `json:"events"`
 }

@@ -52,6 +52,8 @@ var Commands = []cli.Command{
 	subCommandResetPassword,
 }
 
+var location = time.UTC
+
 // Update command with subcommands
 var commandUpdate = cli.Command{
 	Name:  "update",
@@ -245,11 +247,24 @@ var commandGet = cli.Command{
 	},
 }
 
+func updateLocation(context *cli.Context) (err error) {
+	var newLoc *time.Location
+	if context.GlobalString("timezone") != "" {
+		newLoc, err = time.LoadLocation(context.GlobalString("timezone"))
+		if err != nil {
+			return err
+		}
+	}
+	location = newLoc
+	return nil
+}
+
 var subCommandGetEvents = cli.Command{
 	Name:        "events",
 	Usage:       "get events",
 	Description: "Get LastPass events. By default, it retrieves events of all users within that day.",
 	ArgsUsage:   "[--user, -u <email> | --duration, -d <days> | [--verbose | -v]]",
+	Before: updateLocation,
 	Action:      doGetEvents,
 	Flags: []cli.Flag{
 		cli.IntFlag{Name: "duration, d", Value: 1, Usage: "By specifying this, events from d-day ago to today is retrieved."},
@@ -263,8 +278,8 @@ func doGetEvents(c *cli.Context) error {
 		os.Setenv("DEBUG", "1")
 	}
 
-	loc, _ := time.LoadLocation(lf.LastPassTimeZone)
-	now := time.Now().In(loc)
+	lastPassLoc, _ := time.LoadLocation(lf.LastPassTimeZone)
+	now := time.Now().In(lastPassLoc)
 	dayAgo := now.Add(-time.Duration(c.Int("duration")) * time.Hour * 24)
 	from := lf.JsonLastPassTime{JsonTime: dayAgo}
 	to := lf.JsonLastPassTime{JsonTime: now}
@@ -286,11 +301,9 @@ func doGetEvents(c *cli.Context) error {
 
 	}
 	logger.DieIf(err)
-	newLoc, err := time.LoadLocation("Asia/Tokyo")
-	if err != nil {
-		return err
-	}
-	events.ConvertTimezone(newLoc)
+
+	events.ConvertTimezone(location)
+	util.PrintIndentedJSON(events)
 	return err
 }
 
@@ -448,6 +461,7 @@ var commandDashboards = cli.Command{
 	ArgsUsage:   "[--verbose | -v] [--period | -d <duration>]",
 	Description: `show audit related dashboard`,
 	Action:      doDashboard,
+	Before: updateLocation,
 	Flags: []cli.Flag{
 		cli.IntFlag{Name: "duration, d", Usage: "Audits for past <duration> day"},
 		cli.BoolFlag{Name: "verbose, v", Usage: "Verbose output mode"},
@@ -501,18 +515,13 @@ func doDashboard(c *cli.Context) error {
 	}
 	wg.Wait()
 
-	newLoc, err := time.LoadLocation("Asia/Tokyo")
-	if err != nil {
-		return err
-	}
-
 	// Pull Admin Users from fetched data. Output string is also constructed
 	out := fmt.Sprintf("# Admin Users\n")
 	for _, u := range organizationMap["admin"] {
 		out = out + fmt.Sprintf("- %v\n", u.UserName)
 		for _, event := range events {
 			if u.UserName == event.Username {
-				out = out + fmt.Sprintf("	- %v\n", event.String(newLoc))
+				out = out + fmt.Sprintf("	- %v\n", event.String(location))
 			}
 		}
 	}
@@ -521,7 +530,7 @@ func doDashboard(c *cli.Context) error {
 	out = out + fmt.Sprintf("# API Activities\n")
 	for _, event := range events {
 		if event.Username == "API" {
-			out = out + fmt.Sprintf("%v\n", event.String(newLoc))
+			out = out + fmt.Sprintf("%v\n", event.String(location))
 		}
 	}
 
@@ -529,7 +538,7 @@ func doDashboard(c *cli.Context) error {
 	out = out + fmt.Sprintf("\n# Audit Events\n")
 	for _, event := range events {
 		if event.IsAuditEvent() {
-			out = out + fmt.Sprintf("%v\n", event.String(newLoc))
+			out = out + fmt.Sprintf("%v\n", event.String(location))
 		}
 	}
 

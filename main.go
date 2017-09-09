@@ -14,7 +14,11 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "config, c",
-			Usage: "Load configuration from `FILE`",
+			Usage: "load configuration from `FILE`",
+		},
+		cli.StringFlag{
+			Name:  "timezone, t",
+			Usage: "set timezone `TIMEZONE` in IANA timezone database format (Default UTC).",
 		},
 	}
 	app.Commands = Commands
