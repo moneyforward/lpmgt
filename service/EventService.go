@@ -35,8 +35,8 @@ type Event struct {
 	ID        string    `json:"ID,omitempty"`
 }
 
-func (e *Event) String() string {
-	return e.Time.String() + " " + e.Username + " " + e.IPAddress + " " + e.Action + " " + e.Data
+func (e *Event) String(timezone *time.Location) string {
+	return e.Time.UTC().In(timezone).String() + " " + e.Username + " " + e.IPAddress + " " + e.Action + " " + e.Data
 }
 
 func (e *Event) UnmarshalJSON(b []byte) error {
@@ -54,15 +54,16 @@ func (e *Event) UnmarshalJSON(b []byte) error {
 			if err != nil {
 				return err
 			}
-			asiaLoc, err := time.LoadLocation("Asia/Tokyo")
-			if err != nil {
-				return err
-			}
+			//asiaLoc, err := time.LoadLocation("Asia/Tokyo")
+			//if err != nil {
+			//	return err
+			//}
 			t, err := time.ParseInLocation(format.LastPassFormat, v, eastLoc)
 			if err != nil {
 				return err
 			}
-			e.Time = t.UTC().In(asiaLoc)
+			//e.Time = t.UTC().In(asiaLoc)
+			e.Time = t.UTC()
 		case "username":
 			e.Username = v
 		case "ip_address":

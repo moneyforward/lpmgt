@@ -497,13 +497,18 @@ func doDashboard(c *cli.Context) error {
 	}
 	wg.Wait()
 
+	asiaLoc, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		return err
+	}
+
 	// Pull Admin Users from fetched data. Output string is also constructed
 	out := fmt.Sprintf("# Admin Users\n")
 	for _, u := range organizationMap["admin"] {
 		out = out + fmt.Sprintf("- %v\n", u.UserName)
 		for _, event := range events {
 			if u.UserName == event.Username {
-				out = out + fmt.Sprintf("	- %v\n", event.String())
+				out = out + fmt.Sprintf("	- %v\n", event.String(asiaLoc))
 			}
 		}
 	}
@@ -512,7 +517,7 @@ func doDashboard(c *cli.Context) error {
 	out = out + fmt.Sprintf("# API Activities\n")
 	for _, event := range events {
 		if event.Username == "API" {
-			out = out + fmt.Sprintf("%v\n", event.String())
+			out = out + fmt.Sprintf("%v\n", event.String(asiaLoc))
 		}
 	}
 
@@ -520,7 +525,7 @@ func doDashboard(c *cli.Context) error {
 	out = out + fmt.Sprintf("\n# Audit Events\n")
 	for _, event := range events {
 		if event.IsAuditEvent() {
-			out = out + fmt.Sprintf("%v\n", event.String())
+			out = out + fmt.Sprintf("%v\n", event.String(asiaLoc))
 		}
 	}
 
