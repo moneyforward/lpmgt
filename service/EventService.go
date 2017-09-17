@@ -9,13 +9,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Events structure represents LastPass events.
 type Events struct {
 	Events []Event `json:"events"`
 }
 
 // GetUserEvents get events from users
 func (es *Events) GetUserEvents(username string) *Events {
-	events := make([]Event, 0)
+	var events []Event
 	for _, event := range es.Events {
 		if username == event.Username {
 			events = append(events, event)
@@ -25,12 +26,14 @@ func (es *Events) GetUserEvents(username string) *Events {
 	return &Events{Events:events}
 }
 
+// ConvertTimezone overwrite events in new timezone.
 func (es *Events) ConvertTimezone(timezone *time.Location) {
 	for index, event := range es.Events {
 		es.Events[index].Time = event.Time.UTC().In(timezone)
 	}
 }
 
+// Event represents event data in LastPass
 type Event struct {
 	Time      time.Time `json:"JSONTime"`
 	Username  string    `json:"Username,omitempty"`
@@ -44,6 +47,7 @@ func (e *Event) String(timezone *time.Location) string {
 	return e.Time.UTC().In(timezone).String() + " " + e.Username + " " + e.IPAddress + " " + e.Action + " " + e.Data
 }
 
+// UnmarshalJSON is written because it has a value(time) in a special format.
 func (e *Event) UnmarshalJSON(b []byte) error {
 	var rawStrings map[string]string
 
@@ -80,6 +84,7 @@ func (e *Event) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// IsAuditEvent checks whether Event is one to be audited.
 func (e Event) IsAuditEvent() bool {
 	switch e.Action {
 	case "Employee Account Deleted":
@@ -105,6 +110,7 @@ func (e Event) IsAuditEvent() bool {
 	return true
 }
 
+// EventService is a service class that handles event objects in LastPass.
 type EventService struct {
 	client  *lp.LastPassClient
 	command string
