@@ -576,7 +576,7 @@ func doDashboard(context *cli.Context) error {
 					out = out + fmt.Sprintf("\n## %v", dep)
 				}
 				out = out + fmt.Sprintf("\n- "+u.UserName)
-				count += 1
+				count++
 			}
 		}
 	}
@@ -591,7 +591,7 @@ func doDashboard(context *cli.Context) error {
 					out = out + fmt.Sprintf("\n## %v", dep)
 				}
 				out = out + fmt.Sprintf("\n- "+u.UserName)
-				count += 1
+				count++
 			}
 		}
 	}
