@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/pkg/errors"
-	lp "lastpass_provisioning"
+	lp "lpmgt"
 )
 
 // APIResultStatus is a status of response from LastPass API

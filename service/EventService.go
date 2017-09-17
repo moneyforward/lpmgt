@@ -1,7 +1,7 @@
 package service
 
 import (
-	lp "lastpass_provisioning"
+	lp "lpmgt"
 	"net/http"
 	"strings"
 	"time"

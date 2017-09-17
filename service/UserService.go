@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"net/http"
-	lp "lastpass_provisioning"
+	lp "lpmgt"
 )
 
 // UserService is a service class that sends a request to LastPass provisioning API.

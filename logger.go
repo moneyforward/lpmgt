@@ -1,4 +1,4 @@
-package logger
+package lpmgt
 
 import (
 	"github.com/motemen/go-colorine"

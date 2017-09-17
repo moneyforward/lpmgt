@@ -2,7 +2,7 @@ package service
 
 import (
 	"net/http"
-	lp "lastpass_provisioning"
+	lp "lpmgt"
 )
 
 // SharedFolder is a LastPass Object in which users share accounts.
