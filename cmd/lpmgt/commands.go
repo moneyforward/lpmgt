@@ -282,9 +282,9 @@ func doGetEvents(c *cli.Context) error {
 	from := lp.JSONLastPassTime{JSONTime: dayAgo}
 	to := lp.JSONLastPassTime{JSONTime: now}
 
-	var events *service.Events
+	var events *lp.Events
 	var err error
-	s := service.NewEventService(NewLastPassClientFromContext(c))
+	s := lp.NewEventService(NewLastPassClientFromContext(c))
 	switch user := c.String("user"); strings.ToLower(user) {
 	case "":
 		events, err = s.GetEventReport(user, "", from, to)
@@ -487,12 +487,12 @@ func doDashboard(context *cli.Context) error {
 	c := NewLastPassClientFromContext(context)
 
 	folders := []service.SharedFolder{}
-	events := []service.Event{}
+	events := []lp.Event{}
 	organizationMap := make(map[string][]service.User)
 
 	c1 := make(chan []service.User)
 	c2 := make(chan []service.SharedFolder)
-	c3 := make(chan *service.Events)
+	c3 := make(chan *lp.Events)
 
 	// Fetch Data
 	numOfGoRoutines := 3	// Change this number based on goroutine to fetch data from LastPass.
@@ -500,7 +500,7 @@ func doDashboard(context *cli.Context) error {
 	wg.Add(numOfGoRoutines)
 	go getAllUsers(&wg, service.NewUserService(c), c1)
 	go getSharedFolders(&wg, service.NewFolderService(c), c2)
-	go getEvents(&wg, service.NewEventService(c), c3, time.Duration(durationToAuditInDay))
+	go getEvents(&wg, lp.NewEventService(c), c3, time.Duration(durationToAuditInDay))
 	for i := 0; i < numOfGoRoutines; i++ {
 		select {
 		case users := <-c1:
@@ -608,7 +608,7 @@ func getAllUsers(wg *sync.WaitGroup, s *service.UserService, q chan []service.Us
 	q <- users
 }
 
-func getEvents(wg *sync.WaitGroup, s *service.EventService, q chan *service.Events, d time.Duration) {
+func getEvents(wg *sync.WaitGroup, s *lp.EventService, q chan *lp.Events, d time.Duration) {
 	defer wg.Done()
 	loc, _ := time.LoadLocation(lp.LastPassTimeZone)
 	now := time.Now().In(loc)
