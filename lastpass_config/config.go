@@ -4,14 +4,14 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
-	"lastpass_provisioning/config"
 	"fmt"
 )
 
 // LastPassConfig is config structure for LastPass
 type LastPassConfig struct {
 	CompanyID string `yaml:"company_id"`
-	Config config.Config `yaml:"config"`
+	EndPoint  string `yaml:"end_point_url"`
+	Secret    string `yaml:"secret"` // API Key
 	TimeZone string  `yaml:"timezone,omitempty"`
 }
 
@@ -34,8 +34,8 @@ func LoadConfig(configFile string) (*LastPassConfig, error) {
 		return nil, err
 	}
 
-	if config.Config.EndPoint == "" {
-		config.Config.EndPoint = DefaultBaseURL
+	if config.EndPoint == "" {
+		config.EndPoint = DefaultBaseURL
 	}
 
 	if config.TimeZone == "" {
@@ -51,7 +51,7 @@ func LoadEndPointURL(configFile string) string {
 	if err != nil {
 		return ""
 	}
-	return config.Config.EndPoint
+	return config.EndPoint
 }
 
 // LoadAPIKeyFromEnvOrConfig returns API Key from either Env or LastPassConfig file
@@ -64,7 +64,7 @@ func LoadAPIKeyFromEnvOrConfig(configFile string) string {
 	if err != nil {
 		return ""
 	}
-	return config.Config.Secret
+	return config.Secret
 }
 
 // LoadCompanyIDFromEnvOrConfig returns Company ID provided by Lastpass.
