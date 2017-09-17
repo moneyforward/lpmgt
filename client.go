@@ -70,7 +70,7 @@ func (c *LastPassClient) DoRequest(command string, payload interface{}) (*http.R
 		CompanyID        string      `json:"cid"`
 		ProvisioningHash string      `json:"provhash"`
 		Command          string      `json:"cmd"`
-		Payload             interface{} `json:"payload"`
+		Payload             interface{} `json:"data"`
 	}{
 		CompanyID:        c.CompanyID,
 		ProvisioningHash: c.APIKey,
