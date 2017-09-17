@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/pkg/errors"
-	"lastpass_provisioning/util"
+	lp "lastpass_provisioning"
 )
 
 type ApiResultStatus struct {
@@ -18,7 +18,7 @@ func (s *ApiResultStatus) Error() error {
 	if s.IsOK() {
 		return nil
 	}
-	b, e := util.IndentedJSON(s.Errors)
+	b, e := lp.IndentedJSON(s.Errors)
 	if e != nil {
 		return e
 	}

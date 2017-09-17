@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"lastpass_provisioning/util"
 	"lastpass_provisioning/lastpass_config"
+	"lastpass_provisioning"
 )
 
 // Client is a general client structure.
@@ -48,7 +48,7 @@ func NewClient(apiKey string, endpointURL string, verbose bool) (*Client, error)
 
 // RequestJSON is a general http request in JSON form.
 func (c *Client) RequestJSON(method string, path string, payload interface{}) (*http.Response, error) {
-	body, err := util.JSONReader(payload)
+	body, err := lastpass_provisioning.JSONReader(payload)
 	if err != nil {
 		return nil, err
 	}

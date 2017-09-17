@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"net/http"
-	"lastpass_provisioning/util"
+	lp "lastpass_provisioning"
 	"lastpass_provisioning/lastpass_client"
 )
 
@@ -89,7 +89,7 @@ func (s *UserService) GetUserData(userName string) (user User, err error) {
 	}
 
 	users := &Users{}
-	err = util.JSONBodyDecoder(res, users)
+	err = lp.JSONBodyDecoder(res, users)
 	if err != nil {
 		return
 	}
@@ -108,7 +108,7 @@ func (s *UserService) BatchAdd(users []User) error {
 	s.data = users
 	res, err := s.doRequest()
 	status := &ApiResultStatus{}
-	err = util.JSONBodyDecoder(res, status)
+	err = lp.JSONBodyDecoder(res, status)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (s *UserService) UpdateUser(user User) error {
 	s.data = user
 	res, err := s.doRequest()
 	status := &ApiResultStatus{}
-	err = util.JSONBodyDecoder(res, status)
+	err = lp.JSONBodyDecoder(res, status)
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func (s *UserService) DeleteUser(name string, mode DeactivationMode) error {
 	}{UserName: name, DeleteAction: int(mode)}
 	res, err := s.doRequest()
 	status := &ApiResultStatus{}
-	err = util.JSONBodyDecoder(res, status)
+	err = lp.JSONBodyDecoder(res, status)
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func (s *UserService) GetNon2faUsers() ([]User, error) {
 	s.data = User{}
 	res, err := s.doRequest()
 	var users Users
-	err = util.JSONBodyDecoder(res, &users)
+	err = lp.JSONBodyDecoder(res, &users)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +171,7 @@ func (s *UserService) GetAllUsers() ([]User, error) {
 		return nil, err
 	}
 	var nonAdminUsers Users
-	err = util.JSONBodyDecoder(res, &nonAdminUsers)
+	err = lp.JSONBodyDecoder(res, &nonAdminUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (s *UserService) GetInactiveUsers() ([]User, error) {
 	}
 
 	var nonAdminUsers Users
-	err = util.JSONBodyDecoder(res, &nonAdminUsers)
+	err = lp.JSONBodyDecoder(res, &nonAdminUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +205,7 @@ func (s *UserService) GetDisabledUsers() ([]User, error) {
 	}
 
 	var Users Users
-	err = util.JSONBodyDecoder(res, &Users)
+	err = lp.JSONBodyDecoder(res, &Users)
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +222,7 @@ func (s *UserService) GetAdminUserData() ([]User, error) {
 	}
 
 	var adminUsers Users
-	err = util.JSONBodyDecoder(res, &adminUsers)
+	err = lp.JSONBodyDecoder(res, &adminUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +239,7 @@ func (s *UserService) DisableMultifactor(username string) (*ApiResultStatus, err
 	}
 
 	var status ApiResultStatus
-	err = util.JSONBodyDecoder(res, &status)
+	err = lp.JSONBodyDecoder(res, &status)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +256,7 @@ func (s *UserService) ResetPassword(username string) (*ApiResultStatus, error) {
 	}
 
 	var status ApiResultStatus
-	err = util.JSONBodyDecoder(res, &status)
+	err = lp.JSONBodyDecoder(res, &status)
 	if err != nil {
 		return nil, err
 	}

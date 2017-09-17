@@ -7,10 +7,9 @@ import (
 	"github.com/urfave/cli"
 	"io/ioutil"
 	client "lastpass_provisioning/lastpass_client"
-	format "lastpass_provisioning"
+	lp "lastpass_provisioning"
 	"lastpass_provisioning/logger"
 	"lastpass_provisioning/service"
-	"lastpass_provisioning/util"
 	"strings"
 	"sync"
 	"time"
@@ -231,7 +230,7 @@ func doDescribeUser(context *cli.Context) error {
 	user, err := service.NewUserService(c).GetUserData(argUserName)
 	logger.DieIf(err)
 
-	util.PrintIndentedJSON(user)
+	lp.PrintIndentedJSON(user)
 	return nil
 }
 
@@ -277,11 +276,11 @@ func doGetEvents(c *cli.Context) error {
 		os.Setenv("DEBUG", "1")
 	}
 
-	lastPassLoc, _ := time.LoadLocation(format.LastPassTimeZone)
+	lastPassLoc, _ := time.LoadLocation(lp.LastPassTimeZone)
 	now := time.Now().In(lastPassLoc)
 	dayAgo := now.Add(-time.Duration(c.Int("duration")) * time.Hour * 24)
-	from := format.JsonLastPassTime{JsonTime: dayAgo}
-	to := format.JsonLastPassTime{JsonTime: now}
+	from := lp.JsonLastPassTime{JsonTime: dayAgo}
+	to := lp.JsonLastPassTime{JsonTime: now}
 
 	var events *service.Events
 	var err error
@@ -302,7 +301,7 @@ func doGetEvents(c *cli.Context) error {
 	logger.DieIf(err)
 
 	events.ConvertTimezone(location)
-	util.PrintIndentedJSON(events)
+	lp.PrintIndentedJSON(events)
 	return err
 }
 
@@ -603,12 +602,12 @@ func getAllUsers(wg *sync.WaitGroup, s *service.UserService, q chan []service.Us
 
 func getEvents(wg *sync.WaitGroup, s *service.EventService, q chan *service.Events, d time.Duration) {
 	defer wg.Done()
-	loc, _ := time.LoadLocation(format.LastPassTimeZone)
+	loc, _ := time.LoadLocation(lp.LastPassTimeZone)
 	now := time.Now().In(loc)
 	dayAgo := now.Add(-d * time.Hour * 24)
 
-	from := format.JsonLastPassTime{JsonTime: dayAgo}
-	to := format.JsonLastPassTime{JsonTime: now}
+	from := lp.JsonLastPassTime{JsonTime: dayAgo}
+	to := lp.JsonLastPassTime{JsonTime: now}
 	events, err := s.GetAllEventReports(from, to)
 	logger.DieIf(err)
 	q <- events
