@@ -4,16 +4,12 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"net/http"
-	"lastpass_provisioning/util"
-	"lastpass_provisioning/lastpass_client"
+	lp "lpmgt"
 )
-
-// ToDO
-// reinviteuser -> status.go
 
 // UserService is a service class that sends a request to LastPass provisioning API.
 type UserService struct {
-	client  *lastpass_client.LastPassClient
+	client  *lp.LastPassClient
 	command string
 	data    interface{}
 }
@@ -88,13 +84,13 @@ func (s *UserService) GetUserData(userName string) (user User, err error) {
 		return
 	}
 
-	users := &Users{}
-	err = util.JSONBodyDecoder(res, users)
+	users := &users{}
+	err = lp.JSONBodyDecoder(res, users)
 	if err != nil {
 		return
 	}
-	if len(users.GetUsers()) != 0 {
-		user = users.GetUsers()[0]
+	if len(users.getUsers()) != 0 {
+		user = users.getUsers()[0]
 	} else {
 		eMessage := fmt.Sprintf("User %v does not exist", userName)
 		return user, errors.New(eMessage)
@@ -107,8 +103,8 @@ func (s *UserService) BatchAdd(users []User) error {
 	s.command = "batchadd"
 	s.data = users
 	res, err := s.doRequest()
-	status := &ApiResultStatus{}
-	err = util.JSONBodyDecoder(res, status)
+	status := &APIResultStatus{}
+	err = lp.JSONBodyDecoder(res, status)
 	if err != nil {
 		return err
 	}
@@ -120,8 +116,8 @@ func (s *UserService) UpdateUser(user User) error {
 	s.command = "batchadd"
 	s.data = user
 	res, err := s.doRequest()
-	status := &ApiResultStatus{}
-	err = util.JSONBodyDecoder(res, status)
+	status := &APIResultStatus{}
+	err = lp.JSONBodyDecoder(res, status)
 	if err != nil {
 		return err
 	}
@@ -141,8 +137,8 @@ func (s *UserService) DeleteUser(name string, mode DeactivationMode) error {
 		DeleteAction int    `json:"deleteaction"`
 	}{UserName: name, DeleteAction: int(mode)}
 	res, err := s.doRequest()
-	status := &ApiResultStatus{}
-	err = util.JSONBodyDecoder(res, status)
+	status := &APIResultStatus{}
+	err = lp.JSONBodyDecoder(res, status)
 	if err != nil {
 		return err
 	}
@@ -154,12 +150,12 @@ func (s *UserService) GetNon2faUsers() ([]User, error) {
 	s.command = "getuserdata"
 	s.data = User{}
 	res, err := s.doRequest()
-	var users Users
-	err = util.JSONBodyDecoder(res, &users)
+	var users users
+	err = lp.JSONBodyDecoder(res, &users)
 	if err != nil {
 		return nil, err
 	}
-	return users.GetNon2faUsers(), nil
+	return users.getNon2faUsers(), nil
 }
 
 // GetAllUsers simply retrieves all users
@@ -170,12 +166,12 @@ func (s *UserService) GetAllUsers() ([]User, error) {
 	if err != nil {
 		return nil, err
 	}
-	var nonAdminUsers Users
-	err = util.JSONBodyDecoder(res, &nonAdminUsers)
+	var nonAdminUsers users
+	err = lp.JSONBodyDecoder(res, &nonAdminUsers)
 	if err != nil {
 		return nil, err
 	}
-	return nonAdminUsers.GetUsers(), nil
+	return nonAdminUsers.getUsers(), nil
 }
 
 // GetInactiveUsers is Deactivated user(Deleted user in mode 0)
@@ -187,12 +183,12 @@ func (s *UserService) GetInactiveUsers() ([]User, error) {
 		return nil, err
 	}
 
-	var nonAdminUsers Users
-	err = util.JSONBodyDecoder(res, &nonAdminUsers)
+	var nonAdminUsers users
+	err = lp.JSONBodyDecoder(res, &nonAdminUsers)
 	if err != nil {
 		return nil, err
 	}
-	return nonAdminUsers.GetNeverLoggedInUsers(), nil
+	return nonAdminUsers.getNeverLoggedInUsers(), nil
 }
 
 // GetDisabledUsers gets Deactivated user(Deleted user in mode 0)
@@ -204,12 +200,12 @@ func (s *UserService) GetDisabledUsers() ([]User, error) {
 		return nil, err
 	}
 
-	var Users Users
-	err = util.JSONBodyDecoder(res, &Users)
+	var Users users
+	err = lp.JSONBodyDecoder(res, &Users)
 	if err != nil {
 		return nil, err
 	}
-	return Users.GetUsers(), nil
+	return Users.getUsers(), nil
 }
 
 // GetAdminUserData gets admin users
@@ -221,16 +217,16 @@ func (s *UserService) GetAdminUserData() ([]User, error) {
 		return nil, err
 	}
 
-	var adminUsers Users
-	err = util.JSONBodyDecoder(res, &adminUsers)
+	var adminUsers users
+	err = lp.JSONBodyDecoder(res, &adminUsers)
 	if err != nil {
 		return nil, err
 	}
-	return adminUsers.GetUsers(), nil
+	return adminUsers.getUsers(), nil
 }
 
 // DisableMultifactor disables multifactor setting of user
-func (s *UserService) DisableMultifactor(username string) (*ApiResultStatus, error) {
+func (s *UserService) DisableMultifactor(username string) (*APIResultStatus, error) {
 	s.command = "disablemultifactor"
 	s.data = User{UserName:username}
 	res, err := s.doRequest()
@@ -238,8 +234,8 @@ func (s *UserService) DisableMultifactor(username string) (*ApiResultStatus, err
 		return nil, err
 	}
 
-	var status ApiResultStatus
-	err = util.JSONBodyDecoder(res, &status)
+	var status APIResultStatus
+	err = lp.JSONBodyDecoder(res, &status)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +243,7 @@ func (s *UserService) DisableMultifactor(username string) (*ApiResultStatus, err
 }
 
 // ResetPassword reset password for the user
-func (s *UserService) ResetPassword(username string) (*ApiResultStatus, error) {
+func (s *UserService) ResetPassword(username string) (*APIResultStatus, error) {
 	s.command = "resetpassword"
 	s.data = User{UserName:username}
 	res, err := s.doRequest()
@@ -255,8 +251,8 @@ func (s *UserService) ResetPassword(username string) (*ApiResultStatus, error) {
 		return nil, err
 	}
 
-	var status ApiResultStatus
-	err = util.JSONBodyDecoder(res, &status)
+	var status APIResultStatus
+	err = lp.JSONBodyDecoder(res, &status)
 	if err != nil {
 		return nil, err
 	}
@@ -305,7 +301,7 @@ func (s *UserService) ResetPassword(username string) (*ApiResultStatus, error) {
 //}
 
 // NewUserService creates a new UserService
-func NewUserService(client *lastpass_client.LastPassClient) (s *UserService) {
+func NewUserService(client *lp.LastPassClient) (s *UserService) {
 	return &UserService{client: client}
 }
 
@@ -325,34 +321,28 @@ type User struct {
 	NeverLoggedIn          bool     `json:"neverloggedin,omitempty"`
 	LinkedAccount          string   `json:"linked,omitempty"`
 	NumberOfSites          float64  `json:"sites,omitempty"`
-	NumberOfNotes          float64  `json:"notes,omitempty"`
-	NumberOfFormFills      float64  `json:"formfills,omitempty"`
-	NumberOfApplications   float64  `json:"applications,omitempty"`
-	NumberOfAttachments    float64  `json:"attachment,omitempty"`
-	Groups                 []string `json:"groups,omitempty"`
-	Readonly               string   `json:"readonly,omitempty"`       // ShareFolderの設定に利用. BoolでもなくIntでもない...
-	Give                   string   `json:"give,omitempty"`           // ShareFolderの設定に利用
-	Can_Administer         string   `json:"can_administer,omitempty"` // ShareFolderの設定に利用
-	IsAdmin                bool     `json:"admin,omitempty"`
-	Duousername            string   `json:"duousername,omitempty"`
-	LastPwChange           string   `json:"last_pw_change,omitempty"`
-	Mpstrength             string   `json:"mpstrength,omitempty"`
-	Multifactor            string   `json:"multifactor,omitempty"`
+	NumberOfNotes        float64  `json:"notes,omitempty"`
+	NumberOfFormFills    float64  `json:"formfills,omitempty"`
+	NumberOfApplications float64  `json:"applications,omitempty"`
+	NumberOfAttachments  float64  `json:"attachment,omitempty"`
+	Groups               []string `json:"groups,omitempty"`
+	Readonly             string   `json:"readonly,omitempty"`       // ShareFolderの設定に利用. BoolでもなくIntでもない...
+	Give                 string   `json:"give,omitempty"`           // ShareFolderの設定に利用
+	CanAdminister        string   `json:"can_administer,omitempty"` // ShareFolderの設定に利用
+	IsAdmin              bool     `json:"admin,omitempty"`
+	Duousername          string   `json:"duousername,omitempty"`
+	LastPwChange         string   `json:"last_pw_change,omitempty"`
+	Mpstrength           string   `json:"mpstrength,omitempty"`
+	Multifactor          string   `json:"multifactor,omitempty"`
 }
 
-type Users struct {
+type users struct {
 	Users   map[string]User     `json:"Users,omitempty"`
 	Groups  map[string][]string `json:"Groups,omitempty"`
 	Invited []string            `json:"invited,omitempty"`
 }
 
-type TransferringUser struct {
-	Username   string   `json:"username"`
-	JoiningDepName []string `json:"add,omitempty"`
-	LeavingDepName []string `json:"del,omitempty"`
-}
-
-func (u *User) Contains(users []string) bool {
+func (u *User) contains(users []string) bool {
 	for _, user := range users {
 		if user == u.UserName {
 			return true
@@ -361,11 +351,7 @@ func (u *User) Contains(users []string) bool {
 	return false
 }
 
-func (u *User) Is2FA() bool {
-	return u.Multifactor!=""
-}
-
-func (us *Users) GetUsers() []User {
+func (us *users) getUsers() []User {
 	users := []User{}
 	for _, user := range us.Users {
 		users = append(users, user)
@@ -373,7 +359,7 @@ func (us *Users) GetUsers() []User {
 	return users
 }
 
-func (us *Users) GetNon2faUsers() (users []User) {
+func (us *users) getNon2faUsers() (users []User) {
 	for _, user := range us.Users {
 		if user.Multifactor == "" {
 			users = append(users, user)
@@ -382,17 +368,11 @@ func (us *Users) GetNon2faUsers() (users []User) {
 	return users
 }
 
-func (us *Users) GetNeverLoggedInUsers() (users []User) {
+func (us *users) getNeverLoggedInUsers() (users []User) {
 	for _, user := range us.Users{
 		if user.NeverLoggedIn {
 			users = append(users, user)
 		}
 	}
 	return
-}
-
-func PrintUserNames(users []User) {
-	for _, user := range users {
-		fmt.Println(user.UserName)
-	}
 }

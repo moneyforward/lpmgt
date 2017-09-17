@@ -2,29 +2,31 @@ package service
 
 import (
 	"github.com/pkg/errors"
-	"lastpass_provisioning/util"
+	lp "lpmgt"
 )
 
-type ApiResultStatus struct {
+// APIResultStatus is a status of response from LastPass API
+type APIResultStatus struct {
 	Status   string   `json:"status,omitempty"`
 	Errors []string `json:"errors,omitempty"`
 }
 
-func (s *ApiResultStatus)IsOK() bool {
+// IsOK checks status of response from LastPass
+func (s *APIResultStatus)IsOK() bool {
 	return s.Status == "OK"
 }
 
-func (s *ApiResultStatus) Error() error {
+func (s *APIResultStatus) Error() error {
 	if s.IsOK() {
 		return nil
 	}
-	b, e := util.IndentedJSON(s.Errors)
+	b, e := lp.IndentedJSON(s.Errors)
 	if e != nil {
 		return e
 	}
 	return errors.New(string(b))
 }
 
-func (s *ApiResultStatus) String() string {
+func (s *APIResultStatus) String() string {
 	return s.Status
 }

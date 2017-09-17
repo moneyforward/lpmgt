@@ -1,9 +1,8 @@
 package service
 
 import (
-	lc "lastpass_provisioning/lastpass_client"
 	"net/http"
-	"lastpass_provisioning/util"
+	lp "lpmgt"
 )
 
 // SharedFolder is a LastPass Object in which users share accounts.
@@ -15,18 +14,18 @@ type SharedFolder struct {
 
 // FolderService is a service class that handles folder objects in LastPass.
 type FolderService struct {
-	client  *lc.LastPassClient
+	client  *lp.LastPassClient
 	command string
 	data    interface{}
 }
 
-// NewEventService creates a new EventService
-func NewFolderService(client *lc.LastPassClient) (s *FolderService) {
+// NewFolderService creates a new NewFolderService
+func NewFolderService(client *lp.LastPassClient) (s *FolderService) {
 	return &FolderService{client: client}
 }
 
 /*
-GetSharedFolderData returns a JSON object containing information on all Shared Folders in the enterprise and the permissions granted to them.
+GetSharedFolders returns a JSON object containing information on all Shared Folders in the enterprise and the permissions granted to them.
 # Request
 {
 	"cid": "8771312",
@@ -66,7 +65,7 @@ func (s *FolderService) GetSharedFolders() ([]SharedFolder, error) {
 	}
 
 	var sharedFolders map[string]SharedFolder
-	err = util.JSONBodyDecoder(res, &sharedFolders)
+	err = lp.JSONBodyDecoder(res, &sharedFolders)
 	if err != nil {
 		return nil, err
 	}
@@ -79,5 +78,9 @@ func (s *FolderService) GetSharedFolders() ([]SharedFolder, error) {
 }
 
 func (s *FolderService) doRequest() (*http.Response, error) {
-	return s.client.DoRequest(s.command, s.data)
+	res, err := s.client.DoRequest(s.command, s.data)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
