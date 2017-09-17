@@ -1,8 +1,7 @@
-package service
+package lpmgt
 
 import (
 	"net/http"
-	lp "lpmgt"
 )
 
 // SharedFolder is a LastPass Object in which users share accounts.
@@ -14,13 +13,13 @@ type SharedFolder struct {
 
 // FolderService is a service class that handles folder objects in LastPass.
 type FolderService struct {
-	client  *lp.LastPassClient
+	client  *LastPassClient
 	command string
 	data    interface{}
 }
 
 // NewFolderService creates a new NewFolderService
-func NewFolderService(client *lp.LastPassClient) (s *FolderService) {
+func NewFolderService(client *LastPassClient) (s *FolderService) {
 	return &FolderService{client: client}
 }
 
@@ -65,7 +64,7 @@ func (s *FolderService) GetSharedFolders() ([]SharedFolder, error) {
 	}
 
 	var sharedFolders map[string]SharedFolder
-	err = lp.JSONBodyDecoder(res, &sharedFolders)
+	err = JSONBodyDecoder(res, &sharedFolders)
 	if err != nil {
 		return nil, err
 	}
