@@ -7,7 +7,7 @@ import (
 	"github.com/urfave/cli"
 	"io/ioutil"
 	client "lastpass_provisioning/lastpass_client"
-	format "lastpass_provisioning/lastpass_format"
+	format "lastpass_provisioning"
 	"lastpass_provisioning/logger"
 	"lastpass_provisioning/service"
 	"lastpass_provisioning/util"

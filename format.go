@@ -1,4 +1,4 @@
-package lastpass_format
+package lastpass_provisioning
 
 import (
 	"time"
