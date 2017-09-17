@@ -7,9 +7,9 @@ import (
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "lastpass"
+	app.Name = "lpmgt"
 	app.Version = version
-	app.Usage = "A CLI tool for Lastpass(Enterprise)"
+	app.Usage = "A CLI tool for managing Lastpass(Enterprise) using LastPass Provisioning API."
 	app.Author = "Money Forward Co., Ltd."
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
