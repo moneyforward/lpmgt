@@ -40,7 +40,7 @@ func JSONReader(v interface{}) (io.Reader, error) {
 	err := json.NewEncoder(buf).Encode(v)
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to encode %v into JSON" , v)
+		return nil, fmt.Errorf("Failed to encode %v into JSON\n" , v)
 	}
 
 	return buf, nil

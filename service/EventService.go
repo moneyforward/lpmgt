@@ -57,11 +57,11 @@ func (e *Event) UnmarshalJSON(b []byte) error {
 		case "time":
 			eastLoc, err := time.LoadLocation(lp.LastPassTimeZone)
 			if err != nil {
-				return errors.Wrap(err, "Failed loading location in Event Service.")
+				return err
 			}
 			t, err := time.ParseInLocation(lp.LastPassFormat, v, eastLoc)
 			if err != nil {
-				return errors.Wrap(err, "Failed parsing location in Event Service.")
+				return err
 			}
 			e.Time = t.UTC()
 		case "username":
@@ -119,7 +119,7 @@ func NewEventService(client *lp.LastPassClient) (s *EventService) {
 func (s *EventService) doRequest() (*http.Response, error) {
 	res, err := s.client.DoRequest(s.command, s.data)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed completing an EventService.")
+		return nil, err
 	}
 	return res, nil
 }
@@ -138,13 +138,13 @@ func (s *EventService) GetEventReport(username, search string, from, to lp.JsonL
 
 	res, err := s.doRequest()
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed executing GetEventReport caller.")
+		return nil, err
 	}
 
 	var events Events
 	err = lp.JSONBodyDecoder(res, &events)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed decoding a response body from GetEventReport caller.")
+		return nil, err
 	}
 
 	return &events, nil
@@ -156,13 +156,13 @@ func (s *EventService) GetAllEventReports(from, to lp.JsonLastPassTime) (*Events
 	s.GetEventReport("allusers", "", from, to)
 	res, err := s.doRequest()
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed executing GetAllEventReports caller.")
+		return nil, err
 	}
 
 	var events Events
 	err = lp.JSONBodyDecoder(res, &events)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed decoding a response body from GetAllEventReports caller.")
+		return nil, err
 	}
 
 	return &events, nil
@@ -174,7 +174,7 @@ func (s *EventService) GetAllEventReports(from, to lp.JsonLastPassTime) (*Events
 func (s *EventService) GetAPIEventReports(from, to lp.JsonLastPassTime) (*Events, error) {
 	events, err := s.GetAllEventReports(from, to)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed executing GetAPIEventReports caller.")
+		return nil, err
 	}
 	return events.GetUserEvents("API"), nil
 }

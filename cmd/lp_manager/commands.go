@@ -79,7 +79,7 @@ func doDisableMFA(context *cli.Context) error {
 	s := service.NewUserService(c)
 
 	status, err := s.DisableMultifactor(argUserName)
-	logger.DieIf(err)
+	logger.DieIf(errors.Wrapf(err, "Failed executing %T.DisableMultifactor", s))
 	logger.Log(context.Command.Name, status.String())
 	return nil
 }
@@ -101,7 +101,7 @@ func doResetPassword(context *cli.Context) error {
 	s := service.NewUserService(c)
 
 	status, err := s.ResetPassword(argUserName)
-	logger.DieIf(err)
+	logger.DieIf(errors.Wrapf(err, "Failed executing %T.ResetPassword", s))
 	logger.Log(context.Command.Name, status.String())
 	return nil
 }
@@ -137,7 +137,7 @@ func doUpdateBelongingDepartment(context *cli.Context) error {
 
 	// Fetch User if he/she exists
 	user, err := s.GetUserData(argUserName)
-	logger.DieIf(err)
+	logger.DieIf(errors.Wrapf(err, "Failed executing %T.GetUserData", s))
 
 	// Join
 	user.Groups = append(user.Groups, context.StringSlice("join")...)
@@ -156,7 +156,7 @@ func doUpdateBelongingDepartment(context *cli.Context) error {
 
 	// Update
 	err = s.UpdateUser(user)
-	logger.DieIf(err)
+	logger.DieIf(errors.Wrapf(err, "Failed executing %T.UpdateUser", s))
 	logger.Log("updated", user.UserName)
 	return nil
 }
@@ -197,9 +197,9 @@ func doDeleteUser(context *cli.Context) error {
 		mode = service.Deactivate
 	}
 
-	c := NewLastPassClientFromContext(context)
-	err := service.NewUserService(c).DeleteUser(argUserName, mode)
-	logger.DieIf(err)
+	s := service.NewUserService(NewLastPassClientFromContext(context))
+	err := s.DeleteUser(argUserName, mode)
+	logger.DieIf(errors.Wrapf(err, "Failed executing %T.DeleteUser", s))
 	logger.Log(context.String("mode"), argUserName)
 	return nil
 }
@@ -227,9 +227,9 @@ func doDescribeUser(context *cli.Context) error {
 		logger.DieIf(errors.New("Email(username) has to be specified"))
 	}
 
-	c := NewLastPassClientFromContext(context)
-	user, err := service.NewUserService(c).GetUserData(argUserName)
-	logger.DieIf(err)
+	s := service.NewUserService(NewLastPassClientFromContext(context))
+	user, err := s.GetUserData(argUserName)
+	logger.DieIf(errors.Wrapf(err, "Failed executing %T.GetUserData(%v)", s, argUserName))
 
 	lp.PrintIndentedJSON(user)
 	return nil
@@ -289,15 +289,17 @@ func doGetEvents(c *cli.Context) error {
 	switch user := c.String("user"); strings.ToLower(user) {
 	case "":
 		events, err = s.GetEventReport(user, "", from, to)
+		err = errors.Wrapf(err, "Failed executing %T.GetEventReport", s)
 	case "api":
 		events, err = s.GetAPIEventReports(from, to)
+		err = errors.Wrapf(err, "Failed executing %T.GetAPIEventReports", s)
 	default:
 		events, err = s.GetAllEventReports(from, to)
+		err = errors.Wrapf(err, "Failed executing %T.GetAllEventReports", s)
 	}
 	if c.String("user") == "" {
 		events, err = s.GetAllEventReports(from, to)
-	} else {
-
+		err = errors.Wrapf(err, "Failed executing %T.GetAllEventReports", s)
 	}
 	logger.DieIf(err)
 
@@ -317,7 +319,7 @@ func doGetGroups(context *cli.Context) error {
 	c := NewLastPassClientFromContext(context)
 	s := service.NewUserService(c)
 	users, err := s.GetAllUsers()
-	logger.DieIf(err)
+	logger.DieIf(errors.Wrap(err, "Failed executing doGetGroups()"))
 
 	deps := make(map[string]bool)
 	for _, u := range users {
@@ -354,16 +356,20 @@ func doGetUsers(context *cli.Context) (err error) {
 	switch context.String("filter") {
 	case "non2fa":
 		users, err = s.GetNon2faUsers()
+		logger.DieIf(errors.Wrap(err, "Failed executing GetNon2faUsers()"))
 	case "inactive":
 		users, err = s.GetInactiveUsers()
+		logger.DieIf(errors.Wrap(err, "Failed executing GetInactiveUsers()"))
 	case "disabled":
 		users, err = s.GetDisabledUsers()
+		logger.DieIf(errors.Wrap(err, "Failed executing GetDisabledUsers()"))
 	case "admin":
 		users, err = s.GetAdminUserData()
+		logger.DieIf(errors.Wrap(err, "Failed executing GetAdminUserData()"))
 	default:
 		users, err = s.GetAllUsers()
+		logger.DieIf(errors.Wrap(err, "Failed executing GetAllUsers()"))
 	}
-	logger.DieIf(err)
 	service.PrintUserNames(users)
 	return nil
 }
@@ -406,7 +412,7 @@ func doAddUser(context *cli.Context) error {
 
 	c := NewLastPassClientFromContext(context)
 	err := service.NewUserService(c).BatchAdd([]service.User{user})
-	logger.DieIf(err)
+	logger.DieIf(errors.Wrap(err, "Failed executing NewUserService."))
 
 	message := user.UserName
 	for _, dep := range user.Groups {
@@ -424,7 +430,7 @@ func doAddUsersInBulk(context *cli.Context) error {
 
 	c := NewLastPassClientFromContext(context)
 	err = service.NewUserService(c).BatchAdd(users)
-	logger.DieIf(err)
+	logger.DieIf(errors.Wrap(err, "Failed executing BatchAdd."))
 
 	for _, user := range users {
 		message := user.UserName
@@ -597,7 +603,7 @@ func doDashboard(context *cli.Context) error {
 func getAllUsers(wg *sync.WaitGroup, s *service.UserService, q chan []service.User) {
 	defer wg.Done()
 	users, err := s.GetAllUsers()
-	logger.DieIf(err)
+	logger.DieIf(errors.Wrap(err, "Failed executing GetAllUsers."))
 	q <- users
 }
 
@@ -610,13 +616,13 @@ func getEvents(wg *sync.WaitGroup, s *service.EventService, q chan *service.Even
 	from := lp.JsonLastPassTime{JsonTime: dayAgo}
 	to := lp.JsonLastPassTime{JsonTime: now}
 	events, err := s.GetAllEventReports(from, to)
-	logger.DieIf(err)
+	logger.DieIf(errors.Wrap(err, "Failed executing GetAllEventReports."))
 	q <- events
 }
 
 func getSharedFolders(wg *sync.WaitGroup, s *service.FolderService, q chan []service.SharedFolder) {
 	defer wg.Done()
 	folders, err := s.GetSharedFolders()
-	logger.DieIf(err)
+	logger.DieIf(errors.Wrap(err, "Failed executing getSharedFolders"))
 	q <- folders
 }

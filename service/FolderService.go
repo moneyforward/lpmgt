@@ -78,5 +78,9 @@ func (s *FolderService) GetSharedFolders() ([]SharedFolder, error) {
 }
 
 func (s *FolderService) doRequest() (*http.Response, error) {
-	return s.client.DoRequest(s.command, s.data)
+	res, err := s.client.DoRequest(s.command, s.data)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }

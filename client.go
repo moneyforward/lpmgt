@@ -123,7 +123,7 @@ func (c *LastPassClient) DoRequest(command string, payload interface{}) (*http.R
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return resp, fmt.Errorf("API result failed: %s", resp.Status)
+		return resp, fmt.Errorf("API result failed: %s\n", resp.Status)
 	}
 
 	return resp, err
