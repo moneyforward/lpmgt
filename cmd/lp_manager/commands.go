@@ -280,8 +280,8 @@ func doGetEvents(c *cli.Context) error {
 	lastPassLoc, _ := time.LoadLocation(lp.LastPassTimeZone)
 	now := time.Now().In(lastPassLoc)
 	dayAgo := now.Add(-time.Duration(c.Int("duration")) * time.Hour * 24)
-	from := lp.JsonLastPassTime{JsonTime: dayAgo}
-	to := lp.JsonLastPassTime{JsonTime: now}
+	from := lp.JSONLastPassTime{JSONTime: dayAgo}
+	to := lp.JSONLastPassTime{JSONTime: now}
 
 	var events *service.Events
 	var err error
@@ -613,8 +613,8 @@ func getEvents(wg *sync.WaitGroup, s *service.EventService, q chan *service.Even
 	now := time.Now().In(loc)
 	dayAgo := now.Add(-d * time.Hour * 24)
 
-	from := lp.JsonLastPassTime{JsonTime: dayAgo}
-	to := lp.JsonLastPassTime{JsonTime: now}
+	from := lp.JSONLastPassTime{JSONTime: dayAgo}
+	to := lp.JSONLastPassTime{JSONTime: now}
 	events, err := s.GetAllEventReports(from, to)
 	logger.DieIf(errors.Wrap(err, "Failed executing GetAllEventReports."))
 	q <- events

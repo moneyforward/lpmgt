@@ -10,20 +10,25 @@ import (
 	"time"
 )
 
-const LastPassFormat = "2006-01-02 15:04:05"
-const LastPassTimeZone = "US/Eastern"
+const (
+	// LastPassFormat is a format used LastPass Provisioning API
+	LastPassFormat = "2006-01-02 15:04:05"
+	// LastPassTimeZone is only location acceptable to  LastPass Provisioning API
+	LastPassTimeZone = "US/Eastern"
+)
 
-type JsonLastPassTime struct {
-	JsonTime time.Time
+// JSONLastPassTime is a golang structure used in LastPass
+type JSONLastPassTime struct {
+	JSONTime time.Time
 }
 
 // Format returns a textual representation of the time value formatted in LastPass Format
-func (j JsonLastPassTime) Format() string {
-	return j.JsonTime.Format(LastPassFormat)
+func (j JSONLastPassTime) Format() string {
+	return j.JSONTime.Format(LastPassFormat)
 }
 
 // MarshalJSON encodes golang structure into json format
-func (j JsonLastPassTime) MarshalJSON() ([]byte, error) {
+func (j JSONLastPassTime) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + j.Format() + `"`), nil
 }
 

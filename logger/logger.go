@@ -20,15 +20,6 @@ func Log(prefix, message string) {
 	logger.Log(prefix, message)
 }
 
-// ErrorIf outputs log if `err` occurs.
-func ErrorIf(err error) bool {
-	if err != nil {
-		Log("error", err.Error())
-		return true
-	}
-	return false
-}
-
 // DieIf outputs log and exit(1) if `err` occurs.
 func DieIf(err error) {
 	if err != nil {

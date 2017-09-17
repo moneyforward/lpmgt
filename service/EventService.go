@@ -32,7 +32,7 @@ func (es *Events) ConvertTimezone(timezone *time.Location) {
 }
 
 type Event struct {
-	Time      time.Time `json:"JsonTime"`
+	Time      time.Time `json:"JSONTime"`
 	Username  string    `json:"Username,omitempty"`
 	IPAddress string    `json:"IP_Address,omitempty"`
 	Action    string    `json:"Action,omitempty"`
@@ -126,11 +126,11 @@ func (s *EventService) doRequest() (*http.Response, error) {
 
 // GetEventReport fetches event of an user in certain period of time.
 // Filtering is also available by setting search string.
-func (s *EventService) GetEventReport(username, search string, from, to lp.JsonLastPassTime) (*Events, error) {
+func (s *EventService) GetEventReport(username, search string, from, to lp.JSONLastPassTime) (*Events, error) {
 	s.command = "reporting"
 	s.data = struct {
-		From   lp.JsonLastPassTime `json:"from"`
-		To     lp.JsonLastPassTime `json:"to"`
+		From   lp.JSONLastPassTime `json:"from"`
+		To     lp.JSONLastPassTime `json:"to"`
 		Search string                         `json:"search"`
 		User   string                         `json:"user"`
 		Format string                         `json:"format"`
@@ -152,7 +152,7 @@ func (s *EventService) GetEventReport(username, search string, from, to lp.JsonL
 
 // GetAllEventReports fetches event of all users in certain period of time.
 // Filtering is also available by setting search string.
-func (s *EventService) GetAllEventReports(from, to lp.JsonLastPassTime) (*Events, error) {
+func (s *EventService) GetAllEventReports(from, to lp.JSONLastPassTime) (*Events, error) {
 	s.GetEventReport("allusers", "", from, to)
 	res, err := s.doRequest()
 	if err != nil {
@@ -171,7 +171,7 @@ func (s *EventService) GetAllEventReports(from, to lp.JsonLastPassTime) (*Events
 // GetAPIEventReports retrieves events triggered by API.
 // We first call
 // s.GetEventReport("api", "", from, to) will return error "Please select a valid user."
-func (s *EventService) GetAPIEventReports(from, to lp.JsonLastPassTime) (*Events, error) {
+func (s *EventService) GetAPIEventReports(from, to lp.JSONLastPassTime) (*Events, error) {
 	events, err := s.GetAllEventReports(from, to)
 	if err != nil {
 		return nil, err
