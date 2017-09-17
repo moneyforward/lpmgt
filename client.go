@@ -1,7 +1,6 @@
 package lastpass_provisioning
 
 import (
-	"lastpass_provisioning/lastpass_config"
 	"os"
 	"errors"
 	"lastpass_provisioning/logger"
@@ -28,7 +27,7 @@ func init() {
 }
 
 // NewClient returns a general Client structure.
-func NewClient(apiKey string, endpointURL string, verbose bool) (*LastPassClient, error) {
+func NewClient(apiKey, endpointURL, companyID string, verbose bool) (*LastPassClient, error) {
 	parsedURL, err := url.ParseRequestURI(endpointURL)
 	if err != nil {
 		return nil, err
@@ -37,17 +36,18 @@ func NewClient(apiKey string, endpointURL string, verbose bool) (*LastPassClient
 		URL:       parsedURL,
 		APIKey:    apiKey,
 		Verbose:   verbose,
-		UserAgent: lastpass_config.DefaultUserAgent,
+		UserAgent: defaultUserAgent,
 		Headers:   http.Header{},
 		Logger:    nil,
+		CompanyID: companyID,
 	}, nil
 }
 
 // NewLastPassClient returns LastPass Client from confFile
 func NewLastPassClient(configFilePath string) *LastPassClient {
-	apiKey := lastpass_config.LoadAPIKeyFromEnvOrConfig(configFilePath)
-	companyID := lastpass_config.LoadCompanyIDFromEnvOrConfig(configFilePath)
-	endPointURL := lastpass_config.LoadEndPointURL(configFilePath)
+	apiKey := LoadAPIKeyFromEnvOrConfig(configFilePath)
+	companyID := LoadCompanyIDFromEnvOrConfig(configFilePath)
+	endPointURL := LoadEndPointURL(configFilePath)
 
 	if apiKey == "" {
 		err := errors.New(`
@@ -55,20 +55,21 @@ func NewLastPassClient(configFilePath string) *LastPassClient {
 `)
 		logger.DieIf(err)
 	}
+
 	if companyID == "" {
 		err := errors.New(`
     LASTPASS_COMPANY_ID environment variable is not set. (Try "export LASTPASS_COMPANY_ID='<Your lastpass company id>'")
 `)
 		logger.DieIf(err)
 	}
+
 	if endPointURL == "" {
-		endPointURL = lastpass_config.DefaultBaseURL
+		endPointURL = defaultBaseURL
 	}
 
-	client, err := NewClient(apiKey, endPointURL, os.Getenv("DEBUG") != "")
+	client, err := NewClient(apiKey, endPointURL, companyID, os.Getenv("DEBUG") != "")
 	logger.DieIf(err)
 
-	client.CompanyID = companyID
 	return client
 }
 

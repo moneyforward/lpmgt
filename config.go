@@ -1,4 +1,4 @@
-package lastpass_config
+package lastpass_provisioning
 
 import (
 	"gopkg.in/yaml.v2"
@@ -16,8 +16,8 @@ type LastPassConfig struct {
 }
 
 const (
-	DefaultBaseURL   = "https://lastpass.com/enterpriseapi.php"
-	DefaultUserAgent = "lastpass-client-go"
+	defaultBaseURL   = "https://lastpass.com/enterpriseapi.php"
+	defaultUserAgent = "lastpass-client-go"
 )
 
 // LoadConfig loads config file in YAML format.
@@ -35,7 +35,7 @@ func LoadConfig(configFile string) (*LastPassConfig, error) {
 	}
 
 	if config.EndPoint == "" {
-		config.EndPoint = DefaultBaseURL
+		config.EndPoint = defaultBaseURL
 	}
 
 	if config.TimeZone == "" {
