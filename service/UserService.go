@@ -103,7 +103,7 @@ func (s *UserService) BatchAdd(users []User) error {
 	s.command = "batchadd"
 	s.data = users
 	res, err := s.doRequest()
-	status := &ApiResultStatus{}
+	status := &APIResultStatus{}
 	err = lp.JSONBodyDecoder(res, status)
 	if err != nil {
 		return err
@@ -116,7 +116,7 @@ func (s *UserService) UpdateUser(user User) error {
 	s.command = "batchadd"
 	s.data = user
 	res, err := s.doRequest()
-	status := &ApiResultStatus{}
+	status := &APIResultStatus{}
 	err = lp.JSONBodyDecoder(res, status)
 	if err != nil {
 		return err
@@ -137,7 +137,7 @@ func (s *UserService) DeleteUser(name string, mode DeactivationMode) error {
 		DeleteAction int    `json:"deleteaction"`
 	}{UserName: name, DeleteAction: int(mode)}
 	res, err := s.doRequest()
-	status := &ApiResultStatus{}
+	status := &APIResultStatus{}
 	err = lp.JSONBodyDecoder(res, status)
 	if err != nil {
 		return err
@@ -226,7 +226,7 @@ func (s *UserService) GetAdminUserData() ([]User, error) {
 }
 
 // DisableMultifactor disables multifactor setting of user
-func (s *UserService) DisableMultifactor(username string) (*ApiResultStatus, error) {
+func (s *UserService) DisableMultifactor(username string) (*APIResultStatus, error) {
 	s.command = "disablemultifactor"
 	s.data = User{UserName:username}
 	res, err := s.doRequest()
@@ -234,7 +234,7 @@ func (s *UserService) DisableMultifactor(username string) (*ApiResultStatus, err
 		return nil, err
 	}
 
-	var status ApiResultStatus
+	var status APIResultStatus
 	err = lp.JSONBodyDecoder(res, &status)
 	if err != nil {
 		return nil, err
@@ -243,7 +243,7 @@ func (s *UserService) DisableMultifactor(username string) (*ApiResultStatus, err
 }
 
 // ResetPassword reset password for the user
-func (s *UserService) ResetPassword(username string) (*ApiResultStatus, error) {
+func (s *UserService) ResetPassword(username string) (*APIResultStatus, error) {
 	s.command = "resetpassword"
 	s.data = User{UserName:username}
 	res, err := s.doRequest()
@@ -251,7 +251,7 @@ func (s *UserService) ResetPassword(username string) (*ApiResultStatus, error) {
 		return nil, err
 	}
 
-	var status ApiResultStatus
+	var status APIResultStatus
 	err = lp.JSONBodyDecoder(res, &status)
 	if err != nil {
 		return nil, err

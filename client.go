@@ -1,4 +1,4 @@
-package lastpass_provisioning
+package lpmgt
 
 import (
 	"os"

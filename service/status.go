@@ -5,16 +5,18 @@ import (
 	lp "lastpass_provisioning"
 )
 
-type ApiResultStatus struct {
+// APIResultStatus is a status of response from LastPass API
+type APIResultStatus struct {
 	Status   string   `json:"status,omitempty"`
 	Errors []string `json:"errors,omitempty"`
 }
 
-func (s *ApiResultStatus)IsOK() bool {
+// IsOK checks status of response from LastPass
+func (s *APIResultStatus)IsOK() bool {
 	return s.Status == "OK"
 }
 
-func (s *ApiResultStatus) Error() error {
+func (s *APIResultStatus) Error() error {
 	if s.IsOK() {
 		return nil
 	}
@@ -25,6 +27,6 @@ func (s *ApiResultStatus) Error() error {
 	return errors.New(string(b))
 }
 
-func (s *ApiResultStatus) String() string {
+func (s *APIResultStatus) String() string {
 	return s.Status
 }
