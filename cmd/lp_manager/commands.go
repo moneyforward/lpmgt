@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 	"io/ioutil"
-	client "lastpass_provisioning/lastpass_client"
 	lp "lastpass_provisioning"
 	"lastpass_provisioning/logger"
 	"lastpass_provisioning/service"
@@ -36,9 +35,9 @@ OPTIONS:
 
 // NewLastPassClientFromContext creates LastpassClient.
 // This method depends on urfave/cli.
-func NewLastPassClientFromContext(c *cli.Context) *client.LastPassClient {
+func NewLastPassClientFromContext(c *cli.Context) *lp.LastPassClient {
 	confFile := c.GlobalString("config")
-	return client.NewLastPassClient(confFile)
+	return lp.NewLastPassClient(confFile)
 }
 
 // Commands cli.Command object list

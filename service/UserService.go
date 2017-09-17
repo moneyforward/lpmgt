@@ -5,15 +5,11 @@ import (
 	"github.com/pkg/errors"
 	"net/http"
 	lp "lastpass_provisioning"
-	"lastpass_provisioning/lastpass_client"
 )
-
-// ToDO
-// reinviteuser -> status.go
 
 // UserService is a service class that sends a request to LastPass provisioning API.
 type UserService struct {
-	client  *lastpass_client.LastPassClient
+	client  *lp.LastPassClient
 	command string
 	data    interface{}
 }
@@ -305,7 +301,7 @@ func (s *UserService) ResetPassword(username string) (*ApiResultStatus, error) {
 //}
 
 // NewUserService creates a new UserService
-func NewUserService(client *lastpass_client.LastPassClient) (s *UserService) {
+func NewUserService(client *lp.LastPassClient) (s *UserService) {
 	return &UserService{client: client}
 }
 

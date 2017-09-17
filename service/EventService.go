@@ -1,7 +1,6 @@
 package service
 
 import (
-	lc "lastpass_provisioning/lastpass_client"
 	lp "lastpass_provisioning"
 	"net/http"
 	"strings"
@@ -107,13 +106,13 @@ func (e Event) IsAuditEvent() bool {
 }
 
 type EventService struct {
-	client  *lc.LastPassClient
+	client  *lp.LastPassClient
 	command string
 	data    interface{}
 }
 
 // NewEventService creates a new EventService
-func NewEventService(client *lc.LastPassClient) (s *EventService) {
+func NewEventService(client *lp.LastPassClient) (s *EventService) {
 	return &EventService{client: client}
 }
 

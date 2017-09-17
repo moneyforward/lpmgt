@@ -1,7 +1,6 @@
 package service
 
 import (
-	lc "lastpass_provisioning/lastpass_client"
 	"net/http"
 	lp "lastpass_provisioning"
 )
@@ -15,13 +14,13 @@ type SharedFolder struct {
 
 // FolderService is a service class that handles folder objects in LastPass.
 type FolderService struct {
-	client  *lc.LastPassClient
+	client  *lp.LastPassClient
 	command string
 	data    interface{}
 }
 
 // NewEventService creates a new EventService
-func NewFolderService(client *lc.LastPassClient) (s *FolderService) {
+func NewFolderService(client *lp.LastPassClient) (s *FolderService) {
 	return &FolderService{client: client}
 }
 

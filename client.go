@@ -1,4 +1,4 @@
-package lastpass_client
+package lastpass_provisioning
 
 import (
 	"lastpass_provisioning/lastpass_config"
@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"log"
-	lp "lastpass_provisioning"
 	"net/http/httputil"
 	"fmt"
 )
@@ -91,7 +90,7 @@ func (c *LastPassClient) DoRequest(command string, payload interface{}) (*http.R
 	}
 
 	// Form body.
-	body, err := lp.JSONReader(data)
+	body, err := JSONReader(data)
 	if err != nil {
 		return nil, err
 	}
