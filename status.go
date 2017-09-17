@@ -1,8 +1,7 @@
-package service
+package lpmgt
 
 import (
 	"github.com/pkg/errors"
-	lp "lpmgt"
 )
 
 // APIResultStatus is a status of response from LastPass API
@@ -20,7 +19,7 @@ func (s *APIResultStatus) Error() error {
 	if s.IsOK() {
 		return nil
 	}
-	b, e := lp.IndentedJSON(s.Errors)
+	b, e := IndentedJSON(s.Errors)
 	if e != nil {
 		return e
 	}
