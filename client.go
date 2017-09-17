@@ -3,7 +3,6 @@ package lastpass_provisioning
 import (
 	"os"
 	"errors"
-	"lastpass_provisioning/logger"
 	"net/http"
 	"net/url"
 	"log"
@@ -44,33 +43,25 @@ func NewClient(apiKey, endpointURL, companyID string, verbose bool) (*LastPassCl
 }
 
 // NewLastPassClient returns LastPass Client from confFile
-func NewLastPassClient(configFilePath string) *LastPassClient {
+func NewLastPassClient(configFilePath string) (*LastPassClient, error) {
 	apiKey := LoadAPIKeyFromEnvOrConfig(configFilePath)
 	companyID := LoadCompanyIDFromEnvOrConfig(configFilePath)
 	endPointURL := LoadEndPointURL(configFilePath)
 
 	if apiKey == "" {
-		err := errors.New(`
-    LASTPASS_APIKEY environment variable is not set. (Try "export LASTPASS_APIKEY='<Your apikey>'")
-`)
-		logger.DieIf(err)
+		return nil, errors.New(`LASTPASS_APIKEY environment variable is not set. (Try "export LASTPASS_APIKEY='<Your apikey>'")`)
 	}
 
 	if companyID == "" {
-		err := errors.New(`
-    LASTPASS_COMPANY_ID environment variable is not set. (Try "export LASTPASS_COMPANY_ID='<Your lastpass company id>'")
-`)
-		logger.DieIf(err)
+		return nil,
+			errors.New(`LASTPASS_COMPANY_ID environment variable is not set. (Try "export LASTPASS_COMPANY_ID='<Your lastpass company id>'")`)
 	}
 
 	if endPointURL == "" {
 		endPointURL = defaultBaseURL
 	}
 
-	client, err := NewClient(apiKey, endPointURL, companyID, os.Getenv("DEBUG") != "")
-	logger.DieIf(err)
-
-	return client
+	return NewClient(apiKey, endPointURL, companyID, os.Getenv("DEBUG") != "")
 }
 
 // DoRequest executes LastPass specific request in JSON format and returns http Response

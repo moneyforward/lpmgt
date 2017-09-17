@@ -11,9 +11,7 @@ var logger = &colorine.Logger{
 		"error": colorine.Error,
 		"":        colorine.Info,
 		"created": colorine.Info,
-		"updated": colorine.Info,
-		"thrown":  colorine.Info,
-		"retired": colorine.Info,
+		"deleted": colorine.Info,
 	},
 }
 
@@ -28,7 +26,6 @@ func ErrorIf(err error) bool {
 		Log("error", err.Error())
 		return true
 	}
-
 	return false
 }
 
@@ -37,12 +34,5 @@ func DieIf(err error) {
 	if err != nil {
 		Log("error", err.Error())
 		os.Exit(1)
-	}
-}
-
-// PanicIf raise panic if `err` occurs.
-func PanicIf(err error) {
-	if err != nil {
-		panic(err)
 	}
 }

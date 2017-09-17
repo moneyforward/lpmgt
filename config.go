@@ -4,7 +4,6 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
-	"fmt"
 )
 
 // LastPassConfig is config structure for LastPass
@@ -25,12 +24,10 @@ func LoadConfig(configFile string) (*LastPassConfig, error) {
 	config := &LastPassConfig{}
 	f, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		fmt.Println("failed loading")
 		return nil, err
 	}
 	err = yaml.Unmarshal(f, &config)
 	if err != nil {
-		fmt.Println("failed unmarshaling")
 		return nil, err
 	}
 

@@ -35,9 +35,11 @@ OPTIONS:
 
 // NewLastPassClientFromContext creates LastpassClient.
 // This method depends on urfave/cli.
-func NewLastPassClientFromContext(c *cli.Context) *lp.LastPassClient {
-	confFile := c.GlobalString("config")
-	return lp.NewLastPassClient(confFile)
+func NewLastPassClientFromContext(context *cli.Context) *lp.LastPassClient {
+	confFile := context.GlobalString("config")
+	client, err := lp.NewLastPassClient(confFile)
+	logger.DieIf(err)
+	return client
 }
 
 // Commands cli.Command object list

@@ -40,17 +40,20 @@ func JSONReader(v interface{}) (io.Reader, error) {
 	err := json.NewEncoder(buf).Encode(v)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to encode %v into JSON" , v)
 	}
+
 	return buf, nil
 }
 
 // PrintIndentedJSON output indented json via stdout.
 func PrintIndentedJSON(originalJSON interface{}) error {
 	dataRaw, err := IndentedJSON(originalJSON)
+
 	if err != nil {
 		return err
 	}
+
 	fmt.Fprintln(os.Stdout, string(dataRaw))
 	return nil
 }
