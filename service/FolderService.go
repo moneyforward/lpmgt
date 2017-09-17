@@ -19,13 +19,13 @@ type FolderService struct {
 	data    interface{}
 }
 
-// NewEventService creates a new EventService
+// NewFolderService creates a new NewFolderService
 func NewFolderService(client *lp.LastPassClient) (s *FolderService) {
 	return &FolderService{client: client}
 }
 
 /*
-GetSharedFolderData returns a JSON object containing information on all Shared Folders in the enterprise and the permissions granted to them.
+GetSharedFolders returns a JSON object containing information on all Shared Folders in the enterprise and the permissions granted to them.
 # Request
 {
 	"cid": "8771312",

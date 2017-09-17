@@ -355,7 +355,7 @@ func doGetUsers(context *cli.Context) (err error) {
 	switch context.String("filter") {
 	case "non2fa":
 		users, err = s.GetNon2faUsers()
-		lp.DieIf(errors.Wrap(err, "Failed executing GetNon2faUsers()"))
+		lp.DieIf(errors.Wrap(err, "Failed executing getNon2faUsers()"))
 	case "inactive":
 		users, err = s.GetInactiveUsers()
 		lp.DieIf(errors.Wrap(err, "Failed executing GetInactiveUsers()"))
@@ -369,7 +369,9 @@ func doGetUsers(context *cli.Context) (err error) {
 		users, err = s.GetAllUsers()
 		lp.DieIf(errors.Wrap(err, "Failed executing GetAllUsers()"))
 	}
-	service.PrintUserNames(users)
+	for _, user := range users {
+		fmt.Println(user.UserName)
+	}
 	return nil
 }
 
@@ -586,7 +588,7 @@ func doDashboard(context *cli.Context) error {
 	for dep, us := range organizationMap {
 		count := 0
 		for _, u := range us {
-			if !u.Is2FA() {
+			if u.Multifactor=="" { // Not 2FA
 				if count == 0 {
 					out = out + fmt.Sprintf("\n## %v", dep)
 				}

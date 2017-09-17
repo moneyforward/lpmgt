@@ -84,13 +84,13 @@ func (s *UserService) GetUserData(userName string) (user User, err error) {
 		return
 	}
 
-	users := &Users{}
+	users := &users{}
 	err = lp.JSONBodyDecoder(res, users)
 	if err != nil {
 		return
 	}
-	if len(users.GetUsers()) != 0 {
-		user = users.GetUsers()[0]
+	if len(users.getUsers()) != 0 {
+		user = users.getUsers()[0]
 	} else {
 		eMessage := fmt.Sprintf("User %v does not exist", userName)
 		return user, errors.New(eMessage)
@@ -150,12 +150,12 @@ func (s *UserService) GetNon2faUsers() ([]User, error) {
 	s.command = "getuserdata"
 	s.data = User{}
 	res, err := s.doRequest()
-	var users Users
+	var users users
 	err = lp.JSONBodyDecoder(res, &users)
 	if err != nil {
 		return nil, err
 	}
-	return users.GetNon2faUsers(), nil
+	return users.getNon2faUsers(), nil
 }
 
 // GetAllUsers simply retrieves all users
@@ -166,12 +166,12 @@ func (s *UserService) GetAllUsers() ([]User, error) {
 	if err != nil {
 		return nil, err
 	}
-	var nonAdminUsers Users
+	var nonAdminUsers users
 	err = lp.JSONBodyDecoder(res, &nonAdminUsers)
 	if err != nil {
 		return nil, err
 	}
-	return nonAdminUsers.GetUsers(), nil
+	return nonAdminUsers.getUsers(), nil
 }
 
 // GetInactiveUsers is Deactivated user(Deleted user in mode 0)
@@ -183,12 +183,12 @@ func (s *UserService) GetInactiveUsers() ([]User, error) {
 		return nil, err
 	}
 
-	var nonAdminUsers Users
+	var nonAdminUsers users
 	err = lp.JSONBodyDecoder(res, &nonAdminUsers)
 	if err != nil {
 		return nil, err
 	}
-	return nonAdminUsers.GetNeverLoggedInUsers(), nil
+	return nonAdminUsers.getNeverLoggedInUsers(), nil
 }
 
 // GetDisabledUsers gets Deactivated user(Deleted user in mode 0)
@@ -200,12 +200,12 @@ func (s *UserService) GetDisabledUsers() ([]User, error) {
 		return nil, err
 	}
 
-	var Users Users
+	var Users users
 	err = lp.JSONBodyDecoder(res, &Users)
 	if err != nil {
 		return nil, err
 	}
-	return Users.GetUsers(), nil
+	return Users.getUsers(), nil
 }
 
 // GetAdminUserData gets admin users
@@ -217,12 +217,12 @@ func (s *UserService) GetAdminUserData() ([]User, error) {
 		return nil, err
 	}
 
-	var adminUsers Users
+	var adminUsers users
 	err = lp.JSONBodyDecoder(res, &adminUsers)
 	if err != nil {
 		return nil, err
 	}
-	return adminUsers.GetUsers(), nil
+	return adminUsers.getUsers(), nil
 }
 
 // DisableMultifactor disables multifactor setting of user
@@ -321,34 +321,28 @@ type User struct {
 	NeverLoggedIn          bool     `json:"neverloggedin,omitempty"`
 	LinkedAccount          string   `json:"linked,omitempty"`
 	NumberOfSites          float64  `json:"sites,omitempty"`
-	NumberOfNotes          float64  `json:"notes,omitempty"`
-	NumberOfFormFills      float64  `json:"formfills,omitempty"`
-	NumberOfApplications   float64  `json:"applications,omitempty"`
-	NumberOfAttachments    float64  `json:"attachment,omitempty"`
-	Groups                 []string `json:"groups,omitempty"`
-	Readonly               string   `json:"readonly,omitempty"`       // ShareFolderの設定に利用. BoolでもなくIntでもない...
-	Give                   string   `json:"give,omitempty"`           // ShareFolderの設定に利用
-	Can_Administer         string   `json:"can_administer,omitempty"` // ShareFolderの設定に利用
-	IsAdmin                bool     `json:"admin,omitempty"`
-	Duousername            string   `json:"duousername,omitempty"`
-	LastPwChange           string   `json:"last_pw_change,omitempty"`
-	Mpstrength             string   `json:"mpstrength,omitempty"`
-	Multifactor            string   `json:"multifactor,omitempty"`
+	NumberOfNotes        float64  `json:"notes,omitempty"`
+	NumberOfFormFills    float64  `json:"formfills,omitempty"`
+	NumberOfApplications float64  `json:"applications,omitempty"`
+	NumberOfAttachments  float64  `json:"attachment,omitempty"`
+	Groups               []string `json:"groups,omitempty"`
+	Readonly             string   `json:"readonly,omitempty"`       // ShareFolderの設定に利用. BoolでもなくIntでもない...
+	Give                 string   `json:"give,omitempty"`           // ShareFolderの設定に利用
+	CanAdminister        string   `json:"can_administer,omitempty"` // ShareFolderの設定に利用
+	IsAdmin              bool     `json:"admin,omitempty"`
+	Duousername          string   `json:"duousername,omitempty"`
+	LastPwChange         string   `json:"last_pw_change,omitempty"`
+	Mpstrength           string   `json:"mpstrength,omitempty"`
+	Multifactor          string   `json:"multifactor,omitempty"`
 }
 
-type Users struct {
+type users struct {
 	Users   map[string]User     `json:"Users,omitempty"`
 	Groups  map[string][]string `json:"Groups,omitempty"`
 	Invited []string            `json:"invited,omitempty"`
 }
 
-type TransferringUser struct {
-	Username   string   `json:"username"`
-	JoiningDepName []string `json:"add,omitempty"`
-	LeavingDepName []string `json:"del,omitempty"`
-}
-
-func (u *User) Contains(users []string) bool {
+func (u *User) contains(users []string) bool {
 	for _, user := range users {
 		if user == u.UserName {
 			return true
@@ -357,11 +351,7 @@ func (u *User) Contains(users []string) bool {
 	return false
 }
 
-func (u *User) Is2FA() bool {
-	return u.Multifactor!=""
-}
-
-func (us *Users) GetUsers() []User {
+func (us *users) getUsers() []User {
 	users := []User{}
 	for _, user := range us.Users {
 		users = append(users, user)
@@ -369,7 +359,7 @@ func (us *Users) GetUsers() []User {
 	return users
 }
 
-func (us *Users) GetNon2faUsers() (users []User) {
+func (us *users) getNon2faUsers() (users []User) {
 	for _, user := range us.Users {
 		if user.Multifactor == "" {
 			users = append(users, user)
@@ -378,17 +368,11 @@ func (us *Users) GetNon2faUsers() (users []User) {
 	return users
 }
 
-func (us *Users) GetNeverLoggedInUsers() (users []User) {
+func (us *users) getNeverLoggedInUsers() (users []User) {
 	for _, user := range us.Users{
 		if user.NeverLoggedIn {
 			users = append(users, user)
 		}
 	}
 	return
-}
-
-func PrintUserNames(users []User) {
-	for _, user := range users {
-		fmt.Println(user.UserName)
-	}
 }
