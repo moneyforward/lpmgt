@@ -39,6 +39,8 @@ lpmgt describe user <member@email.com>
 lpmgt delete user <member@email.com> --mode delete
 lpmgt --config config.yaml -t ASIA/TOKYO get dashboard 
 ```
+# Limitation
+One cannot create/delete/update group info because API is not prepared in LastPass
 
 # Contribution
 1. Fork
