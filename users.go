@@ -86,7 +86,18 @@ func (s *UserService) GetUserData(userName string) (user User, err error) {
 	users := &users{}
 	err = JSONBodyDecoder(res, users)
 	if err != nil {
-		return
+		// LastPassProvisioning API returns {"Users":[]} when there is no <userName> user.
+		// When there is {"Users":{"<UserID>": <User Structure>}}
+		errorUserDoesNotExistCase := struct {
+			Users  []User     `json:"Users,omitempty"`
+		}{}
+
+		if err2 := JSONBodyDecoder(res, &errorUserDoesNotExistCase); err2 == nil {
+			return
+		} else {
+			eMessage := fmt.Sprintf("User %v does not exist", userName)
+			return user, errors.New(eMessage)
+		}
 	}
 	if len(users.getUsers()) != 0 {
 		user = users.getUsers()[0]

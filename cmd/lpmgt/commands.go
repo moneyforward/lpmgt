@@ -208,6 +208,8 @@ var commandDescribe = cli.Command{
 	Usage: "describe specific object",
 	Subcommands: []cli.Command{
 		subCommandDescribeUser,
+		// TODO
+		// subCommandDescribeGroup,
 	},
 }
 
