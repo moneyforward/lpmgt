@@ -135,7 +135,7 @@ func doUpdateBelongingDepartment(context *cli.Context) error {
 
 	// Fetch User if he/she exists
 	user, err := s.GetUserData(argUserName)
-	lp.DieIf(errors.Wrapf(err, "Failed executing %T.GetUserData", s))
+	lp.DieIf(errors.Wrapf(err, "Failed executing %T.doUpdateBelongingDepartment", s))
 
 	// Join
 	user.Groups = append(user.Groups, context.StringSlice("join")...)
@@ -227,7 +227,7 @@ func doDescribeUser(context *cli.Context) error {
 
 	s := lp.NewUserService(NewLastPassClientFromContext(context))
 	user, err := s.GetUserData(argUserName)
-	lp.DieIf(errors.Wrapf(err, "Failed executing %T.GetUserData(%v)", s, argUserName))
+	lp.DieIf(errors.Wrapf(err, "Failed executing %T.doDescribeUser(%v)", s, argUserName))
 
 	lp.PrintIndentedJSON(user)
 	return nil

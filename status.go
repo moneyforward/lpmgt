@@ -7,7 +7,7 @@ import (
 // APIResultStatus is a status of response from LastPass API
 type APIResultStatus struct {
 	Status   string   `json:"status,omitempty"`
-	Errors []string `json:"errors,omitempty"`
+	Errors string `json:"error,omitempty"`
 }
 
 // IsOK checks status of response from LastPass
