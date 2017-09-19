@@ -1,15 +1,14 @@
-package service
+package lpmgt
 
 import (
 	"fmt"
 	"github.com/pkg/errors"
 	"net/http"
-	lp "lpmgt"
 )
 
 // UserService is a service class that sends a request to LastPass provisioning API.
 type UserService struct {
-	client  *lp.LastPassClient
+	client  *LastPassClient
 	command string
 	data    interface{}
 }
@@ -85,9 +84,20 @@ func (s *UserService) GetUserData(userName string) (user User, err error) {
 	}
 
 	users := &users{}
-	err = lp.JSONBodyDecoder(res, users)
+	err = JSONBodyDecoder(res, users)
 	if err != nil {
-		return
+		// LastPassProvisioning API returns {"Users":[]} when there is no <userName> user.
+		// When there is {"Users":{"<UserID>": <User Structure>}}
+		errorUserDoesNotExistCase := struct {
+			Users  []User     `json:"Users,omitempty"`
+		}{}
+
+		if err2 := JSONBodyDecoder(res, &errorUserDoesNotExistCase); err2 == nil {
+			return
+		} else {
+			eMessage := fmt.Sprintf("User %v does not exist", userName)
+			return user, errors.New(eMessage)
+		}
 	}
 	if len(users.getUsers()) != 0 {
 		user = users.getUsers()[0]
@@ -104,7 +114,7 @@ func (s *UserService) BatchAdd(users []User) error {
 	s.data = users
 	res, err := s.doRequest()
 	status := &APIResultStatus{}
-	err = lp.JSONBodyDecoder(res, status)
+	err = JSONBodyDecoder(res, status)
 	if err != nil {
 		return err
 	}
@@ -117,7 +127,7 @@ func (s *UserService) UpdateUser(user User) error {
 	s.data = user
 	res, err := s.doRequest()
 	status := &APIResultStatus{}
-	err = lp.JSONBodyDecoder(res, status)
+	err = JSONBodyDecoder(res, status)
 	if err != nil {
 		return err
 	}
@@ -138,7 +148,7 @@ func (s *UserService) DeleteUser(name string, mode DeactivationMode) error {
 	}{UserName: name, DeleteAction: int(mode)}
 	res, err := s.doRequest()
 	status := &APIResultStatus{}
-	err = lp.JSONBodyDecoder(res, status)
+	err = JSONBodyDecoder(res, status)
 	if err != nil {
 		return err
 	}
@@ -151,7 +161,7 @@ func (s *UserService) GetNon2faUsers() ([]User, error) {
 	s.data = User{}
 	res, err := s.doRequest()
 	var users users
-	err = lp.JSONBodyDecoder(res, &users)
+	err = JSONBodyDecoder(res, &users)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +177,7 @@ func (s *UserService) GetAllUsers() ([]User, error) {
 		return nil, err
 	}
 	var nonAdminUsers users
-	err = lp.JSONBodyDecoder(res, &nonAdminUsers)
+	err = JSONBodyDecoder(res, &nonAdminUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +194,7 @@ func (s *UserService) GetInactiveUsers() ([]User, error) {
 	}
 
 	var nonAdminUsers users
-	err = lp.JSONBodyDecoder(res, &nonAdminUsers)
+	err = JSONBodyDecoder(res, &nonAdminUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +211,7 @@ func (s *UserService) GetDisabledUsers() ([]User, error) {
 	}
 
 	var Users users
-	err = lp.JSONBodyDecoder(res, &Users)
+	err = JSONBodyDecoder(res, &Users)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +228,7 @@ func (s *UserService) GetAdminUserData() ([]User, error) {
 	}
 
 	var adminUsers users
-	err = lp.JSONBodyDecoder(res, &adminUsers)
+	err = JSONBodyDecoder(res, &adminUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +245,7 @@ func (s *UserService) DisableMultifactor(username string) (*APIResultStatus, err
 	}
 
 	var status APIResultStatus
-	err = lp.JSONBodyDecoder(res, &status)
+	err = JSONBodyDecoder(res, &status)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +262,7 @@ func (s *UserService) ResetPassword(username string) (*APIResultStatus, error) {
 	}
 
 	var status APIResultStatus
-	err = lp.JSONBodyDecoder(res, &status)
+	err = JSONBodyDecoder(res, &status)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +311,7 @@ func (s *UserService) ResetPassword(username string) (*APIResultStatus, error) {
 //}
 
 // NewUserService creates a new UserService
-func NewUserService(client *lp.LastPassClient) (s *UserService) {
+func NewUserService(client *LastPassClient) (s *UserService) {
 	return &UserService{client: client}
 }
 

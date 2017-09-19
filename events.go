@@ -1,7 +1,6 @@
-package service
+package lpmgt
 
 import (
-	lp "lpmgt"
 	"net/http"
 	"strings"
 	"time"
@@ -59,11 +58,11 @@ func (e *Event) UnmarshalJSON(b []byte) error {
 	for k, v := range rawStrings {
 		switch strings.ToLower(k) {
 		case "time":
-			eastLoc, err := time.LoadLocation(lp.LastPassTimeZone)
+			eastLoc, err := time.LoadLocation(LastPassTimeZone)
 			if err != nil {
 				return err
 			}
-			t, err := time.ParseInLocation(lp.LastPassFormat, v, eastLoc)
+			t, err := time.ParseInLocation(LastPassFormat, v, eastLoc)
 			if err != nil {
 				return err
 			}
@@ -112,13 +111,13 @@ func (e Event) IsAuditEvent() bool {
 
 // EventService is a service class that handles event objects in LastPass.
 type EventService struct {
-	client  *lp.LastPassClient
+	client  *LastPassClient
 	command string
 	data    interface{}
 }
 
 // NewEventService creates a new EventService
-func NewEventService(client *lp.LastPassClient) (s *EventService) {
+func NewEventService(client *LastPassClient) (s *EventService) {
 	return &EventService{client: client}
 }
 
@@ -132,11 +131,11 @@ func (s *EventService) doRequest() (*http.Response, error) {
 
 // GetEventReport fetches event of an user in certain period of time.
 // Filtering is also available by setting search string.
-func (s *EventService) GetEventReport(username, search string, from, to lp.JSONLastPassTime) (*Events, error) {
+func (s *EventService) GetEventReport(username, search string, from, to JSONLastPassTime) (*Events, error) {
 	s.command = "reporting"
 	s.data = struct {
-		From   lp.JSONLastPassTime `json:"from"`
-		To     lp.JSONLastPassTime `json:"to"`
+		From   JSONLastPassTime `json:"from"`
+		To     JSONLastPassTime `json:"to"`
 		Search string                         `json:"search"`
 		User   string                         `json:"user"`
 		Format string                         `json:"format"`
@@ -148,7 +147,7 @@ func (s *EventService) GetEventReport(username, search string, from, to lp.JSONL
 	}
 
 	var events Events
-	err = lp.JSONBodyDecoder(res, &events)
+	err = JSONBodyDecoder(res, &events)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +157,7 @@ func (s *EventService) GetEventReport(username, search string, from, to lp.JSONL
 
 // GetAllEventReports fetches event of all users in certain period of time.
 // Filtering is also available by setting search string.
-func (s *EventService) GetAllEventReports(from, to lp.JSONLastPassTime) (*Events, error) {
+func (s *EventService) GetAllEventReports(from, to JSONLastPassTime) (*Events, error) {
 	s.GetEventReport("allusers", "", from, to)
 	res, err := s.doRequest()
 	if err != nil {
@@ -166,7 +165,7 @@ func (s *EventService) GetAllEventReports(from, to lp.JSONLastPassTime) (*Events
 	}
 
 	var events Events
-	err = lp.JSONBodyDecoder(res, &events)
+	err = JSONBodyDecoder(res, &events)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +176,7 @@ func (s *EventService) GetAllEventReports(from, to lp.JSONLastPassTime) (*Events
 // GetAPIEventReports retrieves events triggered by API.
 // We first call
 // s.GetEventReport("api", "", from, to) will return error "Please select a valid user."
-func (s *EventService) GetAPIEventReports(from, to lp.JSONLastPassTime) (*Events, error) {
+func (s *EventService) GetAPIEventReports(from, to JSONLastPassTime) (*Events, error) {
 	events, err := s.GetAllEventReports(from, to)
 	if err != nil {
 		return nil, err

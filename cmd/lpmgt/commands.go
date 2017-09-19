@@ -7,7 +7,6 @@ import (
 	"github.com/urfave/cli"
 	"io/ioutil"
 	lp "lpmgt"
-	"lpmgt/service"
 	"strings"
 	"sync"
 	"time"
@@ -75,7 +74,7 @@ func doDisableMFA(context *cli.Context) error {
 	}
 
 	c := NewLastPassClientFromContext(context)
-	s := service.NewUserService(c)
+	s := lp.NewUserService(c)
 
 	status, err := s.DisableMultifactor(argUserName)
 	lp.DieIf(errors.Wrapf(err, "Failed executing %T.DisableMultifactor", s))
@@ -97,7 +96,7 @@ func doResetPassword(context *cli.Context) error {
 	}
 
 	c := NewLastPassClientFromContext(context)
-	s := service.NewUserService(c)
+	s := lp.NewUserService(c)
 
 	status, err := s.ResetPassword(argUserName)
 	lp.DieIf(errors.Wrapf(err, "Failed executing %T.ResetPassword", s))
@@ -132,11 +131,11 @@ func doUpdateBelongingDepartment(context *cli.Context) error {
 	}
 
 	c := NewLastPassClientFromContext(context)
-	s := service.NewUserService(c)
+	s := lp.NewUserService(c)
 
 	// Fetch User if he/she exists
 	user, err := s.GetUserData(argUserName)
-	lp.DieIf(errors.Wrapf(err, "Failed executing %T.GetUserData", s))
+	lp.DieIf(errors.Wrapf(err, "Failed executing %T.doUpdateBelongingDepartment", s))
 
 	// Join
 	user.Groups = append(user.Groups, context.StringSlice("join")...)
@@ -186,17 +185,17 @@ func doDeleteUser(context *cli.Context) error {
 		lp.DieIf(errors.New("Email(username) has to be specified"))
 	}
 
-	var mode = service.DeactivationMode(service.Deactivate)
+	var mode = lp.DeactivationMode(lp.Deactivate)
 	switch context.String("mode") {
 	case "deactivate":
-		mode = service.Deactivate
+		mode = lp.Deactivate
 	case "delete":
-		mode = service.Delete
+		mode = lp.Delete
 	default:
-		mode = service.Deactivate
+		mode = lp.Deactivate
 	}
 
-	s := service.NewUserService(NewLastPassClientFromContext(context))
+	s := lp.NewUserService(NewLastPassClientFromContext(context))
 	err := s.DeleteUser(argUserName, mode)
 	lp.DieIf(errors.Wrapf(err, "Failed executing %T.DeleteUser", s))
 	lp.Log(context.String("mode"), argUserName)
@@ -209,6 +208,8 @@ var commandDescribe = cli.Command{
 	Usage: "describe specific object",
 	Subcommands: []cli.Command{
 		subCommandDescribeUser,
+		// TODO
+		// subCommandDescribeGroup,
 	},
 }
 
@@ -226,9 +227,9 @@ func doDescribeUser(context *cli.Context) error {
 		lp.DieIf(errors.New("Email(username) has to be specified"))
 	}
 
-	s := service.NewUserService(NewLastPassClientFromContext(context))
+	s := lp.NewUserService(NewLastPassClientFromContext(context))
 	user, err := s.GetUserData(argUserName)
-	lp.DieIf(errors.Wrapf(err, "Failed executing %T.GetUserData(%v)", s, argUserName))
+	lp.DieIf(errors.Wrapf(err, "Failed executing %T.doDescribeUser(%v)", s, argUserName))
 
 	lp.PrintIndentedJSON(user)
 	return nil
@@ -282,9 +283,9 @@ func doGetEvents(c *cli.Context) error {
 	from := lp.JSONLastPassTime{JSONTime: dayAgo}
 	to := lp.JSONLastPassTime{JSONTime: now}
 
-	var events *service.Events
+	var events *lp.Events
 	var err error
-	s := service.NewEventService(NewLastPassClientFromContext(c))
+	s := lp.NewEventService(NewLastPassClientFromContext(c))
 	switch user := c.String("user"); strings.ToLower(user) {
 	case "":
 		events, err = s.GetEventReport(user, "", from, to)
@@ -316,7 +317,7 @@ var subCommandGetGroups = cli.Command{
 // There are no API that fetches group info
 func doGetGroups(context *cli.Context) error {
 	c := NewLastPassClientFromContext(context)
-	s := service.NewUserService(c)
+	s := lp.NewUserService(c)
 	users, err := s.GetAllUsers()
 	lp.DieIf(errors.Wrap(err, "Failed executing doGetGroups()"))
 
@@ -348,9 +349,9 @@ var subCommandGetUsers = cli.Command{
 
 func doGetUsers(context *cli.Context) (err error) {
 	c := NewLastPassClientFromContext(context)
-	s := service.NewUserService(c)
+	s := lp.NewUserService(c)
 
-	var users []service.User
+	var users []lp.User
 
 	switch context.String("filter") {
 	case "non2fa":
@@ -406,13 +407,13 @@ func doAddUser(context *cli.Context) error {
 		lp.DieIf(errors.New("Email(username) has to be specified"))
 	}
 
-	user := service.User{
+	user := lp.User{
 		UserName: argUserName,
 		Groups:   context.StringSlice("dept"),
 	}
 
 	c := NewLastPassClientFromContext(context)
-	err := service.NewUserService(c).BatchAdd([]service.User{user})
+	err := lp.NewUserService(c).BatchAdd([]lp.User{user})
 	lp.DieIf(errors.Wrap(err, "Failed executing NewUserService."))
 
 	message := user.UserName
@@ -430,7 +431,7 @@ func doAddUsersInBulk(context *cli.Context) error {
 	}
 
 	c := NewLastPassClientFromContext(context)
-	err = service.NewUserService(c).BatchAdd(users)
+	err = lp.NewUserService(c).BatchAdd(users)
 	lp.DieIf(errors.Wrap(err, "Failed executing BatchAdd."))
 
 	for _, user := range users {
@@ -444,14 +445,14 @@ func doAddUsersInBulk(context *cli.Context) error {
 	return err
 }
 
-func loadAddingUsers(usersFile string) (config []service.User, err error) {
+func loadAddingUsers(usersFile string) (config []lp.User, err error) {
 	f, err := ioutil.ReadFile(usersFile)
 	if err != nil {
 		return
 	}
 
 	data := struct {
-		Data []service.User `json:"data"`
+		Data []lp.User `json:"data"`
 	}{}
 
 	if err = json.Unmarshal(f, &data); err != nil {
@@ -486,21 +487,21 @@ func doDashboard(context *cli.Context) error {
 
 	c := NewLastPassClientFromContext(context)
 
-	folders := []service.SharedFolder{}
-	events := []service.Event{}
-	organizationMap := make(map[string][]service.User)
+	folders := []lp.SharedFolder{}
+	events := []lp.Event{}
+	organizationMap := make(map[string][]lp.User)
 
-	c1 := make(chan []service.User)
-	c2 := make(chan []service.SharedFolder)
-	c3 := make(chan *service.Events)
+	c1 := make(chan []lp.User)
+	c2 := make(chan []lp.SharedFolder)
+	c3 := make(chan *lp.Events)
 
 	// Fetch Data
 	numOfGoRoutines := 3	// Change this number based on goroutine to fetch data from LastPass.
 	var wg sync.WaitGroup
 	wg.Add(numOfGoRoutines)
-	go getAllUsers(&wg, service.NewUserService(c), c1)
-	go getSharedFolders(&wg, service.NewFolderService(c), c2)
-	go getEvents(&wg, service.NewEventService(c), c3, time.Duration(durationToAuditInDay))
+	go getAllUsers(&wg, lp.NewUserService(c), c1)
+	go getSharedFolders(&wg, lp.NewFolderService(c), c2)
+	go getEvents(&wg, lp.NewEventService(c), c3, time.Duration(durationToAuditInDay))
 	for i := 0; i < numOfGoRoutines; i++ {
 		select {
 		case users := <-c1:
@@ -601,14 +602,14 @@ func doDashboard(context *cli.Context) error {
 	return nil
 }
 
-func getAllUsers(wg *sync.WaitGroup, s *service.UserService, q chan []service.User) {
+func getAllUsers(wg *sync.WaitGroup, s *lp.UserService, q chan []lp.User) {
 	defer wg.Done()
 	users, err := s.GetAllUsers()
 	lp.DieIf(errors.Wrap(err, "Failed executing GetAllUsers."))
 	q <- users
 }
 
-func getEvents(wg *sync.WaitGroup, s *service.EventService, q chan *service.Events, d time.Duration) {
+func getEvents(wg *sync.WaitGroup, s *lp.EventService, q chan *lp.Events, d time.Duration) {
 	defer wg.Done()
 	loc, _ := time.LoadLocation(lp.LastPassTimeZone)
 	now := time.Now().In(loc)
@@ -621,7 +622,7 @@ func getEvents(wg *sync.WaitGroup, s *service.EventService, q chan *service.Even
 	q <- events
 }
 
-func getSharedFolders(wg *sync.WaitGroup, s *service.FolderService, q chan []service.SharedFolder) {
+func getSharedFolders(wg *sync.WaitGroup, s *lp.FolderService, q chan []lp.SharedFolder) {
 	defer wg.Done()
 	folders, err := s.GetSharedFolders()
 	lp.DieIf(errors.Wrap(err, "Failed executing getSharedFolders"))

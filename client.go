@@ -122,6 +122,19 @@ func (c *LastPassClient) DoRequest(command string, payload interface{}) (*http.R
 		}
 	}
 
+	// TODO: This will not work because LastPass Provisioning API always return `Content-Type: text/xml;charset=utf-8` regardless of the API result.
+	// HELP NEEDED
+	//if strings.Contains(resp.Header.Get("Content-Type"), "text/xml") {
+	//	var XML struct {
+	//		Message string `xml:"rc,attr"`
+	//	}
+	//	b := io.ReadCloser(resp.Body)
+	//	err := xml.NewDecoder(b).Decode(&XML)
+	//	if err != nil {
+	//		return resp, fmt.Errorf("API result failed: %v\n", XML.Message)
+	//	}
+	//}
+
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return resp, fmt.Errorf("API result failed: %s\n", resp.Status)
 	}
