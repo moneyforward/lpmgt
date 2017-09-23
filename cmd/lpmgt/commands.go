@@ -108,20 +108,12 @@ var subCommandUpdateUser = cli.Command{
 	Name:        "user",
 	Usage:       "update user <email>",
 	Description: `update a <email>`,
-	ArgsUsage:   "<email>",
-	Subcommands: []cli.Command{
-		{
-			Name:        "department",
-			Usage:       "update user department",
-			ArgsUsage:   "[[--leave | -l <department>]...] [[--join | -j <department>]...]",
-			Description: "User can specify either --leave or --join to move department",
-			Action:      doUpdateBelongingDepartment,
-			Flags: []cli.Flag{
-				cli.StringSliceFlag{Name: "leave, l", Value: &cli.StringSlice{}, Usage: "leave current department"},
-				cli.StringSliceFlag{Name: "join, j", Value: &cli.StringSlice{}, Usage: "join new department"},
-			},
-		},
+	ArgsUsage:   "[[--leave | -l <department>]...] [[--join | -j <department>]...]",
+	Flags: []cli.Flag{
+		cli.StringSliceFlag{Name: "leave, l", Value: &cli.StringSlice{}, Usage: "leave current department"},
+		cli.StringSliceFlag{Name: "join, j", Value: &cli.StringSlice{}, Usage: "join new department"},
 	},
+	Action: doUpdateBelongingDepartment,
 }
 
 func doUpdateBelongingDepartment(context *cli.Context) error {
