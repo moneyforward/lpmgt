@@ -253,7 +253,7 @@ func (s *UserService) DisableMultifactor(username string) (*APIResultStatus, err
 }
 
 // ResetPassword reset password for the user
-func (s *UserService) ResetPassword(username string) (*APIResultStatus, error) {
+func (s *UserService) ResetPassword(username string) (*APIResultStatusForPasswordResetting, error) {
 	s.command = "resetpassword"
 	s.data = User{UserName:username}
 	res, err := s.doRequest()
@@ -261,7 +261,7 @@ func (s *UserService) ResetPassword(username string) (*APIResultStatus, error) {
 		return nil, err
 	}
 
-	var status APIResultStatus
+	var status APIResultStatusForPasswordResetting
 	err = JSONBodyDecoder(res, &status)
 	if err != nil {
 		return nil, err

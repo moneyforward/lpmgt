@@ -1,0 +1,32 @@
+{
+    "data": [
+      {
+        "username": "Ishizawa.Mai@moneyforward.co.jp",
+        "Groups": ["メディア事業本部"]
+      },
+      {
+        "username": "Maruyama.Moto@moneyforward.co.jp",
+        "Groups": ["PFMサービス開発本部"]
+      },
+      {
+        "username": "Izawa.Takaaki@moneyforward.co.jp",
+        "Groups": ["メディア事業本部"]
+      },
+      {
+        "username": "Masuda.Satoru@moneyforward.co.jp",
+        "Groups": ["MFクラウドサービス開発本部"]
+      },
+      {
+        "username": "Sato.Taichi@moneyforward.co.jp",
+        "Groups": ["PFMサービス開発本部"]
+      },
+      {
+        "username": "Uenodan.Kento@moneyforward.co.jp",
+        "Groups": ["MFクラウド事業推進本部"]
+      },
+      {
+        "username": "Takizawa.Naoto@moneyforward.co.jp",
+        "Groups": ["PFMサービス開発本部"]
+      }
+    ]
+}
