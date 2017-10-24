@@ -48,4 +48,4 @@ One cannot create/delete/update group info because API is not prepared in LastPa
 3. Create a PR.
 
 # License
-**coming soon**
+MIT
